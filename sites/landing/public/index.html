@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Математика бизнеса — порядок в продажах</title>
+  <meta name="description" content="Внедрение amoCRM и автоматизация продаж. Оставьте заявку — разберёмся в задаче вместе.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="logo" href="/"><span class="logo-mark">∑</span> Математика бизнеса</a>
+    <a class="topbar-link" href="#reviews">Отзывы</a>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-text">
+        <p class="eyebrow">amoCRM · автоматизация · боты</p>
+        <h1>В продажах хаос?<br><span class="accent">Посчитаем и наведём порядок.</span></h1>
+        <p class="lead">Не нужно знать, что именно автоматизировать. Оставьте заявку — разберёмся в задаче вместе.</p>
+      </div>
+
+      <form class="card lead-form" id="lead-form" novalidate>
+        <fieldset class="triangle">
+          <legend>Что для вас важнее? <span class="hint">Выберите два из трёх</span></legend>
+          <div class="chips">
+            <label class="chip"><input type="checkbox" name="priority" value="fast"><span>Быстро</span></label>
+            <label class="chip"><input type="checkbox" name="priority" value="quality"><span>Качественно</span></label>
+            <label class="chip"><input type="checkbox" name="priority" value="budget"><span>Недорого</span></label>
+          </div>
+          <p class="triangle-note" id="triangle-note">Все три сразу не бывает — так честнее 🙂</p>
+        </fieldset>
+
+        <label class="field">
+          <span>Как к вам обращаться</span>
+          <input type="text" name="name" autocomplete="name" maxlength="100" required>
+        </label>
+        <label class="field">
+          <span>Телефон или Telegram</span>
+          <input type="text" name="contact" autocomplete="tel" maxlength="100" placeholder="+7 900 000-00-00 или @username" required>
+        </label>
+        <label class="field">
+          <span>Что болит? <em>необязательно</em></span>
+          <textarea name="comment" rows="2" maxlength="1000" placeholder="Пара слов о задаче"></textarea>
+        </label>
+        <input type="text" name="website" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true">
+
+        <label class="consent">
+          <input type="checkbox" name="consent" required>
+          <span>Согласен на обработку персональных данных по <a href="privacy.html" target="_blank">политике конфиденциальности</a></span>
+        </label>
+
+        <button type="submit" class="btn">Оставить заявку</button>
+        <a class="btn btn-ghost" href="https://t.me/USERNAME" target="_blank" rel="noopener">Или написать в Telegram</a>
+        <p class="form-status" id="form-status" role="status"></p>
+      </form>
+    </section>
+
+    <section class="reviews" id="reviews">
+      <h2>Работа сделана — клиенты довольны</h2>
+      <p class="section-sub">Благодарственные письма клиентов. Нажмите, чтобы рассмотреть.</p>
+      <div class="review-grid" id="review-grid"></div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span>© <span id="year"></span> Математика бизнеса</span>
+    <a href="privacy.html">Политика конфиденциальности</a>
+  </footer>
+
+  <dialog class="lightbox" id="lightbox">
+    <button class="lightbox-close" aria-label="Закрыть">×</button>
+    <img alt="">
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>
