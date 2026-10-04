@@ -11,6 +11,13 @@ const { sendMail } = require('./mailer');
 
 const PORT = Number(process.env.PORT || 8080);
 const PUBLIC_DIR = path.join(__dirname, 'public');
+// One process serves several sites, picked by the host's first label: site2.<host> -> site 2.
+const SITE_DIRS = { site: PUBLIC_DIR, site2: path.join(__dirname, '..', 'landing2', 'public') };
+const SITE_LABELS = { site: 'Сайт 1', site2: 'Сайт 2' };
+const siteOf = (req) => {
+  const label = String(req.headers.host || '').split('.')[0];
+  return SITE_DIRS[label] ? label : 'site';
+};
 const LEADS_FILE = process.env.LEADS_FILE || path.join(__dirname, 'leads.jsonl');
 // Review letters contain clients' requisites, so they are kept out of the public
 // repo and uploaded to the server directly; served from REVIEWS_DIR when set.
@@ -54,6 +61,7 @@ function handleLead(req, res) {
     if (data.website) return json(res, 200, { ok: true }); // honeypot: silently drop bots
     const lead = {
       ts: new Date().toISOString(),
+      site: siteOf(req),
       name: str(data.name, 100),
       contact: str(data.contact, 100),
       comment: str(data.comment, 1000),
@@ -80,7 +88,7 @@ function readSettings() {
 function leadText(lead) {
   const when = new Date(lead.ts).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' });
   return [
-    `Новая заявка с сайта (${when} МСК)`,
+    `Новая заявка: ${SITE_LABELS[lead.site]} (${when} МСК)`,
     '',
     `Имя: ${lead.name}`,
     `Контакт: ${lead.contact}`,
@@ -92,7 +100,7 @@ function leadText(lead) {
 function notifyByMail(lead) {
   const s = readSettings();
   if (!s) return;
-  sendMail({ host: s.host, port: s.port, user: s.user, pass: s.pass, to: s.to, subject: `Заявка с сайта: ${lead.name}`, text: leadText(lead) })
+  sendMail({ host: s.host, port: s.port, user: s.user, pass: s.pass, to: s.to, subject: `${SITE_LABELS[lead.site]}: заявка от ${lead.name}`, text: leadText(lead) })
     .then(() => console.log('lead e-mailed'))
     .catch((err) => console.error('mail failed:', err.message));
 }
@@ -137,7 +145,7 @@ function serveStatic(req, res) {
   try { urlPath = decodeURIComponent(new URL(req.url, 'http://x').pathname); } catch { urlPath = '/'; }
   if (urlPath.endsWith('/')) urlPath += 'index.html';
   const [root, rel] = urlPath.startsWith('/reviews/')
-    ? [REVIEWS_DIR, urlPath.slice('/reviews'.length)] : [PUBLIC_DIR, urlPath];
+    ? [REVIEWS_DIR, urlPath.slice('/reviews'.length)] : [SITE_DIRS[siteOf(req)], urlPath];
   const file = path.join(root, path.normalize(rel));
   if (!file.startsWith(root + path.sep)) { res.writeHead(403); return res.end(); }
   fs.readFile(file, (err, content) => {

@@ -28,7 +28,7 @@ $HOST {
 	reverse_proxy 127.0.0.1:8787
 }
 
-site.$HOST {
+site.$HOST, site2.$HOST {
 	encode gzip
 	reverse_proxy 127.0.0.1:8080
 }
