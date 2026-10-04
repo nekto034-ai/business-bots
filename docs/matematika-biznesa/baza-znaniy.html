@@ -3,24 +3,18 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
 <style>
-/* Layout: база знаний — боковое меню разделов + одна длинная лента со связанными блоками; на телефоне меню становится горизонтальной лентой сверху */
+/* Layout: база знаний (тёмная, один вид) — боковое меню разделов + одна длинная лента со связанными блоками; на телефоне меню становится горизонтальной лентой сверху */
 :root{
-  --bg:#f5f6f4; --panel:#ffffff; --ink:#1c2230; --soft:#5a6273; --rule:#dde0e4;
-  --accent:#2c5a86; --accent-bg:#e6eef6;
-  --pain:#b4621a; --pain-bg:#f9ecdd;
-  --good:#2b7a5d; --good-bg:#e1f1ea;
-  --warn:#8a6f12; --warn-bg:#f5eed3;
+  /* единый тёмный вид: почти чёрный фон, тёплый жёлтый акцент */
+  --bg:#0e0f12; --panel:#17191e; --ink:#f2f2f0; --soft:#a3a6ad; --rule:#2a2d34;
+  --accent:#ffc23d; --accent-bg:#2e2611;
+  --pain:#ff7a59; --pain-bg:#33201a;
+  --good:#4fdc9b; --good-bg:#14301f;
+  --warn:#c9a4ff; --warn-bg:#271e38;
   --sans:"Onest",system-ui,-apple-system,"Segoe UI",sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:dark;
 }
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#14171d; --panel:#1b2029; --ink:#e7eaef; --soft:#a0a8b6; --rule:#2f3644;
-  --accent:#8db8e6; --accent-bg:#1d2d40; --pain:#eea062; --pain-bg:#3a281a;
-  --good:#6fd0aa; --good-bg:#17322a; --warn:#e2c75e; --warn-bg:#342e16; color-scheme:dark}}
-:root[data-theme="dark"]{
-  --bg:#14171d; --panel:#1b2029; --ink:#e7eaef; --soft:#a0a8b6; --rule:#2f3644;
-  --accent:#8db8e6; --accent-bg:#1d2d40; --pain:#eea062; --pain-bg:#3a281a;
-  --good:#6fd0aa; --good-bg:#17322a; --warn:#e2c75e; --warn-bg:#342e16; color-scheme:dark}
 *{box-sizing:border-box}
 html{scroll-behavior:smooth;scroll-padding-top:16px}
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
