@@ -1,0 +1,683 @@
+<title>База знаний «Математика бизнеса»</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: база знаний — боковое меню разделов + одна длинная лента со связанными блоками; на телефоне меню становится горизонтальной лентой сверху */
+:root{
+  --bg:#f5f6f4; --panel:#ffffff; --ink:#1c2230; --soft:#5a6273; --rule:#dde0e4;
+  --accent:#2c5a86; --accent-bg:#e6eef6;
+  --pain:#b4621a; --pain-bg:#f9ecdd;
+  --good:#2b7a5d; --good-bg:#e1f1ea;
+  --warn:#8a6f12; --warn-bg:#f5eed3;
+  --sans:"Onest",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#14171d; --panel:#1b2029; --ink:#e7eaef; --soft:#a0a8b6; --rule:#2f3644;
+  --accent:#8db8e6; --accent-bg:#1d2d40; --pain:#eea062; --pain-bg:#3a281a;
+  --good:#6fd0aa; --good-bg:#17322a; --warn:#e2c75e; --warn-bg:#342e16; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#14171d; --panel:#1b2029; --ink:#e7eaef; --soft:#a0a8b6; --rule:#2f3644;
+  --accent:#8db8e6; --accent-bg:#1d2d40; --pain:#eea062; --pain-bg:#3a281a;
+  --good:#6fd0aa; --good-bg:#17322a; --warn:#e2c75e; --warn-bg:#342e16; color-scheme:dark}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:16px}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.6;margin:0}
+a{color:var(--accent);text-underline-offset:3px}
+a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.layout{display:grid;grid-template-columns:240px minmax(0,1fr);gap:32px;max-width:1240px;margin:0 auto;padding-inline:20px;padding-block:28px 80px}
+nav.side{position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px);align-self:start;display:flex;flex-direction:column;gap:2px;max-height:calc(100vh - 32px);overflow:auto}
+nav.side .brand{font-weight:700;font-size:15px;margin-bottom:10px}
+nav.side .brand small{display:block;font-weight:400;color:var(--soft);font-size:12px}
+nav.side a{display:block;padding:6px 10px;border-radius:4px;color:var(--ink);text-decoration:none;font-size:14px}
+nav.side a:hover{background:var(--accent-bg)}
+nav.side .grp{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--soft);margin:12px 10px 2px}
+main{display:flex;flex-direction:column;gap:64px;min-width:0}
+@media (max-width:860px){
+  .layout{grid-template-columns:minmax(0,1fr);gap:16px}
+  nav.side{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;flex-direction:row;overflow-x:auto;max-height:none;background:var(--bg);padding-block:8px;border-bottom:1px solid var(--rule)}
+  nav.side .brand,nav.side .grp{display:none}
+  nav.side a{white-space:nowrap}
+}
+section{display:flex;flex-direction:column;gap:18px;min-width:0}
+h1{font-size:clamp(28px,4.5vw,40px);line-height:1.15;margin:0;text-wrap:balance}
+h2{font-size:clamp(22px,3vw,28px);line-height:1.2;margin:0;text-wrap:balance}
+h3{font-size:18px;line-height:1.3;margin:0}
+p{margin:0;max-width:72ch}
+ul,ol{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:6px;max-width:72ch}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+.soft{color:var(--soft)}
+.card{background:var(--panel);border:1px solid var(--rule);border-radius:6px;padding:20px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
+.tag{display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.06em;padding:2px 8px;border-radius:999px;background:var(--accent-bg);color:var(--accent);white-space:nowrap}
+.tag.pain{background:var(--pain-bg);color:var(--pain)}
+.tag.good{background:var(--good-bg);color:var(--good)}
+.tag.warn{background:var(--warn-bg);color:var(--warn)}
+.who{display:flex;flex-wrap:wrap;gap:6px}
+.tbl{overflow-x:auto;border:1px solid var(--rule);border-radius:6px;background:var(--panel)}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--rule);vertical-align:top}
+th{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--soft);font-weight:500;background:var(--panel)}
+tr:last-child td{border-bottom:0}
+td.n{font-family:var(--mono);font-weight:600;white-space:nowrap}
+tr:target td{background:var(--warn-bg)}
+.formula{font-family:var(--mono);font-size:clamp(15px,2.2vw,19px);font-weight:600;background:var(--panel);border:1px solid var(--rule);border-radius:6px;padding:16px 18px}
+.chain{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chain a{background:var(--panel);border:1px solid var(--rule);border-radius:4px;padding:8px 12px;text-decoration:none;color:var(--ink);font-weight:500}
+.chain a:hover{border-color:var(--accent)}
+.chain span{color:var(--soft);font-family:var(--mono)}
+.note{border-left:3px solid var(--warn);background:var(--warn-bg);padding:10px 14px;border-radius:0 4px 4px 0}
+.quote{font-style:italic}
+/* модули */
+.filters{display:flex;flex-wrap:wrap;gap:8px}
+.filters button{font:inherit;font-size:14px;border:1px solid var(--rule);background:var(--panel);color:var(--ink);border-radius:999px;padding:5px 12px;cursor:pointer}
+.filters button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.stage-h{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--soft);margin-top:8px}
+.mod{background:var(--panel);border:1px solid var(--rule);border-left:4px solid var(--pain);border-radius:6px;padding:18px 20px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.mod:target{box-shadow:0 0 0 3px var(--warn)}
+.mod-h{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:baseline}
+.mod-h .code{font-family:var(--mono);font-weight:600;color:var(--pain)}
+.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px 18px}
+.kv div{display:flex;flex-direction:column;gap:2px;min-width:0}
+.kv .k{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--soft)}
+.talk{display:flex;flex-direction:column;gap:8px}
+.talk .line{display:grid;grid-template-columns:92px minmax(0,1fr);gap:10px;align-items:start}
+.talk .acc{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;padding:2px 6px;border-radius:4px;text-align:center}
+.acc-logic{background:var(--accent-bg);color:var(--accent)}
+.acc-fear{background:var(--pain-bg);color:var(--pain)}
+.acc-gain{background:var(--good-bg);color:var(--good)}
+.acc-price{background:var(--warn-bg);color:var(--warn)}
+.links{display:flex;flex-wrap:wrap;gap:6px 10px;font-size:14px}
+.obj{background:var(--panel);border:1px solid var(--rule);border-radius:6px;padding:18px 20px;display:flex;flex-direction:column;gap:12px}
+.obj:target{box-shadow:0 0 0 3px var(--warn)}
+.obj h3 .quote{font-style:normal}
+details{background:var(--panel);border:1px solid var(--rule);border-radius:6px;padding:12px 16px}
+details summary{cursor:pointer;font-weight:600}
+details[open] summary{margin-bottom:10px}
+.status li b{font-weight:600}
+</style>
+
+<div class="layout">
+<nav class="side" aria-label="Разделы">
+  <div class="brand">Математика бизнеса<small>база знаний · версия 4 октября 2026</small></div>
+  <div class="grp">Основа</div>
+  <a href="#obzor">Обзор и формула</a>
+  <a href="#strategiya">Стратегия</a>
+  <a href="#ekonomika">Экономика</a>
+  <div class="grp">Продукты и цены</div>
+  <a href="#ceny">Цены S / M / L</a>
+  <a href="#dop">Доп. услуги</a>
+  <a href="#vnedrenie">Внедрение</a>
+  <a href="#soprovozhdenie">Сопровождение</a>
+  <div class="grp">Продажи</div>
+  <a href="#process">Путь клиента</a>
+  <a href="#brif">Бриф</a>
+  <a href="#moduli">Модули и ответы</a>
+  <a href="#vozrazheniya">Возражения</a>
+  <a href="#modelirovanie">Моделирование</a>
+  <a href="#kp">КП из блоков</a>
+  <a href="#bylo">Было → стало</a>
+  <div class="grp">Дальше</div>
+  <a href="#plan">План и вопросы</a>
+</nav>
+
+<main>
+
+<!-- ================= ОБЗОР ================= -->
+<section id="obzor">
+  <div class="eyebrow">Обзор</div>
+  <h1>Математика бизнеса</h1>
+  <p>Внедрение amoCRM для малого бизнеса от 1 до 15 человек. Работаем как большая компания: понятный состав работ, фиксированные цены, сопровождение и цифры. Стоим дешевле крупных интеграторов и даём сервис лучше, чем «настройщики с Авито».</p>
+  <div class="formula">Деньги = Обращения × Конверсия × Средний чек × Повторные покупки</div>
+  <p>Нет обращений — нет заявок, нет заявок — нет сделок, нет сделок — нет денег. Клиенты смотрят только на деньги, а управлять можно только тем, что стоит до них. Мы делаем эти цифры видимыми. В этом смысл названия.</p>
+  <h3>Как устроена система</h3>
+  <div class="chain">
+    <a href="#brif">Бриф</a><span>→</span>
+    <a href="#moduli">Модули потерь</a><span>→</span>
+    <a href="#modelirovanie">Моделирование</a><span>→</span>
+    <a href="#kp">КП</a><span>→</span>
+    <a href="#vnedrenie">Внедрение</a><span>→</span>
+    <a href="#soprovozhdenie">Сопровождение</a><span>→</span>
+    <a href="#bylo">Было → стало</a>
+  </div>
+  <p class="soft">Один и тот же набор <a href="#moduli">модулей</a> используется четыре раза: в разговоре с клиентом, в «Моделировании», в КП и в ежемесячном отчёте.</p>
+  <div class="note"><b>Напоминания:</b> 1) сделать репозиторий на GitHub приватным; 2) вернуться к масштабированию «Моделирования», когда идея подтвердится на первых клиентах. <a href="#plan">Весь список</a></div>
+</section>
+
+<!-- ================= СТРАТЕГИЯ ================= -->
+<section id="strategiya">
+  <div class="eyebrow">Стратегия</div>
+  <h2>Позиционирование и цели</h2>
+  <div class="grid3">
+    <div class="card"><h3>Сверху</h3><p>Крупные интеграторы. Сильные, но долго и дорого для компании из 3 человек.</p></div>
+    <div class="card"><h3>Снизу</h3><p>«Настройщики с Авито». Работают за лицензию, сервис соответствующий.</p></div>
+    <div class="card" style="border-color:var(--accent)"><h3>Мы — посередине</h3><p>Как большая компания: состав работ, сроки, сопровождение, цифры. Цена чуть ниже рынка, без демпинга.</p></div>
+  </div>
+  <div class="grid2">
+    <div class="card">
+      <h3>Сильные стороны Артёма</h3>
+      <ul>
+        <li>7–8 лет в продажах, потом CRM. Понимает и технику, и отдел продаж, и руководителя.</li>
+        <li>20–25 внедрений, официальный партнёр amoCRM.</li>
+        <li>8 письменных отзывов. Среди них «Дом приключений Деда Мороза» (второй год работы) и проект, где отдел продаж продал 50 000+ билетов.</li>
+        <li>Стандарт качества: автоматизации из нескольких маленьких ботов вместо одного большого. Дольше в настройке, зато не ломается.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>План</h3>
+      <ul>
+        <li><b>Окт–дек 2026:</b> интенсив, 200+ тыс. в месяц по новым ценам. Без ночей и без отказа от спорта.</li>
+        <li><b>До найма:</b> открыть ИП (лимит самозанятого 2,4 млн в год, найм только с ИП).</li>
+        <li><b>С января 2027:</b> первый продавец. Дальше второй продавец, техподдержка, настройщик.</li>
+        <li><b>Рост вширь:</b> много продавцов и точек, а не конкуренция с крупными.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="card">
+    <h3>Принципы</h3>
+    <ul>
+      <li>Растём за счёт цен, <a href="#soprovozhdenie">сопровождения</a> и автоматизации, а не за счёт часов.</li>
+      <li>Каждое решение записываем так, чтобы его мог повторить сотрудник.</li>
+      <li>Цифры честные: у каждой подписано, откуда она (<a href="#bylo">подробнее</a>).</li>
+      <li>Наш клиент не хочет разбираться сам. «Умному» клиенту продаём консультацию или аудит.</li>
+      <li>Работаем официально. В модели считаем только официальную выручку.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ================= ЭКОНОМИКА ================= -->
+<section id="ekonomika">
+  <div class="eyebrow">Экономика · для директора</div>
+  <h2>Откуда деньги</h2>
+  <div class="grid2">
+    <div class="card">
+      <h3>Пять источников дохода</h3>
+      <ol>
+        <li>Лицензии amoCRM — 50% комиссии.</li>
+        <li>Подписки виджетов — 10–40% комиссии.</li>
+        <li>Подключение виджетов — с клиента.</li>
+        <li><a href="#soprovozhdenie">Сопровождение</a> — главная зона роста.</li>
+        <li><a href="#vnedrenie">Внедрение</a>, настройка, аудит.</li>
+      </ol>
+    </div>
+    <div class="card">
+      <h3>Закономерность 1 : 1 : 1</h3>
+      <p>Работа ≈ лицензии ≈ виджеты. Работа на 40 тыс. приносит ещё около 40 тыс. с лицензий и около 40 тыс. с виджетов.</p>
+      <ul>
+        <li>Клиент стоит около трёх цен работы.</li>
+        <li>Потолок рекламы на одного клиента — около одной цены работы.</li>
+        <li>Сопровождение удерживает лицензии и виджеты при продлении.</li>
+        <li>Продавца оценивать по полной сумме, а не только по работе.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>Тариф amoCRM</th><th>6 мес, ₽/польз./мес</th><th>12 мес</th></tr></thead>
+    <tbody>
+      <tr><td>Базовый</td><td class="n">599</td><td class="n">499</td></tr>
+      <tr><td>Расширенный (основной)</td><td class="n">1 299</td><td class="n">1 083</td></tr>
+      <tr><td>Про</td><td class="n">1 799</td><td class="n">1 499</td></tr>
+    </tbody>
+  </table></div>
+  <p class="soft">Минимальный срок лицензии — 6 месяцев. Каждое продление — момент, когда клиент может уйти к другому партнёру. Цель — 250 тыс. в месяц при ~100 оплачиваемых часах, то есть ~2 500 ₽ в час.</p>
+</section>
+
+<!-- ================= ЦЕНЫ ================= -->
+<section id="ceny">
+  <div class="eyebrow">Цены · утверждено</div>
+  <h2>Одна ось размера: S / M / L</h2>
+  <p>Правило продавца: <b>определи размер компании — смотри свою колонку.</b> Больше ничего не считаешь.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Продукт</th><th>S · 1–3 чел.</th><th>M · 4–8 чел.</th><th>L · 9–15 чел.</th></tr></thead>
+    <tbody>
+      <tr><td><a href="#vnedrenie">Внедрение</a></td><td class="n">Старт 25 000</td><td class="n">Бизнес 40 000</td><td class="n">Команда 70 000</td></tr>
+      <tr><td><a href="#s-control">«Контроль»</a>, 6 мес</td><td class="n">6 000</td><td class="n">6 000</td><td class="n">6 000</td></tr>
+      <tr><td><a href="#s-tech">«Техподдержка»</a>, 6 мес</td><td class="n">21 000</td><td class="n">39 000</td><td class="n">57 000</td></tr>
+      <tr><td><a href="#s-dev">«Развитие»</a>, 6 мес</td><td class="n">72 000</td><td class="n">90 000</td><td class="n">120 000</td></tr>
+    </tbody>
+  </table></div>
+  <div class="grid2">
+    <div class="card">
+      <h3>Почасовая работа</h3>
+      <div class="tbl"><table><tbody>
+        <tr id="p-hour"><td>Без подписки (минимум 1 час)</td><td class="n">3 000 ₽/ч</td></tr>
+        <tr><td>На «Контроле» (−10%)</td><td class="n">2 700</td></tr>
+        <tr><td>На «Техподдержке» (−15%)</td><td class="n">2 550</td></tr>
+        <tr><td>На «Развитии» (−20%)</td><td class="n">2 400</td></tr>
+        <tr id="p-fast"><td>«Ускорение»: взяться за 4 рабочих часа</td><td class="n">5 000 ₽</td></tr>
+      </tbody></table></div>
+    </div>
+    <div class="card">
+      <h3>Правила</h3>
+      <ul>
+        <li>Сопровождение — за 6 или 12 месяцев, одним счётом с лицензией. 12 месяцев — 2 в подарок.</li>
+        <li>Лицензия через нас — +1 месяц amoCRM в подарок.</li>
+        <li>Задача больше 2 часов — сначала оценка.</li>
+        <li>Цены для новых клиентов. Старым — по договорённости.</li>
+        <li>Продавец не даёт скидки сверх указанных.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ================= ДОП УСЛУГИ ================= -->
+<section id="dop">
+  <div class="eyebrow">Цены · черновик</div>
+  <h2>Единый прайс доп. услуг</h2>
+  <p>Одна цена для всех клиентов, без коэффициентов. Из этих строк собирается <a href="#kp">КП</a>. Лицензии и подписки виджетов оплачиваются отдельно.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Услуга</th><th>Было</th><th>Стало</th></tr></thead>
+    <tbody>
+      <tr id="p-base"><td>Базовая настройка: 1 воронка, поля до 15, теги, права</td><td class="n">5–8 тыс.</td><td class="n">12 000</td></tr>
+      <tr id="p-funnel"><td>Дополнительная воронка</td><td class="n">2–3 тыс.</td><td class="n">5 000</td></tr>
+      <tr id="p-auto"><td>Автоматизация воронки</td><td class="n">3–4 тыс.</td><td class="n">5 000</td></tr>
+      <tr id="p-fields"><td>Поля сверх лимита, за каждые 10</td><td class="n">1,5–2 тыс.</td><td class="n">2 000</td></tr>
+      <tr id="p-user"><td>Пользователь сверх пакета</td><td class="n">~700</td><td class="n">1 000</td></tr>
+      <tr id="p-import"><td>Загрузка базы по нашему шаблону</td><td class="n">2 000</td><td class="n">3 000</td></tr>
+      <tr id="p-a"><td>Подключение: сайт и формы, VK, почта, Telegram-бот</td><td class="n">1–1,5 тыс.</td><td class="n">2 000</td></tr>
+      <tr id="p-b"><td>Виджет с настройкой: WhatsApp, Telegram, Avito, SMS, документы, скрипты, чек-листы</td><td class="n">0,5–3 тыс.</td><td class="n">4 000</td></tr>
+      <tr id="p-tel"><td>Телефония</td><td class="n">4–6 тыс.</td><td class="n">6 000</td></tr>
+      <tr id="p-telr"><td>Телефония с маршрутизацией</td><td class="n">—</td><td class="n">10 000</td></tr>
+      <tr id="p-c"><td>Сложная интеграция: эквайринг, 1С, таблицы, API</td><td class="n">2–4 тыс.</td><td class="n">от 7 000</td></tr>
+      <tr id="p-bot1"><td>Простой бот (1–2 действия)</td><td class="n">1–1,5 тыс.</td><td class="n">2 000</td></tr>
+      <tr id="p-bot2"><td>Бот-цепочка (3–5 шагов)</td><td class="n">~4 500</td><td class="n">5 000</td></tr>
+      <tr id="p-bot3"><td>Сложный бот (ветвления, расчёты, оплата)</td><td class="n">«обсуждаем»</td><td class="n">от 8 000</td></tr>
+      <tr id="p-train"><td>Обучение, дополнительный час</td><td class="n">—</td><td class="n">3 000</td></tr>
+      <tr id="p-video"><td>Обучающие видео по вашей CRM</td><td class="n">5–6 тыс.</td><td class="n">7 000</td></tr>
+      <tr id="p-schema"><td>Схема бизнес-процесса</td><td class="n">—</td><td class="n">5 000</td></tr>
+      <tr id="p-report"><td>Отчёт «было → стало» отдельно</td><td class="n">—</td><td class="n">5 000</td></tr>
+      <tr id="p-audit"><td>Аудит существующей amoCRM</td><td class="n">—</td><td class="n">7 000</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ================= ВНЕДРЕНИЕ ================= -->
+<section id="vnedrenie">
+  <div class="eyebrow">Продукт</div>
+  <h2>Пакеты внедрения</h2>
+  <div class="tbl"><table>
+    <thead><tr><th></th><th id="pk-s">Старт · S</th><th id="pk-m">Бизнес · M</th><th id="pk-l">Команда · L</th></tr></thead>
+    <tbody>
+      <tr><td>Сотрудников</td><td>1–3</td><td>4–8</td><td>9–15</td></tr>
+      <tr><td>Воронки с автоматизацией</td><td>1</td><td>до 2</td><td>до 3</td></tr>
+      <tr><td>Поля (лимит)</td><td>до 15</td><td>до 25</td><td>до 40</td></tr>
+      <tr><td>Теги, права доступа</td><td>✓</td><td>✓</td><td>✓</td></tr>
+      <tr><td>Каналы (подключения и виджеты)</td><td>до 2</td><td>до 3</td><td>до 5</td></tr>
+      <tr><td>Телефония</td><td>—</td><td>✓</td><td>✓</td></tr>
+      <tr><td>Salesbot</td><td>1 простой в подарок</td><td>до 3</td><td>до 5</td></tr>
+      <tr><td>Загрузка базы по шаблону</td><td>✓</td><td>✓</td><td>✓</td></tr>
+      <tr><td>Схема бизнес-процесса</td><td>простая</td><td>✓</td><td>✓</td></tr>
+      <tr><td><a href="#bylo">Отчёт «было → стало»</a></td><td>базовый</td><td>✓</td><td>расширенный</td></tr>
+      <tr><td>Обязательная причина отказа и бюджет в сделке</td><td>✓</td><td>✓</td><td>✓</td></tr>
+      <tr><td>Обучение</td><td>1 час</td><td>2 часа</td><td>2 часа + видео</td></tr>
+      <tr><td><a href="#s-tech">«Техподдержка»</a> включена</td><td>1 мес</td><td>1 мес</td><td>2 мес</td></tr>
+      <tr><td><b>Цена</b></td><td class="n">25 000</td><td class="n">40 000</td><td class="n">70 000</td></tr>
+      <tr><td class="soft">По отдельности по прайсу</td><td class="n soft">~31 500</td><td class="n soft">~61 500</td><td class="n soft">~99 000</td></tr>
+    </tbody>
+  </table></div>
+  <div class="grid2">
+    <div class="card">
+      <h3>Правило бесплатной работы</h3>
+      <ul>
+        <li>Бесплатно: созвон по <a href="#brif">брифу</a> и <a href="#modelirovanie">«Моделирование»</a> с КП. До часа работы.</li>
+        <li>Прототип в amoCRM клиента — только после предоплаты 50%.</li>
+        <li>Общий демо-аккаунт не подходит: клиент хочет видеть свой бизнес.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Договор и оплата</h3>
+      <ul>
+        <li>Оплата 50/50. Если клиент вызывает сомнения, предоплата больше.</li>
+        <li>Договор-оферта: принимается оплатой счёта, фиксирует состав работ. Шаблон есть у Артёма.</li>
+        <li>ЭДО для самозанятого возможно: электронная подпись физлица и оператор (Контур, Такском). Проверить Госключ.</li>
+      </ul>
+    </div>
+  </div>
+  <details>
+    <summary>Разбор архива КП 2024–2025</summary>
+    <ul>
+      <li>Формат нравится: таблица «работа — описание — лицензия — срок — цена — очерёдность». «Светофор» (сегодня / завтра / послезавтра) появился в КП «Контраст».</li>
+      <li>Проблемы: поштучные цены по 500–1 000 ₽ выглядят дёшево; каждое КП собиралось вручную (было 2–3 дня, стало 2–3 часа); цены на одно и то же разные.</li>
+      <li>Типовой проект раньше стоил около 21 000 ₽. Базовая настройка «Старта» занимает 1–2 часа, включая час обучения. Цена определяется ценностью, а не временем.</li>
+      <li>Задача: красивое оформление КП.</li>
+    </ul>
+  </details>
+</section>
+
+<!-- ================= СОПРОВОЖДЕНИЕ ================= -->
+<section id="soprovozhdenie">
+  <div class="eyebrow">Продукт</div>
+  <h2>Сопровождение</h2>
+  <p>Клиент на сопровождении продлевает лицензии и виджеты через нас. Модель спортзала: платят все, пользуются немногие. Всё, что можно, делает автоматика. Главная граница: <b>поломка</b> — вернуть как было, <b>доработка</b> — сделать новое.</p>
+  <div class="grid3">
+    <div class="card" id="s-control"><span class="tag">уровень 1</span><h3>«Контроль»</h3><p>Предупредим и подстрахуем. Напоминания о лицензиях и виджетах, ежемесячный автоматический чек-ап CRM, резервная выгрузка базы.</p><p class="soft">«Я в такой ситуации потеряю 500 рублей, а вы потеряете 5 дней работы».</p></div>
+    <div class="card" id="s-tech"><span class="tag">уровень 2</span><h3>«Техподдержка»</h3><p>Всё из «Контроля», плюс чиним поломки, общаемся с техподдержкой amoCRM, проверяем интеграции после обновлений, 1 мелкая доработка в месяц, чистка дублей раз в полгода.</p></div>
+    <div class="card" id="s-dev"><span class="tag">уровень 3</span><h3>«Развитие»</h3><p>Всё из «Техподдержки», плюс 3 часа доработок в месяц, ежемесячный отчёт <a href="#bylo">«было → стало»</a>, обучение нового сотрудника и созвон-аудит раз в квартал.</p></div>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>Реакция (пн–пт 10–19 МСК)</th><th>🔴 Всё стоит</th><th>🟡 Мешает работать</th><th>🟢 Пожелание</th></tr></thead>
+    <tbody>
+      <tr><td>Без подписки</td><td>очередь или <a href="#p-fast">«Ускорение»</a></td><td>до 3 раб. дней</td><td>очередь</td></tr>
+      <tr><td>Контроль</td><td>до 1 раб. дня</td><td>до 2 раб. дней</td><td>очередь</td></tr>
+      <tr><td>Техподдержка</td><td>до 4 часов</td><td>до 1 раб. дня</td><td>до 3 раб. дней</td></tr>
+      <tr><td>Развитие</td><td>до 2 часов, и в выходные</td><td>до 4 часов</td><td>до 1 раб. дня</td></tr>
+    </tbody>
+  </table></div>
+  <div class="grid2">
+    <div class="card">
+      <h3>Защита от «рабства»</h3>
+      <ul>
+        <li>Поломки — в рамках уровня. Доработки — по лимиту, сверх — по ставке подписчика.</li>
+        <li>Один канал обращений, рабочие часы. Красное — исключение.</li>
+        <li>Ожидание ответа от amoCRM и разработчиков виджетов в сроки не входит.</li>
+        <li>Обращения ведём в своей amoCRM.</li>
+        <li>«Реакция» — взяли в работу и сообщили план, а не «решили».</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Как продавать</h3>
+      <ul>
+        <li>Первый месяц «Техподдержки» входит во <a href="#vnedrenie">внедрение</a>. Продление предлагаем за неделю до конца, вместе с отчётом.</li>
+        <li>Без подписки срочная помощь стоит «Ускорение» плюс 3 000 ₽ в час. Подписка дешевле одного такого случая.</li>
+        <li>«Продажи» (контроль менеджеров) — отдельный пилот на 1–2 клиентах, не в линейке.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ================= ПРОЦЕСС ================= -->
+<section id="process">
+  <div class="eyebrow">Продажи</div>
+  <h2>Путь клиента у нас</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Этап</th><th>Что делаем</th></tr></thead>
+    <tbody>
+      <tr><td>1. Заявка</td><td>Фиксируем в своей amoCRM.</td></tr>
+      <tr><td>2. Созвон</td><td>Бриф: ядро → поиск боли → глубина → выгода. <a href="#brif">Бриф</a></td></tr>
+      <tr><td>3. Моделирование</td><td>В течение суток отправляем отчёт из 2–3 модулей клиента. <a href="#modelirovanie">Моделирование</a></td></tr>
+      <tr><td>4. КП</td><td>Собираем из строк, связанных с найденными модулями. 15–30 минут. <a href="#kp">КП</a></td></tr>
+      <tr><td>5. Договор и предоплата</td><td>Оферта, 50%.</td></tr>
+      <tr><td>6. Внедрение</td><td>По чек-листу пакета. Обязательно включаем причины отказа и бюджет. <a href="#vnedrenie">Пакеты</a></td></tr>
+      <tr><td>7. Сдача</td><td>Обучение, точка А из CRM.</td></tr>
+      <tr><td>8. Сопровождение</td><td>Первый месяц включён. <a href="#soprovozhdenie">Сопровождение</a></td></tr>
+      <tr><td>9. Было → стало</td><td>Отчёт, продление, отзыв, кейс. <a href="#bylo">Отчёт</a></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ================= БРИФ ================= -->
+<section id="brif">
+  <div class="eyebrow">Продажи</div>
+  <h2>Бриф: модульный созвон</h2>
+  <p>Разговор, а не анкета. Методика SPIN спрятана внутри: тема → где болит → во что обходится → следующая тема. Фразы клиента о проблеме и о выгоде записываем дословно, они попадут в <a href="#modelirovanie">«Моделирование»</a>.</p>
+  <div class="grid2">
+    <div class="card"><span class="tag">шаг 1 · 5 мин</span><h3>Ядро, всем</h3><ol><li>Чем занимаетесь, кто клиент?</li><li>Сколько человек работает с клиентами? → размер <a href="#ceny">S/M/L</a></li><li>Откуда клиенты, сколько обращений в месяц?</li><li>Средний чек? Из 10 обратившихся сколько покупают?</li><li>Путь клиента от первого сообщения до оплаты?</li></ol></div>
+    <div class="card"><span class="tag">шаг 2 · 5–7 мин</span><h3>Поиск боли</h3><p>По одному открытому вопросу на этап. Слушаем маркерные фразы, по ним находим <a href="#moduli">модуль</a>.</p><ul><li>«Какой канал для вас главный и почему?»</li><li>«Что происходит, когда приходит новая заявка?»</li><li>«Где чаще всего клиент отваливается?»</li><li>«Что происходит после того, как клиент согласился?»</li><li>«Что происходит с клиентом после покупки?»</li><li>«Как вы понимаете, что в продажах всё нормально?»</li></ul></div>
+    <div class="card"><span class="tag">шаг 3 · 5–10 мин</span><h3>Глубина по 2–3 модулям</h3><ol><li>Скрининг-вопрос модуля.</li><li>«Как часто? Сколько таких в месяц?»</li><li>Вместе прикидываем потери по шаблону модуля: «Похоже на правду?»</li><li>Записываем фразу клиента дословно.</li></ol></div>
+    <div class="card"><span class="tag">шаг 4 · 2 мин</span><h3>Выгода, всем</h3><ol><li>«Если бы это было решено — что бы изменилось лично для вас?» (дословно)</li><li>«Что будет хорошим результатом через месяц?»</li><li>«Когда хотите, чтобы заработало?»</li></ol></div>
+  </div>
+  <details><summary>Шаг 5. Техническая часть (тёплые клиенты, перед КП)</summary><ul><li>Была ли CRM, какая, почему ушли?</li><li>Телефония: какая, сколько номеров?</li><li>Мессенджеры и соцсети: какие, сколько аккаунтов?</li><li>Сайт: на чём, какие формы? Документы, оплаты, 1С, таблицы?</li><li>Клиентская база: есть ли, в каком виде, сколько записей?</li></ul></details>
+</section>
+
+<!-- ================= МОДУЛИ ================= -->
+<section id="moduli">
+  <div class="eyebrow">Продажи · главный инструмент</div>
+  <h2>Модули потерь и что говорить</h2>
+  <p>27 мест, где бизнес теряет деньги. Собраны из практики Артёма и из того, что пишут интеграторы amoCRM, Битрикс24 и 1С. У каждого модуля: как это звучит у клиента, вопрос, метрика, что настраиваем (со ссылкой на прайс) и <b>что говорить</b> в четырёх акцентах. Акцент выбирайте под человека: кто-то верит цифрам, кого-то двигает страх потерь, кого-то результат, кого-то окупаемость.</p>
+  <div class="grid3">
+    <div class="card"><span class="talk"><span class="acc acc-logic">логика</span></span><p>Цифры и механика: «вот как это работает и сколько стоит». Для тех, кто считает.</p></div>
+    <div class="card"><span class="talk"><span class="acc acc-fear">страх</span></span><p>Что будет, если ничего не менять. Мягко: показать риск, а не запугать.</p></div>
+    <div class="card"><span class="talk"><span class="acc acc-gain">выгода</span></span><p>Как будет после. Свобода, контроль, рост.</p></div>
+    <div class="card"><span class="talk"><span class="acc acc-price">цена</span></span><p>Окупаемость: «это стоит меньше, чем одна потерянная продажа».</p></div>
+  </div>
+  <div class="filters" role="group" aria-label="Показывать акценты">
+    <button type="button" id="f-all" data-acc="all" aria-pressed="true">Все акценты</button>
+    <button type="button" id="f-logic" data-acc="logic" aria-pressed="false">Логика</button>
+    <button type="button" id="f-fear" data-acc="fear" aria-pressed="false">Страх</button>
+    <button type="button" id="f-gain" data-acc="gain" aria-pressed="false">Выгода</button>
+    <button type="button" id="f-price" data-acc="price" aria-pressed="false">Цена</button>
+  </div>
+  <div id="modlist" style="display:flex;flex-direction:column;gap:14px"></div>
+  <details>
+    <summary>Шаблоны оценки потерь</summary>
+    <div class="tbl"><table><thead><tr><th>Шаблон</th><th>Формула</th></tr></thead><tbody>
+      <tr><td>Потерянные заявки</td><td>Заявки × доля потерянных × конверсия × чек</td></tr>
+      <tr><td>Невозвращённые</td><td>Число зависших × доля, которую можно вернуть × конверсия × чек</td></tr>
+      <tr><td>Недополученный чек</td><td>Продаж в месяц × рост чека</td></tr>
+      <tr><td>Повторные</td><td>Клиентов в базе × доля, которые могли бы купить снова × чек</td></tr>
+      <tr><td>Деньги в долгах</td><td>Сумма неоплаченного</td></tr>
+      <tr><td>Время</td><td>Часы в неделю × стоимость часа</td></tr>
+      <tr><td>Невидимые деньги</td><td>Рекламный бюджет каналов без продаж</td></tr>
+      <tr><td>Риск</td><td>Без суммы: «что будет, если…»</td></tr>
+    </tbody></table></div>
+    <p class="soft">В «Моделирование» идёт одна оценка на модуль, всегда с пометкой «оценка по вашим словам».</p>
+  </details>
+</section>
+
+<!-- ================= ВОЗРАЖЕНИЯ ================= -->
+<section id="vozrazheniya">
+  <div class="eyebrow">Продажи</div>
+  <h2>Возражения</h2>
+  <p>Сначала соглашаемся с чувством клиента, потом уточняем, что стоит за возражением, и только потом отвечаем. Ответ выбираем в нужном акценте.</p>
+  <div id="objlist" style="display:flex;flex-direction:column;gap:14px"></div>
+</section>
+
+<!-- ================= МОДЕЛИРОВАНИЕ ================= -->
+<section id="modelirovanie">
+  <div class="eyebrow">Продажи</div>
+  <h2>«Моделирование»</h2>
+  <p>Бесплатный отчёт после созвона для холодных клиентов (для входящих позже станет платным). Задача — зацепить: клиент видит свой процесс, свои слова и то, чего он не видит. Созвон закладывает мысль, отчёт её добивает.</p>
+  <div class="grid2">
+    <div class="card">
+      <h3>Рамка (у всех одинаковая)</h3>
+      <ol>
+        <li>Шапка: компания, дата, «составлено из ваших ответов».</li>
+        <li>Математика бизнеса: множители с пометками «знаете точно / примерно / не знаете».</li>
+        <li>Путь клиента с отметками модулей.</li>
+        <li><b>2–3 модуля</b>: ваши слова → оценка по вашим словам → что увидите после настройки.</li>
+        <li>Приборная панель со стрелками на нуле.</li>
+        <li>Слова клиента о выгоде и пакет по размеру.</li>
+      </ol>
+    </div>
+    <div class="card">
+      <h3>Как связано с брифом</h3>
+      <div class="tbl"><table><tbody>
+        <tr><td>S — ситуация</td><td>→ путь клиента</td></tr>
+        <tr><td>P — проблема</td><td>→ цитаты в модулях</td></tr>
+        <tr><td>I — последствия</td><td>→ оценка, с которой клиент согласился</td></tr>
+        <tr><td>N — выгода</td><td>→ финал отчёта</td></tr>
+      </tbody></table></div>
+      <p class="soft">Принцип: не пугаем суммами, а показываем, сколько клиент не видит. Без кликбейта, у каждой цифры подписан источник.</p>
+    </div>
+  </div>
+  <div class="card">
+    <h3>Формат и образцы</h3>
+    <ul>
+      <li>Отдаём одностраничным PDF, по желанию плюс голосовое на 1–2 минуты.</li>
+      <li>Черновой конструктор на трёх бизнесах: <a href="https://claude.ai/artifact/26wxD9tL3sqzxm9uoHQxZQ">кухни, салон, ремонт</a>.</li>
+      <li>Оформленный образец: <a href="https://claude.ai/artifact/11ydWQakooAyKeKzPeZsRi">автосервис «Гараж 34»</a>. Дизайн Артёму не нравится, переделать.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ================= КП ================= -->
+<section id="kp">
+  <div class="eyebrow">Продажи</div>
+  <h2>КП из блоков</h2>
+  <p>Каждый найденный <a href="#moduli">модуль</a> сразу говорит, какие строки <a href="#dop">прайса</a> нужны. КП = пакет по размеру + строки модулей, которые не входят в пакет + лицензии и виджеты с периодами + <a href="#soprovozhdenie">сопровождение</a>.</p>
+  <ol>
+    <li>Выбрать пакет по размеру (<a href="#ceny">S/M/L</a>).</li>
+    <li>Для каждого модуля клиента открыть «что настраиваем» и проверить, входит ли это в пакет.</li>
+    <li>Не входит — добавить строку из прайса.</li>
+    <li>Лицензии и подписки виджетов — с ценами по периодам (6/12 мес) и бонусами.</li>
+    <li>«Светофор» очерёдности: сегодня / завтра / послезавтра.</li>
+    <li>Сопровождение после включённого месяца.</li>
+  </ol>
+  <p class="soft">Следующий шаг: шаблон КП и красивое оформление.</p>
+</section>
+
+<!-- ================= БЫЛО-СТАЛО ================= -->
+<section id="bylo">
+  <div class="eyebrow">Продукт · контроль</div>
+  <h2>Было → стало</h2>
+  <p>Если «Моделирование» показывает, что клиент едет без приборов, то «было → стало» — это приборная панель: клиент за рулём, а не груз в багажнике. Подтверждение честной работы и повод продлить <a href="#soprovozhdenie">сопровождение</a>.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Точка</th><th>Когда</th><th>Цифры</th><th>Зачем</th></tr></thead>
+    <tbody>
+      <tr><td>0. Оценка</td><td>Созвон</td><td>Со слов клиента</td><td>Продажа (<a href="#modelirovanie">Моделирование</a>)</td></tr>
+      <tr><td>А. Фотография</td><td>Первый месяц после внедрения</td><td>Факт из amoCRM</td><td>«Впервые видите свои цифры»</td></tr>
+      <tr><td>Б. Результат</td><td>Через 2–3 месяца</td><td>Факт из amoCRM</td><td>Сравнение с А</td></tr>
+    </tbody>
+  </table></div>
+  <div class="tbl"><table>
+    <thead><tr><th>Метрика</th><th>Как считает amoCRM</th><th>Что настроить</th></tr></thead>
+    <tbody>
+      <tr><td>Обращения по каналам</td><td>Новые сделки за период по источникам</td><td>Источник у каждой сделки</td></tr>
+      <tr><td>Время первого ответа</td><td>От создания сделки до первого сообщения или звонка</td><td>Все каналы и телефония в amoCRM</td></tr>
+      <tr><td>Потерянные заявки</td><td>Закрытые с причиной «не ответили / пропал» + открытые без задачи 3+ дня</td><td><b>Обязательная причина отказа</b>, задача у каждой сделки</td></tr>
+      <tr><td>Конверсия</td><td>Успешные ÷ все</td><td>Этапы «Успешно» и «Не реализовано»</td></tr>
+      <tr><td>Средний чек</td><td>Бюджет успешных ÷ их число</td><td>Обязательный бюджет</td></tr>
+    </tbody>
+  </table></div>
+  <p class="soft">Плюс метрики модулей клиента (у каждого <a href="#moduli">модуля</a> своя). Кейсы из 8 отзывов в формате «было → сделали → стало» — разобрать отдельно.</p>
+</section>
+
+<!-- ================= ПЛАН ================= -->
+<section id="plan">
+  <div class="eyebrow">Дальше</div>
+  <h2>План и открытые вопросы</h2>
+  <div class="grid2">
+    <div class="card">
+      <h3>Ближайшее</h3>
+      <ol class="status">
+        <li>Переписать документы для клиента и продавца под <a href="#ceny">S/M/L</a>.</li>
+        <li>Шаблон <a href="#kp">КП</a> из блоков и красивое оформление.</li>
+        <li>Новый дизайн <a href="#modelirovanie">«Моделирования»</a>, проверка на 3–5 клиентах.</li>
+        <li>Поиск клиентов: сегменты, базы, первое сообщение и звонок, сайт, реклама.</li>
+        <li>Договор-оферта.</li>
+        <li>Своя воронка в amoCRM Артёма (подключить доступ для Claude).</li>
+        <li>Кейсы из 8 отзывов и метрики к ним.</li>
+      </ol>
+    </div>
+    <div class="card">
+      <h3>Потом</h3>
+      <ul>
+        <li>Бонусы сопровождения: ярче показать ценность.</li>
+        <li>ИИ-помощник для простых вопросов клиентов.</li>
+        <li>Масштабирование «Моделирования»: форма → PDF, поля в amoCRM, автоотчёт.</li>
+        <li>ИП, найм продавца, схема оплаты продавца.</li>
+        <li>Где искать исполнителей-интеграторов.</li>
+        <li>Пилот «Продажи» (контроль менеджеров).</li>
+      </ul>
+    </div>
+  </div>
+  <p class="soft">Источник: файлы в репозитории <span style="font-family:var(--mono)">business-bots/docs/matematika-biznesa</span>. Конкуренты для ориентира: крупные интеграторы вроде «Команды F5» продают через «заявки не теряются, у каждой сделки ответственный и следующий шаг, руководитель видит картину без ручных отчётов».</p>
+</section>
+
+</main>
+</div>
+
+<script>
+const PR = {base:"Базовая настройка",funnel:"Доп. воронка",auto:"Автоматизация воронки",fields:"Поля",user:"Пользователи",import:"Загрузка базы",a:"Подключение каналов",b:"Виджет с настройкой",tel:"Телефония",telr:"Телефония с маршрутизацией",c:"Сложная интеграция",bot1:"Простой бот",bot2:"Бот-цепочка",bot3:"Сложный бот",train:"Обучение",video:"Видео",schema:"Схема процесса",report:"Отчёт было/стало",audit:"Аудит",dev:"«Развитие»"};
+const STAGES = ["Привлечение","Первый контакт","Продажа","Оплата и исполнение","После продажи","Управление"];
+const M = [
+ {c:1,st:0,n:"Реклама вслепую",hit:"обращения",say:"Откуда клиенты — не скажу точно",q:"Знаете, какой канал приносит не заявки, а деньги?",m:"Продажи и стоимость продажи по каналам",fix:"Источник у каждой сделки, UTM, отчёт по каналам",pr:["base","a","report"],
+  t:["Деньги в рекламу вы вкладываете по каналам, а результат видите общей суммой. Значит, вы не знаете, какой канал окупается.","Возможно, половина бюджета сейчас работает впустую, и вы продолжаете её платить каждый месяц.","Через месяц вы будете знать, какой канал приносит деньги, и сможете перекинуть бюджет туда.","Если отключить хотя бы один неработающий канал, настройка окупится за месяц-два."]},
+ {c:2,st:0,n:"Заявки теряются по технике",hit:"обращения",say:"С сайта иногда не доходит, форма шлёт на почту",q:"Куда попадает заявка с сайта и кто её видит?",m:"Заявки по формам и каналам",fix:"Все формы, почта и соцсети сразу в CRM",pr:["a","b"],
+  t:["Заявка, которая ушла на почту, ждёт, пока её кто-то откроет. Часть открывают через день, часть никогда.","Вы платите за рекламу, клиент оставил заявку, а до вас она не дошла. Он даже не узнает, что его не услышали.","Каждая заявка сразу попадает в CRM с ответственным и задачей. Ни одна не теряется.","Подключение формы стоит 2 000 ₽. Одна потерянная заявка обычно стоит дороже."]},
+ {c:3,st:0,n:"Мало отзывов",hit:"обращения",say:"Отзывы просим, если вспомним",q:"Сколько отзывов вы получили за последний месяц?",m:"Отзывов в месяц",fix:"Автозапрос отзыва после сделки",pr:["bot1"],
+  t:["Новые клиенты сначала читают отзывы. Чем их больше и чем они свежее, тем выше конверсия из рекламы.","У конкурентов отзывов больше, и клиент, сравнивая, выбирает их, даже если вы работаете лучше.","Каждый довольный клиент сам получает просьбу оставить отзыв. Отзывы копятся без ваших усилий.","Бот стоит 2 000 ₽ один раз и работает годами."]},
+ {c:4,st:0,n:"Нет рекомендаций",hit:"обращения",say:"Сарафан есть, но сам по себе",q:"Вы просите довольных клиентов порекомендовать вас?",m:"Доля заявок по рекомендации",fix:"Источник «рекомендация», бот-просьба, учёт рекомендателей",pr:["bot1","base"],
+  t:["Клиент по рекомендации покупает чаще и почти ничего не стоит. Но такие клиенты приходят, только если об этом попросить.","Сарафан, который никто не поддерживает, со временем затихает.","Вы будете знать, кто вас рекомендует, и сможете их благодарить. Рекомендаций станет больше.","Это самые дешёвые клиенты. Один такой клиент окупит настройку."]},
+ {c:5,st:1,n:"Медленный первый ответ",hit:"конверсия",say:"Отвечаем, когда получится; вечером никто",q:"Через сколько ответите, если клиент написал в 21:00?",m:"Время первого ответа",fix:"Все каналы в одном окне, бот или автоответ 24/7",pr:["b","bot2"],
+  t:["Клиент обычно пишет сразу в несколько компаний и выбирает того, кто ответил первым.","Пока вы спите, клиент уже договорился с тем, кто ответил через пять минут.","Клиент получает ответ сразу, в любое время, а утром менеджер продолжает разговор.","Автоответ стоит меньше, чем одна заявка, которая ушла к конкуренту."]},
+ {c:6,st:1,n:"Пропущенные звонки",hit:"конверсия",say:"Не дозвонились — перезвонят сами",q:"Что происходит с пропущенным звонком?",m:"Пропущенные без перезвона",fix:"Телефония в CRM, автозадача «перезвонить»",pr:["tel"],
+  t:["Большинство людей не перезванивают второй раз. Пропущенный звонок — почти всегда потерянный клиент.","Каждый пропущенный звонок — это клиент, который звонит следующему в списке.","Каждый пропущенный звонок сразу превращается в задачу «перезвонить», и вы видите, перезвонили или нет.","Телефония стоит 6 000 ₽. Достаточно вернуть одного клиента, чтобы она окупилась."]},
+ {c:7,st:1,n:"Заявку разбирают как придётся",hit:"конверсия",say:"Кто первый увидел, тот и взял",q:"Как решаете, кто из менеджеров берёт заявку?",m:"Заявок на менеджера, время до назначения",fix:"Автораспределение заявок",pr:["auto"],
+  t:["Когда заявки разбирают вручную, один менеджер перегружен, другой простаивает, а часть заявок не берёт никто.","Каждый думает, что заявку взял коллега, и клиент остаётся без ответа.","Заявка сама уходит нужному менеджеру. Нагрузка ровная, ответственный всегда понятен.","Автоматизация воронки стоит 5 000 ₽ и избавляет от споров «чья заявка»."]},
+ {c:8,st:1,n:"Неявки и отмены",hit:"конверсия",say:"Записались и не пришли",q:"Сколько клиентов не приходит на запись, замер, встречу?",m:"Доля неявок",fix:"Напоминания перед визитом, подтверждение записи",pr:["bot2"],
+  t:["Неявка — это пустое время мастера, которое уже нельзя продать.","Каждая неявка — это час, за который вы платите сотруднику, а денег не получаете.","Клиент получает напоминание и подтверждает визит. Если отменяет, вы успеваете поставить другого.","Цепочка напоминаний стоит 5 000 ₽. Это одна-две спасённые записи."]},
+ {c:9,st:2,n:"Заявки теряются в работе",hit:"конверсия",say:"Бывает, забываем перезвонить",q:"Бывало, что про клиента просто забыли?",m:"Сделки без задачи, просроченные задачи",fix:"Обязательные задачи, контроль просрочек",pr:["base","auto"],
+  t:["Договорённости, которые держатся в голове и блокноте, теряются. Это не вина людей, просто память не CRM.","Клиент ждал звонка, звонка не было, и он купил у другого. Вы об этом даже не узнали.","У каждого клиента есть следующий шаг и срок. Руководитель видит просрочки сразу.","Один спасённый клиент окупает настройку."]},
+ {c:10,st:2,n:"КП отправили — и ждём",hit:"конверсия",say:"Отправили расчёт, клиент молчит",q:"Что делаете после отправки КП или расчёта?",m:"Сделки, зависшие после КП",fix:"Касание через N дней после КП",pr:["bot2","auto"],
+  t:["Клиент, получивший КП, сравнивает. Выигрывает тот, кто напомнил о себе вовремя.","Пока вы ждёте ответа, конкурент уже позвонил и ответил на вопросы.","Через несколько дней клиенту приходит напоминание, а менеджер получает задачу позвонить.","Ваш расчёт уже сделан. Напоминание стоит копейки по сравнению с потерянным КП."]},
+ {c:11,st:2,n:"«Подумаю» — и тишина",hit:"конверсия, время",say:"Неудобно навязываться",q:"Что происходит с клиентом, который ушёл подумать?",m:"Вернулись после паузы",fix:"Цепочка касаний Salesbot",pr:["bot2"],
+  t:["«Подумаю» чаще всего значит «отвлёкся». Часть таких клиентов возвращается, если им напомнить.","Клиент подумал, а напомнил о себе конкурент. Вашу работу он использовал как сравнение.","Клиенту автоматически приходят полезные напоминания: примеры работ, ответы на частые вопросы. Неловкости нет.","Цепочка стоит 5 000 ₽. Достаточно вернуть одного «подумаю», и она окупится."]},
+ {c:12,st:2,n:"Не знаем, почему отказывают",hit:"конверсия",say:"Отказались и отказались",q:"Можете назвать три главные причины отказов?",m:"Причины отказов в процентах",fix:"Обязательная причина отказа, отчёт",pr:["base","report"],
+  t:["Пока не известно, почему отказывают, нельзя понять, что исправлять: цену, сроки или скорость ответа.","Вы можете снижать цену, хотя клиенты уходят из-за медленного ответа. Деньги теряются дважды.","Через месяц вы увидите главные причины отказов в процентах и будете знать, что менять.","Это входит в любой пакет и ничего не стоит отдельно."]},
+ {c:13,st:2,n:"Каждый продаёт как умеет",hit:"конверсия",say:"У одного продаёт, у другого нет",q:"Разница в продажах между менеджерами большая?",m:"Конверсия по менеджерам",fix:"Этапы-регламент, скрипты, чек-листы, отчёт по менеджерам",pr:["b","train"],
+  t:["Когда нет общего порядка продаж, результат зависит от настроения и опыта конкретного человека.","Новый менеджер учится на ваших клиентах. Каждая его ошибка — потерянная сделка.","Лучший способ продажи становится общим для всех. Новичок работает по подсказкам с первого дня.","Если слабый менеджер начнёт продавать хотя бы на 10% лучше, настройка окупится."]},
+ {c:14,st:2,n:"Долгая сделка",hit:"время",say:"От заявки до оплаты — месяц, а то и два",q:"Сколько проходит от первого звонка до оплаты?",m:"Длительность по этапам",fix:"Лимиты времени на этапах, автоматические шаги",pr:["auto"],
+  t:["Каждый лишний день сделки откладывает деньги, а менеджер успевает вести меньше клиентов.","Чем дольше думает клиент, тем выше шанс, что он передумает или найдёт другого.","Вы увидите, на каком этапе сделки застревают, и сократите цикл.","Ускорить хотя бы одну сделку в месяц значит получить деньги раньше."]},
+ {c:15,st:2,n:"Ручная рутина",hit:"время",say:"КП и договоры делаем вручную",q:"Сколько времени уходит на КП, договор, счёт?",m:"Время на документы",fix:"Генерация документов из CRM, шаблоны",pr:["b","c"],
+  t:["Менеджер, который полчаса делает счёт, эти полчаса не продаёт.","Ручные документы — это ошибки в суммах и реквизитах, а значит, переделки и неловкость перед клиентом.","Договор и счёт создаются в один клик из данных сделки.","Посчитайте часы в неделю на документы и умножьте на стоимость часа. Обычно это дороже настройки."]},
+ {c:16,st:2,n:"Маленький чек",hit:"средний чек",say:"Дополнительное не предлагаем, неудобно",q:"Что ещё клиент может купить вместе с основным?",m:"Средний чек, доля допродаж",fix:"Чек-лист осмотра или этапа, допы в сделке, контроль скидок",pr:["b","fields","train"],
+  t:["Дополнительную продажу проще всего сделать тому, кто уже покупает. Нужно только не забыть предложить.","Клиент купит фильтр или аксессуар всё равно, просто у того, кто предложил.","Чек-лист подсказывает, что предложить, а предложение уходит клиенту само. Никто не навязывает.","Даже небольшая допродажа каждому десятому клиенту окупает настройку за месяц."]},
+ {c:17,st:3,n:"Деньги не собраны",hit:"деньги",say:"Доплату вечно выбиваем",q:"Бывает, что сделали, а деньги не пришли?",m:"Сумма неоплаченного",fix:"Этап «ожидает оплаты», напоминания, ссылки на оплату",pr:["funnel","bot2","c"],
+  t:["Продано — не значит получено. Пока долг висит, вы кредитуете клиента бесплатно.","Чем дольше долг, тем меньше шанс его получить.","Вы в любой момент видите, кто сколько должен, а клиенту сами уходят напоминания и ссылка на оплату.","Вернуть хотя бы один зависший платёж — и настройка окупилась."]},
+ {c:18,st:3,n:"Хаос после продажи",hit:"риск",say:"Передаём в работу на словах, сроки срываются",q:"Как продажа передаётся в производство или исполнение?",m:"Сроки исполнения, срывы",fix:"Воронка исполнения, задачи исполнителям, уведомления клиенту",pr:["funnel","auto","bot1"],
+  t:["Когда заказ передаётся на словах, детали теряются, а сроки знает только тот, кто договаривался.","Сорванный срок — это недовольный клиент, плохой отзыв и отсутствие повторной покупки.","Каждый заказ проходит этапы исполнения, клиент получает уведомления, вы видите сроки.","Один сорванный заказ обходится дороже настройки воронки исполнения."]},
+ {c:19,st:4,n:"Клиенты не возвращаются",hit:"повторные",say:"Купили и пропали",q:"Сколько клиентов покупают повторно?",m:"Доля повторных",fix:"Воронка повторных продаж, напоминания по сроку",pr:["funnel","bot2"],
+  t:["Продать тому, кто уже покупал, в разы дешевле, чем найти нового.","Ваши клиенты покупают повторно у того, кто им напомнил о себе.","Клиенту в нужный момент приходит напоминание, а вы видите, сколько клиентов вернулось.","У вас уже есть база. Вернуть из неё несколько клиентов дешевле любой рекламы."]},
+ {c:20,st:4,n:"Отказники забыты",hit:"конверсия, повторные",say:"Отказался — значит, всё",q:"Возвращаетесь к тем, кто отказался полгода назад?",m:"Возвращённые отказники",fix:"Воронка реактивации, рассылки по базе",pr:["funnel","bot2"],
+  t:["Многие отказывают «не сейчас», а не «никогда». Через полгода ситуация у них меняется.","За этих клиентов вы уже заплатили рекламой. Если к ним не вернуться, деньги потрачены зря.","Через N месяцев отказнику автоматически приходит сообщение, и часть из них возвращается.","Это бесплатные заявки из вашей же базы."]},
+ {c:21,st:4,n:"Грязная база",hit:"риск",say:"Один клиент записан три раза, база в телефоне",q:"Можете выгрузить список всех клиентов за год?",m:"Дубли, полнота контактов",fix:"Загрузка базы по шаблону, поиск дублей",pr:["import"],
+  t:["База, в которой клиент записан трижды или живёт в чьём-то телефоне, бесполезна для повторных продаж и рассылок.","Сотрудник уходит, и база уходит вместе с его телефоном.","Вся база в одном месте, без дублей, и с ней можно работать.","Загрузка по шаблону стоит 3 000 ₽. Без базы невозможны повторные продажи."]},
+ {c:22,st:5,n:"Руководитель не видит",hit:"риск",say:"Чтобы узнать, надо спросить менеджера",q:"Можете прямо сейчас сказать, сколько клиентов в работе и на каком этапе?",m:"Время руководителя на контроль",fix:"Воронка, отчёты руководителю",pr:["base","report","dev"],
+  t:["Если картину можно узнать только спросив менеджера, вы видите то, что вам рассказали, а не то, что есть.","Проблемы становятся видны в конце месяца, когда исправлять уже поздно.","Вы открываете CRM и за минуту видите всё: сколько клиентов, где застряли, кто что делает.","Посчитайте, сколько часов в неделю уходит на выяснение «как дела». Это ваше самое дорогое время."]},
+ {c:23,st:5,n:"База принадлежит менеджерам",hit:"риск",say:"Пишут со своих телефонов",q:"С каких номеров менеджеры общаются с клиентами?",m:"Доля переписки в CRM",fix:"Рабочие номера и мессенджеры в CRM, права доступа",pr:["b","tel","user"],
+  t:["Переписка в личном телефоне менеджера принадлежит менеджеру, а не компании.","Менеджер уходит и уводит клиентов. Вы даже не знаете, кому он писал.","Вся переписка и звонки в CRM. Клиенты остаются у компании, кто бы ни ушёл.","Один уведённый крупный клиент стоит больше всей настройки."]},
+ {c:24,st:5,n:"Нет плана и прогноза",hit:"риск, деньги",say:"Сколько продадим в этом месяце — не знаю",q:"Есть план продаж? Знаете, выполните ли его?",m:"План и факт, прогноз",fix:"Бюджеты в сделках, отчёт план/факт",pr:["report","dev"],
+  t:["Без прогноза вы узнаёте о провале месяца в последний день, когда уже ничего не сделать.","Неожиданно слабый месяц — это кассовый разрыв и зарплаты из своего кармана.","Уже в середине месяца вы видите прогноз и успеваете добавить рекламу или подтолкнуть сделки.","Прогноз позволяет вовремя принять решение, а это дешевле любого кассового разрыва."]},
+ {c:25,st:5,n:"Сезонность без подготовки",hit:"риск",say:"В сезон завал, потом тишина",q:"Как меняется поток заявок по сезонам?",m:"Заявки по месяцам",fix:"Подготовка воронок к пику, работа с базой в низкий сезон",pr:["funnel","bot2"],
+  t:["В пик заявок больше, чем рук, а в низкий сезон руки есть, а заявок нет.","В сезон теряются заявки, которые вы ждали весь год.","К пику всё автоматизировано, а в низкий сезон вы работаете с базой и возвращаете клиентов.","Один потерянный пик стоит дороже подготовки к нему."]},
+ {c:26,st:3,n:"Двойной ввод: CRM и учёт отдельно",hit:"время, риск",say:"Остатки и цены смотрим в 1С, а в CRM вбиваем руками",q:"Где вы смотрите остатки, цены и оплаты? Сколько раз одно и то же вводится вручную?",m:"Время на ручной перенос, ошибки в заказах",fix:"Связка CRM с 1С или складом: товары, цены, оплаты",pr:["c"],
+  t:["Когда одни и те же данные вводят дважды, тратится время и появляются ошибки в суммах и остатках.","Менеджер продаёт то, чего уже нет на складе, или по старой цене. Потом приходится извиняться и возвращать деньги.","Цены, остатки и оплаты сами подтягиваются в сделку. Менеджер видит актуальные данные.","Посчитайте часы ручного переноса в месяц. Обычно интеграция окупается за пару месяцев."]},
+ {c:27,st:5,n:"Мотивация вслепую",hit:"риск",say:"Зарплату менеджерам считаем в Excel, бывают споры",q:"Как считаете бонусы менеджерам? Бывают споры, кто привёл клиента?",m:"Продажи и бонусы по менеджерам",fix:"Ответственный и бюджет в каждой сделке, отчёт по менеджерам",pr:["report","dev"],
+  t:["Если бонус считается вручную, менеджер не видит, сколько заработал, и не понимает, за что стараться.","Споры о том, чей клиент, портят команду, а сильные менеджеры уходят туда, где всё прозрачно.","Каждый менеджер видит свой план, свои продажи и свой бонус. Руководитель тратит на расчёт минуты.","Прозрачная мотивация обычно поднимает продажи сильнее, чем повышение оклада."]}
+];
+const ACC = ["logic","fear","gain","price"];
+const ACCN = {logic:"логика",fear:"страх",gain:"выгода",price:"цена"};
+const OBJ = [
+ {id:"o-dorogo",q:"Дорого",clarify:"«Дорого по сравнению с чем? С другим предложением или с тем, сколько вы готовы были потратить?»",a:["Давайте посчитаем: на созвоне мы прикинули, что вы теряете около N в месяц. Внедрение окупается за X недель.","Если ничего не менять, через полгода вы потеряете больше, чем стоит настройка.","Вы платите один раз, а заявки перестают теряться каждый месяц.","Можно начать с пакета поменьше и добавить остальное, когда увидите результат."]},
+ {id:"o-avito",q:"Мне на Авито сделают дешевле",clarify:"«Что вам предлагают за эти деньги? Есть сопровождение, отчёт, сроки?»",a:["Вопрос не в цене настройки, а в том, что будет через месяц. У нас: состав работ, сроки, отчёт «было → стало», техподдержка.","Дешёвую настройку часто делают одним большим ботом, который ломается. Чинить потом придётся за отдельные деньги.","Вы получаете не просто CRM, а цифры, которых раньше не видели.","Разница окупается одной сохранённой сделкой."]},
+ {id:"o-rabotaet",q:"У нас и так всё работает",clarify:"«Как вы понимаете, что всё работает? По каким цифрам?»",a:["Посмотрите на формулу: какие из этих цифр вы знаете точно? Обычно только выручку.","«Работает» и «не видно, что не работает» — разные вещи. Потери обычно незаметны.","Если всё работает, CRM покажет это цифрами и поможет расти дальше.","Можно начать с «Моделирования» бесплатно и посмотреть, есть ли что улучшать."]},
+ {id:"o-podumayu",q:"Я подумаю",clarify:"«Конечно. Что именно хотите обдумать: цену, сроки, нужно ли это вообще?»",a:["Давайте я пришлю «Моделирование», там будут ваши цифры, по ним проще решать.","Пока вы думаете, заявки продолжают теряться. Можно начать с малого.","Представьте через месяц: каждая заявка на месте, вы видите цифры. Что для этого нужно решить?","Предложение действует до такой-то даты, потом цены могут вырасти."]},
+ {id:"o-menedzhery",q:"Менеджеры не будут в ней работать",clarify:"«Был такой опыт? Почему не работали?»",a:["Менеджеры не работают в CRM, когда это неудобно. Мы делаем так, чтобы в ней было проще, чем без неё: все сообщения в одном окне, задачи ставятся сами.","Если оставить как есть, клиенты так и будут жить в их личных телефонах.","Обучение входит в пакет, а первый месяц техподдержки помогает привыкнуть.","Обязательные поля и задачи делают так, что без CRM работать просто не получится."]},
+ {id:"o-probovali",q:"Уже пробовали CRM, не прижилась",clarify:"«Что именно не прижилось? Кто настраивал?»",a:["Обычно CRM не приживается, когда её настроили «как у всех», а не под ваш процесс. Мы начинаем со схемы вашего процесса.","Второй неудачный опыт обходится дороже. Поэтому важно сделать один раз правильно.","Наш отчёт «было → стало» через месяц покажет, работает ли система.","Мы берём ответственность и за то, как система работает после внедрения: первый месяц поддержки включён."]},
+ {id:"o-sam",q:"Сам настрою по видео",clarify:"«Сколько времени готовы на это выделить?»",a:["Настроить можно. Вопрос, сколько вечеров это займёт и сколько будет переделок.","Самая частая ошибка самостоятельной настройки — система, которой никто не пользуется.","Вы занимаетесь бизнесом, а мы за 1–2 недели делаем так, чтобы всё работало.","Ваш час стоит дороже нашего. Если хотите сами, можем провести консультацию или проверить вашу настройку почасово."]},
+ {id:"o-malenkie",q:"Нас всего двое, зачем нам CRM",clarify:"«Сколько заявок в месяц? Где вы их сейчас ведёте?»",a:["Как раз в маленькой команде каждая заявка на счету, а помнить всё в голове невозможно.","Когда вас двое и один заболел, второй не знает, что обещали клиентам.","CRM освобождает вам время на то, ради чего вы открывали бизнес.","Пакет «Старт» стоит 25 000 ₽, это часто дешевле одного потерянного заказа."]},
+ {id:"o-vremya",q:"Сейчас нет времени",clarify:"«Когда будет удобнее? Что сейчас занимает больше всего времени?»",a:["От вас нужен один созвон на 30 минут и час на обучение. Остальное делаем мы.","Времени не хватает как раз потому, что всё держится на вас. Если ждать, будет только хуже.","После настройки вы начнёте экономить время каждую неделю.","Начнём с малого: одна воронка и один канал, а остальное добавим потом."]}
+];
+const $ = id => document.getElementById(id);
+function modHtml(x){
+  const code = "М"+x.c;
+  const links = x.pr.map(k => `<a href="${k==="dev"?"#s-dev":"#p-"+k}">${PR[k]}</a>`).join(" · ");
+  const talk = x.t.map((t,i)=>`<div class="line" data-acc="${ACC[i]}"><span class="acc acc-${ACC[i]}">${ACCN[ACC[i]]}</span><span>${t}</span></div>`).join("");
+  return `<article class="mod" id="m${x.c}">
+    <div class="mod-h"><span class="code">${code}</span><h3>${x.n}</h3><span class="tag pain">бьёт по: ${x.hit}</span></div>
+    <div class="kv">
+      <div><span class="k">Как звучит у клиента</span><span class="quote">«${x.say}»</span></div>
+      <div><span class="k">Скрининг-вопрос</span><span>${x.q}</span></div>
+      <div><span class="k">Метрика для «было → стало»</span><span>${x.m}</span></div>
+      <div><span class="k">Что настраиваем</span><span>${x.fix}</span></div>
+    </div>
+    <div class="talk">${talk}</div>
+    <div class="links"><span class="soft">Цены:</span> ${links}</div>
+  </article>`;
+}
+$("modlist").innerHTML = STAGES.map((s,i)=>`<div class="stage-h">Этап ${i+1}. ${s}</div>` + M.filter(x=>x.st===i).map(modHtml).join("")).join("");
+$("objlist").innerHTML = OBJ.map(o=>`<article class="obj" id="${o.id}"><h3>«<span class="quote">${o.q}</span>»</h3><p><span class="soft">Сначала уточнить:</span> ${o.clarify}</p><div class="talk">${o.a.map((t,i)=>`<div class="line" data-acc="${ACC[i]}"><span class="acc acc-${ACC[i]}">${ACCN[ACC[i]]}</span><span>${t}</span></div>`).join("")}</div></article>`).join("");
+function setAcc(a){
+  document.querySelectorAll(".filters button").forEach(b=>b.setAttribute("aria-pressed", b.dataset.acc===a?"true":"false"));
+  document.querySelectorAll(".talk .line").forEach(l=>{ l.hidden = !(a==="all" || l.dataset.acc===a); });
+  try{ localStorage.setItem("mb-acc", a); }catch(e){}
+}
+document.querySelectorAll(".filters button").forEach(b=>b.addEventListener("click",()=>setAcc(b.dataset.acc)));
+let a0="all"; try{ const s=localStorage.getItem("mb-acc"); if(s) a0=s; }catch(e){}
+setAcc(a0);
+if (location.hash) { const el = document.getElementById(location.hash.slice(1)); if (el) el.scrollIntoView(); }
+</script>
