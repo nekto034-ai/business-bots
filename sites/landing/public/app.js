@@ -3,6 +3,7 @@
 // Review photos: put files into public/reviews/ and list them here.
 const REVIEWS = [
   { src: 'reviews/davinci.jpg', name: 'Клиника «Да Винчи»' },
+  { src: 'reviews/shkirpan.jpg', name: 'ИП Шкирпан Д. А.' },
   { src: 'reviews/kirichok.jpg', name: 'ИП Киричок С. В.' },
   { src: 'reviews/chegorsky.jpg', name: 'ИП Чегорский А. С.', note: 'Дом приключений Деда Мороза' },
   { src: 'reviews/ortho.jpg', name: 'ООО «Ортопедические технологии»' },
