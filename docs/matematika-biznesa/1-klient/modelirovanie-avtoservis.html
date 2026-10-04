@@ -1,0 +1,240 @@
+<title>Моделирование «Гараж 34»</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,500;7..72,600&family=Onest:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: деловой отчёт на одну колонку. Сверху «уравнение» бизнеса, ниже путь клиента, модули-карточки, приборная панель со стрелками на нуле, финал. Всё собирается из данных: библиотека модулей + ответы клиента */
+:root{
+  --paper:#fbfbf9; --sheet:#ffffff; --ink:#20242c; --soft:#5d6472; --rule:#dcdfe5;
+  --signal:#c7741a; --signal-bg:#fbefe1;
+  --seen:#2e7d6b; --seen-bg:#e2f1ec;
+  --approx:#8f7a1c; --approx-bg:#f6f0d6;
+  --serif:"Literata",Georgia,"Times New Roman",serif;
+  --sans:"Onest",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#16191f; --sheet:#1d2129; --ink:#e9ebef; --soft:#a1a8b5; --rule:#323845;
+  --signal:#f0a050; --signal-bg:#3a2a19; --seen:#5fcdb2; --seen-bg:#16302a;
+  --approx:#ddc35c; --approx-bg:#332d16; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#16191f; --sheet:#1d2129; --ink:#e9ebef; --soft:#a1a8b5; --rule:#323845;
+  --signal:#f0a050; --signal-bg:#3a2a19; --seen:#5fcdb2; --seen-bg:#16302a;
+  --approx:#ddc35c; --approx-bg:#332d16; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.6;margin:0}
+.doc{max-width:860px;margin:0 auto;padding-inline:20px;padding-block:40px 72px;display:flex;flex-direction:column;gap:56px}
+p{margin:0;max-width:65ch}
+h1,h2{font-family:var(--serif);font-weight:600;margin:0;text-wrap:balance;line-height:1.2}
+h1{font-size:clamp(30px,5vw,44px)}
+h2{font-size:clamp(22px,3vw,28px)}
+.label{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--soft)}
+section{display:flex;flex-direction:column;gap:20px}
+.lede{font-size:18px;color:var(--soft)}
+
+/* шапка */
+.top{display:flex;flex-direction:column;gap:14px;border-bottom:1px solid var(--rule);padding-bottom:28px}
+.brand{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;font-family:var(--mono);font-size:12px;letter-spacing:.08em;color:var(--soft);text-transform:uppercase}
+.brand b{color:var(--ink);font-weight:600}
+
+/* уравнение */
+.eq{display:flex;flex-wrap:wrap;align-items:stretch;gap:10px}
+.term{flex:1 1 150px;min-width:0;background:var(--sheet);border:1px solid var(--rule);border-radius:4px;padding:16px;display:flex;flex-direction:column;gap:6px;position:relative}
+.term .v{font-family:var(--mono);font-size:26px;font-weight:600;line-height:1.1;font-variant-numeric:tabular-nums}
+.term .n{font-size:14px}
+.term .st{font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px}
+.term .st::before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor}
+.term.known .st{color:var(--seen)}
+.term.approx .st{color:var(--approx)}
+.term.unknown .st{color:var(--signal)}
+.term.unknown .v{color:var(--signal)}
+.term.hit{border-color:var(--signal);box-shadow:inset 0 -3px 0 var(--signal)}
+.op{align-self:center;font-family:var(--mono);font-size:22px;color:var(--soft)}
+.term.result{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.term.result .st{color:var(--paper);opacity:.8}
+.insight{font-family:var(--serif);font-size:clamp(19px,2.6vw,23px);line-height:1.45;max-width:60ch}
+.insight em{font-style:normal;color:var(--signal)}
+
+/* путь клиента */
+.track{position:relative;display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:0}
+.station{position:relative;padding:34px 10px 0 0;display:flex;flex-direction:column;gap:4px;min-width:0}
+.station::before{content:"";position:absolute;top:11px;left:0;right:0;height:2px;background:var(--rule)}
+.station .dot{position:absolute;top:4px;left:0;width:16px;height:16px;border-radius:50%;background:var(--sheet);border:2px solid var(--soft)}
+.station.blind .dot{background:var(--signal);border-color:var(--signal)}
+.station.blind::before{background:linear-gradient(90deg,var(--signal),var(--rule))}
+.station b{font-size:15px;font-weight:600}
+.station small{font-size:13px;color:var(--soft)}
+.station .code{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--signal);letter-spacing:.06em}
+@media (max-width:560px){
+  .track{grid-template-columns:1fr}
+  .station{padding:0 0 18px 30px}
+  .station::before{top:0;bottom:0;left:7px;right:auto;width:2px;height:auto}
+  .station .dot{top:2px}
+}
+
+/* модули */
+.mods{display:flex;flex-direction:column;gap:16px}
+.mod{background:var(--sheet);border:1px solid var(--rule);border-left:4px solid var(--signal);border-radius:4px;padding:20px 22px;display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
+.mod-h{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px}
+.mod-h .code{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--signal)}
+.mod-h h3{font-family:var(--serif);font-size:20px;font-weight:600;margin:0}
+.mod-h .hits{font-size:13px;color:var(--soft)}
+.mod blockquote{margin:0;font-family:var(--serif);font-size:18px;line-height:1.5;padding-left:16px;border-left:2px solid var(--rule)}
+.mod-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
+.mod-g div{display:flex;flex-direction:column;gap:4px;min-width:0}
+.mod-g .k{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--soft)}
+.mod-g .est{color:var(--ink)}
+.mod-g .see{color:var(--seen);font-weight:500}
+
+/* приборная панель */
+.dash{background:var(--sheet);border:1px solid var(--rule);border-radius:4px;padding:22px;display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:18px}
+.gauge{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;min-width:0}
+.gauge svg{width:100%;max-width:150px;height:auto}
+.g-track{fill:none;stroke:var(--rule);stroke-width:10;stroke-linecap:round}
+.g-tick{stroke:var(--soft);stroke-width:1.5}
+.g-needle{stroke:var(--ink);stroke-width:3;stroke-linecap:round}
+.g-hub{fill:var(--ink)}
+.g-q{fill:var(--soft);font-family:var(--mono);font-size:14px}
+.gauge .l{font-size:13px;line-height:1.35}
+.dash-note{font-size:15px;color:var(--soft)}
+
+/* финал */
+.final{border-top:2px solid var(--ink);padding-top:28px;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:28px}
+.final blockquote{margin:0;font-family:var(--serif);font-size:clamp(20px,2.8vw,24px);line-height:1.45}
+.final blockquote small{display:block;margin-top:10px;font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--soft)}
+.offer{display:flex;flex-direction:column;gap:10px;min-width:0}
+.offer .pk{font-family:var(--serif);font-size:22px;font-weight:600}
+.offer .size{font-family:var(--mono);font-size:12px;color:var(--soft);letter-spacing:.06em}
+.offer ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+.offer .price{font-family:var(--mono);font-size:28px;font-weight:600}
+.foot{font-size:13px;color:var(--soft);display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px}
+</style>
+
+<main class="doc" id="doc">
+  <header class="top">
+    <div class="brand"><b>Математика бизнеса</b><span id="meta"></span></div>
+    <h1 id="h1">Моделирование продаж</h1>
+    <p class="lede" id="lede"></p>
+  </header>
+
+  <section>
+    <div class="label">Математика вашего бизнеса</div>
+    <h2>Из чего складывается ваша выручка</h2>
+    <div class="eq" id="eq"></div>
+    <p class="insight" id="insight"></p>
+  </section>
+
+  <section>
+    <div class="label">Путь клиента</div>
+    <h2>Как сейчас клиент проходит через сервис</h2>
+    <div class="track" id="track"></div>
+  </section>
+
+  <section>
+    <div class="label">Что мы услышали</div>
+    <h2>Три места, где выручка уходит незаметно</h2>
+    <div class="mods" id="mods"></div>
+  </section>
+
+  <section>
+    <div class="label">Ваша приборная панель</div>
+    <h2>Что вы будете видеть каждый месяц</h2>
+    <div class="dash" id="dash"></div>
+    <p class="dash-note">Сейчас стрелки стоят на нуле: этих цифр пока никто не считает. После настройки они будут заполняться сами, а через месяц вы получите отчёт «было → стало».</p>
+  </section>
+
+  <section class="final">
+    <blockquote><span id="payoff"></span><small>Ваши слова на созвоне</small></blockquote>
+    <div class="offer" id="offer"></div>
+  </section>
+
+  <p class="foot"><span>Все цифры — из ваших ответов на созвоне. Это оценка, а не замер: точные значения покажет CRM.</span><span>Пример. Клиент вымышлен.</span></p>
+</main>
+
+<script>
+/* ===== Библиотека модулей (общая для всех клиентов) ===== */
+const LIB = {
+  M5:  {name:"Медленный первый ответ", hits:"конверсия", see:"Время первого ответа"},
+  M6:  {name:"Пропущенные звонки", hits:"конверсия", see:"Пропущенные без перезвона"},
+  M9:  {name:"Заявки теряются в работе", hits:"конверсия", see:"Сделки без задачи"},
+  M11: {name:"«Подумаю» — и тишина", hits:"конверсия", see:"Вернулись после паузы"},
+  M16: {name:"Маленький чек", hits:"средний чек", see:"Доля визитов с доп. работами"},
+  M17: {name:"Деньги не собраны", hits:"деньги", see:"Сумма неоплаченного"},
+  M19: {name:"Клиенты не возвращаются", hits:"повторные", see:"Вернулись на следующее ТО"}
+};
+const PACKS = {S:{name:"Старт",size:"1–3 человека",price:"25 000 ₽"},M:{name:"Бизнес",size:"4–8 человек",price:"40 000 ₽"},L:{name:"Команда",size:"9–15 человек",price:"70 000 ₽"}};
+
+/* ===== Ответы клиента (меняется для каждого моделирования) ===== */
+const C = {
+  company:"Автосервис «Гараж 34»", city:"Волгоград", date:"4 октября 2026", size:"M",
+  lede:"Вы рассказали, как устроена работа с клиентами. Мы собрали это в одну картину: что вы видите, чего не видите и где выручка уходит незаметно.",
+  eq:[
+    {v:"~150", n:"звонков и сообщений в месяц", s:"approx"},
+    {v:"?", n:"из них записываются и приезжают", s:"unknown"},
+    {v:"6 500 ₽", n:"средний чек", s:"known"},
+    {v:"?", n:"возвращаются на следующее ТО", s:"unknown"}
+  ],
+  insight:"Точно вы знаете только средний чек. Сколько обращений превращается в визиты и сколько клиентов возвращается, сейчас <em>не видно</em>. А именно эти два множителя решают, сколько будет выручки.",
+  path:[
+    {t:"Звонок или сообщение", s:"телефон, WhatsApp, 2ГИС", m:"M6"},
+    {t:"Запись", s:"в тетради у администратора"},
+    {t:"Приёмка авто", s:"мастер-приёмщик"},
+    {t:"Ремонт", s:"3 бокса", m:"M16"},
+    {t:"Выдача и оплата", s:"касса, перевод"},
+    {t:"Следующее ТО", s:"клиент помнит сам", m:"M19"}
+  ],
+  mods:[
+    {code:"M6", quote:"Когда все в боксах, трубку взять некому. Перезваниваем, если вспомним.", est:"По вашей прикидке, 15–20 пропущенных звонков в неделю, и перезваниваете не всем."},
+    {code:"M16", quote:"Масло меняем, а про фильтры и колодки не говорим. Неудобно навязывать.", est:"Если хотя бы каждому десятому предложить доп. работу на 2 000 ₽, это около 24 000 ₽ в месяц."},
+    {code:"M19", quote:"Про следующее ТО клиент должен помнить сам.", est:"Сколько клиентов возвращается, вы не знаете. ТО нужно раз в 6–10 тысяч км, то есть 1–2 раза в год."}
+  ],
+  extraGauges:["Записей за месяц","Средний чек"],
+  payoff:"Хочу, чтобы телефон перестал отвлекать мастеров, а клиенты сами приезжали на следующее ТО.",
+  offer:["Звонки и мессенджеры в одном окне, задача «перезвонить» ставится сама","Подсказка мастеру: что предложить к этой работе","Напоминание клиенту о следующем ТО по пробегу и сроку","Приборная панель и отчёт «было → стало» через месяц"]
+};
+
+/* ===== Сборка страницы ===== */
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const ST = {known:"знаете точно", approx:"знаете примерно", unknown:"не знаете"};
+const HIT = {"конверсия":1,"повторные":3,"средний чек":2};
+
+$("h1").textContent = "Моделирование продаж: " + C.company;
+$("meta").textContent = C.city + " · " + C.date;
+$("lede").textContent = C.lede;
+
+const hitIdx = new Set(C.mods.map(m => HIT[LIB[m.code].hits]).filter(x => x !== undefined));
+$("eq").innerHTML = C.eq.map((t,i) =>
+  `<div class="term ${t.s}${hitIdx.has(i)?" hit":""}"><span class="v">${esc(t.v)}</span><span class="n">${esc(t.n)}</span><span class="st">${ST[t.s]}</span></div>`
+).join('<span class="op">×</span>') + '<span class="op">=</span><div class="term result"><span class="v">₽</span><span class="n">выручка</span><span class="st">видите</span></div>';
+$("insight").innerHTML = C.insight;
+
+$("track").innerHTML = C.path.map(p =>
+  `<div class="station${p.m?" blind":""}"><span class="dot"></span>${p.m?`<span class="code">${p.m.replace("M","М")} · ${esc(LIB[p.m].name)}</span>`:""}<b>${esc(p.t)}</b><small>${esc(p.s)}</small></div>`
+).join("");
+
+$("mods").innerHTML = C.mods.map(m => { const L = LIB[m.code]; return `
+  <article class="mod">
+    <div class="mod-h"><span class="code">${m.code.replace("M","М")}</span><h3>${esc(L.name)}</h3><span class="hits">бьёт по: ${esc(L.hits)}</span></div>
+    <blockquote>«${esc(m.quote)}»</blockquote>
+    <div class="mod-g">
+      <div><span class="k">Оценка по вашим словам</span><span class="est">${esc(m.est)}</span></div>
+      <div><span class="k">После настройки увидите</span><span class="see">${esc(L.see)}</span></div>
+    </div>
+  </article>`; }).join("");
+
+function gauge(label){
+  const cx=75, cy=78, r=56, ticks=[];
+  for(let i=0;i<=8;i++){ const a=Math.PI*(1-i/8), x1=cx+Math.cos(a)*(r-14), y1=cy-Math.sin(a)*(r-14), x2=cx+Math.cos(a)*(r-8), y2=cy-Math.sin(a)*(r-8); ticks.push(`<line class="g-tick" x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}"/>`); }
+  return `<div class="gauge"><svg viewBox="0 0 150 100" role="img" aria-label="${esc(label)}: пока нет данных">
+    <path class="g-track" d="M ${cx-r} ${cy} A ${r} ${r} 0 0 1 ${cx+r} ${cy}"/>${ticks.join("")}
+    <line class="g-needle" x1="${cx}" y1="${cy}" x2="${cx-r+18}" y2="${cy}"/><circle class="g-hub" cx="${cx}" cy="${cy}" r="5"/>
+    <text class="g-q" x="${cx}" y="${cy-18}" text-anchor="middle">?</text></svg><span class="l">${esc(label)}</span></div>`;
+}
+const gauges = [...C.extraGauges.slice(0,1), ...C.mods.map(m => LIB[m.code].see), ...C.extraGauges.slice(1)];
+$("dash").innerHTML = gauges.map(gauge).join("");
+
+$("payoff").textContent = "«" + C.payoff + "»";
+const P = PACKS[C.size];
+$("offer").innerHTML = `<span class="label">Что предлагаем</span><span class="pk">Пакет «${P.name}»</span><span class="size">для команды ${P.size}</span><ul>${C.offer.map(o=>`<li>${esc(o)}</li>`).join("")}</ul><span class="price">${P.price}</span><span class="dash-note">Лицензии amoCRM оплачиваются отдельно. Через нас — +1 месяц в подарок.</span>`;
+</script>
