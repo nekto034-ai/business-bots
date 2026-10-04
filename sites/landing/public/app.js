@@ -9,7 +9,7 @@ const REVIEWS = [
   { src: 'reviews/ortho.jpg', name: 'ООО «Ортопедические технологии»' },
   { src: 'reviews/shafranskaya.jpg', name: 'ИП Шафранская Н. А.' },
   { src: 'reviews/shcherbakov.jpg', name: 'ИП Щербаков' },
-  { src: 'reviews/skazka.jpg', name: 'ООО «Сказка»' },
+  { src: 'reviews/skazka.jpg', name: 'ООО «Сказка леденцы»' },
 ];
 
 document.getElementById('year').textContent = new Date().getFullYear();
