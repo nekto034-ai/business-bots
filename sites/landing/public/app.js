@@ -2,7 +2,13 @@
 
 // Review photos: put files into public/reviews/ and list them here.
 const REVIEWS = [
-  // { src: 'reviews/company-1.jpg', alt: 'Благодарственное письмо от ООО «…»' },
+  { src: 'reviews/davinci.jpg', name: 'Клиника «Да Винчи»' },
+  { src: 'reviews/kirichok.jpg', name: 'ИП Киричок С. В.' },
+  { src: 'reviews/chegorsky.jpg', name: 'ИП Чегорский А. С.', note: 'Дом приключений Деда Мороза' },
+  { src: 'reviews/ortho.jpg', name: 'ООО «Ортопедические технологии»' },
+  { src: 'reviews/shafranskaya.jpg', name: 'ИП Шафранская Н. А.' },
+  { src: 'reviews/shcherbakov.jpg', name: 'ИП Щербаков' },
+  { src: 'reviews/skazka.jpg', name: 'ООО «Сказка»' },
 ];
 
 document.getElementById('year').textContent = new Date().getFullYear();
@@ -31,10 +37,12 @@ if (REVIEWS.length === 0) {
   for (const r of REVIEWS) {
     const btn = document.createElement('button');
     btn.className = 'review';
-    btn.innerHTML = `<img src="${r.src}" alt="${r.alt}" loading="lazy">`;
+    const alt = `Благодарственное письмо: ${r.name}`;
+    btn.innerHTML = `<img src="${r.src}" alt="${alt}" loading="lazy">`
+      + `<span class="review-caption"><b>${r.name}</b>${r.note ? `<small>${r.note}</small>` : ''}</span>`;
     btn.addEventListener('click', () => {
       lightbox.querySelector('img').src = r.src;
-      lightbox.querySelector('img').alt = r.alt;
+      lightbox.querySelector('img').alt = alt;
       lightbox.showModal();
     });
     grid.append(btn);

@@ -2,7 +2,7 @@
 // Client for bots-agent.
 //   node infra/remote.js keygen [comment]   -> create key, print authorized_keys line
 //   node infra/remote.js health             -> GET /health
-//   node infra/remote.js exec "<command>" [timeoutSeconds]
+//   node infra/remote.js exec "<command>" [timeoutSeconds]   ("-" reads the command from stdin)
 // Env: AGENT_URL (default from infra/server.json), AGENT_KEY (default ~/.bots-agent/key.pem)
 'use strict';
 
@@ -45,8 +45,9 @@ async function main() {
   }
 
   if (command === 'exec') {
-    const [cmd, timeout] = args;
-    if (!cmd) throw new Error('usage: exec "<command>" [timeoutSeconds]');
+    let [cmd, timeout] = args;
+    if (cmd === '-') cmd = fs.readFileSync(0, 'utf8'); // read a long command from stdin
+    if (!cmd) throw new Error('usage: exec "<command>"|- [timeoutSeconds]');
     const body = Buffer.from(JSON.stringify({
       cmd, timeout: timeout ? Number(timeout) : undefined,
       ts: Date.now(), nonce: crypto.randomUUID(),

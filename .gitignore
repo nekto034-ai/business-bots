@@ -1,2 +1,5 @@
 .env
 node_modules/
+
+# Client review letters (contain requisites) — uploaded to the server directly, never committed
+sites/landing/public/reviews/

@@ -9,6 +9,9 @@ const path = require('path');
 const PORT = Number(process.env.PORT || 8080);
 const PUBLIC_DIR = path.join(__dirname, 'public');
 const LEADS_FILE = process.env.LEADS_FILE || path.join(__dirname, 'leads.jsonl');
+// Review letters contain clients' requisites, so they are kept out of the public
+// repo and uploaded to the server directly; served from REVIEWS_DIR when set.
+const REVIEWS_DIR = process.env.REVIEWS_DIR || path.join(PUBLIC_DIR, 'reviews');
 const MAX_BODY = 10_000;
 
 const TYPES = {
@@ -66,8 +69,10 @@ function serveStatic(req, res) {
   let urlPath;
   try { urlPath = decodeURIComponent(new URL(req.url, 'http://x').pathname); } catch { urlPath = '/'; }
   if (urlPath.endsWith('/')) urlPath += 'index.html';
-  const file = path.join(PUBLIC_DIR, path.normalize(urlPath));
-  if (!file.startsWith(PUBLIC_DIR + path.sep)) { res.writeHead(403); return res.end(); }
+  const [root, rel] = urlPath.startsWith('/reviews/')
+    ? [REVIEWS_DIR, urlPath.slice('/reviews'.length)] : [PUBLIC_DIR, urlPath];
+  const file = path.join(root, path.normalize(rel));
+  if (!file.startsWith(root + path.sep)) { res.writeHead(403); return res.end(); }
   fs.readFile(file, (err, content) => {
     if (err) {
       res.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' });

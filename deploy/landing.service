@@ -6,6 +6,7 @@ After=network-online.target
 ExecStart=/usr/bin/node /opt/business-bots/sites/landing/server.js
 Environment=PORT=8080
 Environment=LEADS_FILE=/var/lib/landing/leads.jsonl
+Environment=REVIEWS_DIR=/var/lib/landing/reviews
 DynamicUser=yes
 StateDirectory=landing
 Restart=always
