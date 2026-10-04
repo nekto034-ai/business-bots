@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Настройка почты — Математика бизнеса</title>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .setup { max-width: 560px; margin: 0 auto; padding: 24px 16px 80px; }
+    .setup h1 { font-size: 30px; color: var(--navy-800); text-align: left; margin: 0 0 8px; }
+    .setup .muted { color: var(--ink-soft); margin: 0 0 22px; }
+    .setup .card { box-shadow: 0 1px 2px rgba(11, 31, 58, .06), 0 14px 34px rgba(11, 31, 58, .09); display: flex; flex-direction: column; gap: 16px; }
+    .providers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .providers label { border: 1.5px solid var(--line); border-radius: 12px; padding: 12px 6px; text-align: center; font-weight: 600; cursor: pointer; }
+    .providers input { position: absolute; opacity: 0; }
+    .providers label:has(input:checked) { background: var(--navy-700); border-color: var(--navy-700); color: #fff; }
+    .help { font-size: 13px; color: var(--ink-soft); background: #f3f6fb; border-radius: 12px; padding: 12px 14px; margin: 0; }
+  </style>
+</head>
+<body>
+  <div class="legal-top">
+    <header class="topbar">
+      <a class="logo" href="/"><span class="logo-mark">∑</span><span>Математика<br>бизнеса</span></a>
+    </header>
+  </div>
+  <main class="setup">
+    <h1>Почта для заявок</h1>
+    <p class="muted">Данные уходят прямо на сервер сайта. Страница одноразовая: после сохранения она отключится.</p>
+
+    <form class="card" id="setup">
+      <div class="field">
+        <span>Почтовый сервис</span>
+        <div class="providers">
+          <label><input type="radio" name="provider" value="yandex" checked>Яндекс</label>
+          <label><input type="radio" name="provider" value="gmail">Gmail</label>
+          <label><input type="radio" name="provider" value="mailru">Mail.ru</label>
+        </div>
+      </div>
+      <label class="field">
+        <span>С какой почты отправлять</span>
+        <input type="email" name="user" required placeholder="you@yandex.ru">
+      </label>
+      <label class="field">
+        <span>Пароль приложения <em>не обычный пароль от почты</em></span>
+        <input type="password" name="pass" required autocomplete="off">
+      </label>
+      <p class="help" id="help"></p>
+      <label class="field">
+        <span>Куда присылать заявки</span>
+        <input type="email" name="to" required placeholder="можно ту же почту">
+      </label>
+      <button class="btn" type="submit">Сохранить и отправить тестовое письмо</button>
+      <p class="form-status" id="status" role="status"></p>
+    </form>
+  </main>
+  <script>
+    const HELP = {
+      yandex: 'Яндекс ID → Безопасность → Пароли приложений → Почта (IMAP, POP3, SMTP) → Создать. Скопируйте пароль из 16 букв.',
+      gmail: 'Google Аккаунт → Безопасность → включите двухэтапную аутентификацию → «Пароли приложений» → Создать. Скопируйте пароль из 16 букв.',
+      mailru: 'Mail.ru → Настройки → Безопасность → Пароли для внешних приложений → Добавить. Скопируйте пароль.',
+    };
+    const form = document.getElementById('setup');
+    const help = document.getElementById('help');
+    const status = document.getElementById('status');
+    const updateHelp = () => { help.textContent = HELP[form.provider.value]; };
+    form.addEventListener('change', updateHelp);
+    updateHelp();
+    form.user.addEventListener('change', () => { if (!form.to.value) form.to.value = form.user.value; });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const button = form.querySelector('button');
+      button.disabled = true;
+      status.className = 'form-status';
+      status.textContent = 'Отправляю тестовое письмо…';
+      const body = {
+        code: new URLSearchParams(location.search).get('code'),
+        provider: form.provider.value, user: form.user.value.trim(), pass: form.pass.value.trim(), to: form.to.value.trim(),
+      };
+      try {
+        const res = await fetch('/setup', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+        const out = await res.json();
+        if (!res.ok) throw new Error(out.error || 'Ошибка');
+        status.className = 'form-status ok';
+        status.textContent = 'Готово! Проверьте почту — там тестовое письмо. Эту страницу можно закрыть.';
+        form.querySelectorAll('input, button').forEach((el) => { el.disabled = true; });
+      } catch (err) {
+        status.className = 'form-status err';
+        status.textContent = err.message;
+        button.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
