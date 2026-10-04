@@ -51,11 +51,19 @@ WantedBy=timers.target
 # Public hostname via sslip.io (<ip-with-dashes>.sslip.io resolves to the IP),
 # so Caddy can get a real Let's Encrypt certificate without buying a domain.
 SETUP_HTTPS = r"""
-IP=$(ip -4 route get 1.1.1.1 | awk '{for(i=1;i<=NF;i++) if($i=="src") print $(i+1)}')
+IP=$(curl -4 -sf -m 10 https://api.ipify.org || curl -4 -sf -m 10 https://ifconfig.me)
 HOST="$(echo "$IP" | tr . -).sslip.io"
 printf '%s {\n\treverse_proxy 127.0.0.1:8787\n}\n' "$HOST" > /etc/caddy/Caddyfile
 echo "$HOST" > /etc/bots/hostname
 systemctl restart caddy
+"""
+
+WAIT_FOR_NETWORK = r"""
+for i in $(seq 1 180); do
+  if curl -sf -m 10 -o /dev/null http://archive.ubuntu.com/ubuntu/; then exit 0; fi
+  sleep 5
+done
+echo "no network after 15 min" >&2
 """
 
 
@@ -73,9 +81,6 @@ def file_entry(path, content, perms="0644"):
 def build():
     keys = (INFRA / "authorized_keys").read_text()
     return {
-        "package_update": True,
-        "package_upgrade": True,
-        "packages": ["git", "curl", "ufw", "unattended-upgrades", "caddy"],
         "write_files": [
             file_entry("/opt/bots-agent/agent.js", (INFRA / "agent" / "agent.js").read_text()),
             file_entry("/usr/local/bin/bots-sync", (INFRA / "sync.sh").read_text(), "0755"),
@@ -86,6 +91,11 @@ def build():
             file_entry("/etc/systemd/system/bots-sync.timer", SYNC_TIMER),
         ],
         "runcmd": [
+            # The public IP may be attached a bit after first boot — wait for internet.
+            ["bash", "-c", WAIT_FOR_NETWORK],
+            "apt-get update",
+            "DEBIAN_FRONTEND=noninteractive apt-get -y upgrade",
+            "DEBIAN_FRONTEND=noninteractive apt-get install -y git curl ufw unattended-upgrades caddy",
             "curl -fsSL https://deb.nodesource.com/setup_22.x | bash -",
             "apt-get install -y nodejs",
             f"git clone --branch {TRACKED_BRANCH} {REPO_URL} /opt/business-bots",
