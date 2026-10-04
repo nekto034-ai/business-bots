@@ -1,268 +1,153 @@
 <title>Моделирование «Дуб и Медь»</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;800&family=Golos+Text:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap">
 <style>
-/* Layout: тетрадь в клетку — задача по математике о бизнесе клиента; красная ручка = потери, синие чернила = структура */
+/* Layout: черновой макет-скелет одной страницы, 6 блоков сверху вниз; оформление намеренно простое */
 :root{
-  --paper:#f7f9fc; --grid:#dfe6f0; --ink:#1d2a44; --muted:#5b6780;
-  --blue:#2b4fa8; --red:#d2362b; --red-soft:#fbe4e1; --green:#1f7a4d; --green-soft:#e1f2e8;
-  --card:#ffffff; --line:#c9d3e3;
-  --display:"Unbounded","Arial Black",system-ui,sans-serif;
-  --body:"Golos Text",system-ui,-apple-system,"Segoe UI",sans-serif;
-  --mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  --bg:#f6f7f9; --card:#ffffff; --ink:#1f2633; --muted:#667085; --line:#d5dae2;
+  --q:#b54708; --q-soft:#fef0e1; --ok:#1d7a4a; --ok-soft:#e3f3ea; --mid:#8a6d00; --mid-soft:#fbf3d4;
+  --body:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --mono:ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --paper:#13202b; --grid:#1d2e3c; --ink:#e7eef6; --muted:#9aaabd;
-  --blue:#7fa6ff; --red:#ff6b5e; --red-soft:#3a2023; --green:#4fd08d; --green-soft:#16352a;
-  --card:#192a38; --line:#2c4256; color-scheme:dark}}
+  --bg:#151a21; --card:#1d242e; --ink:#e6eaf0; --muted:#9aa4b2; --line:#334050;
+  --q:#ffa24d; --q-soft:#3a2a18; --ok:#5fd394; --ok-soft:#173326; --mid:#e3c34a; --mid-soft:#352e14; color-scheme:dark}}
 :root[data-theme="dark"]{
-  --paper:#13202b; --grid:#1d2e3c; --ink:#e7eef6; --muted:#9aaabd;
-  --blue:#7fa6ff; --red:#ff6b5e; --red-soft:#3a2023; --green:#4fd08d; --green-soft:#16352a;
-  --card:#192a38; --line:#2c4256; color-scheme:dark}
+  --bg:#151a21; --card:#1d242e; --ink:#e6eaf0; --muted:#9aa4b2; --line:#334050;
+  --q:#ffa24d; --q-soft:#3a2a18; --ok:#5fd394; --ok-soft:#173326; --mid:#e3c34a; --mid-soft:#352e14; color-scheme:dark}
 *{box-sizing:border-box}
-body{background-color:var(--paper);
-  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
-  background-size:24px 24px;color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.55;margin:0}
-.wrap{max-width:960px;margin:0 auto;padding-inline:20px;padding-block:40px 64px;display:flex;flex-direction:column;gap:56px}
-h1,h2{font-family:var(--display);text-wrap:balance;margin:0;line-height:1.15}
-h1{font-size:clamp(28px,5vw,46px);font-weight:800}
-h2{font-size:clamp(20px,3vw,26px);font-weight:700}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.55;margin:0}
+.wrap{max-width:820px;margin:0 auto;padding-inline:16px;padding-block:32px 56px;display:flex;flex-direction:column;gap:20px}
+.draft{font-size:13px;color:var(--muted);border:1px dashed var(--line);border-radius:6px;padding:10px 12px}
+.block{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:20px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.num{font-family:var(--mono);font-size:12px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+h1{font-size:clamp(24px,4vw,32px);margin:0;line-height:1.2;text-wrap:balance}
+h2{font-size:20px;margin:0;line-height:1.25;text-wrap:balance}
 p{margin:0;max-width:65ch}
-.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--blue)}
 .muted{color:var(--muted)}
-section{display:flex;flex-direction:column;gap:18px}
-/* hero */
-.hero{display:flex;flex-direction:column;gap:16px}
-.loss{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 20px;margin-top:8px}
-.loss .big{font-family:var(--display);font-weight:800;font-size:clamp(40px,9vw,88px);color:var(--red);line-height:1;font-variant-numeric:tabular-nums}
-.loss .per{font-family:var(--display);font-size:clamp(16px,2.4vw,22px);color:var(--red)}
-.year{font-size:18px}
-.year b{font-family:var(--mono);color:var(--red)}
-/* formula */
-.task{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:20px 22px;display:flex;flex-direction:column;gap:12px}
-.formula{font-family:var(--mono);font-size:clamp(15px,2.6vw,22px);font-weight:700;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;font-variant-numeric:tabular-nums}
-.formula .t{display:flex;flex-direction:column;align-items:center;gap:2px}
-.formula .t small{font-family:var(--body);font-weight:400;font-size:12px;color:var(--muted)}
-.formula .op{color:var(--muted)}
-.formula .res{color:var(--red);text-decoration:underline;text-decoration-thickness:3px;text-underline-offset:6px}
-/* pipe */
-.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
-svg text{font-family:var(--body)}
-.s-stage{fill:var(--card);stroke:var(--blue);stroke-width:2}
-.s-label{fill:var(--ink);font-size:14px;font-weight:600}
-.s-num{fill:var(--blue);font-family:var(--mono);font-size:13px;font-weight:700}
-.s-pipe{stroke:var(--blue);stroke-width:10;stroke-linecap:round}
-.s-leak{fill:var(--red)}
-.s-leaktext{fill:var(--red);font-size:13px;font-weight:600}
-.s-leaksub{fill:var(--muted);font-size:12px}
-.s-puddle{fill:var(--red-soft);stroke:var(--red);stroke-width:2}
-.s-puddletext{fill:var(--red);font-family:var(--mono);font-size:18px;font-weight:700}
-.drop{animation:drip 2.4s ease-in infinite}
-.d2{animation-delay:.8s}.d3{animation-delay:1.6s}
-@keyframes drip{0%{transform:translateY(0);opacity:1}80%{opacity:1}100%{transform:translateY(46px);opacity:0}}
-@media (prefers-reduced-motion:reduce){.drop{animation:none}}
-/* now vs future */
-.compare{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
-.col{border-radius:6px;padding:18px 20px;display:flex;flex-direction:column;gap:12px;min-width:0}
-.col.now{background:var(--red-soft)}
-.col.fut{background:var(--green-soft)}
-.col h3{font-family:var(--display);font-size:16px;margin:0}
-.col.now h3{color:var(--red)}.col.fut h3{color:var(--green)}
-.col ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px}
-.col li{display:grid;grid-template-columns:22px 1fr;gap:8px}
-.col li span:first-child{font-family:var(--mono);font-weight:700}
-.col.now li span:first-child{color:var(--red)}.col.fut li span:first-child{color:var(--green)}
-/* metrics */
-table{border-collapse:collapse;width:100%;min-width:560px;background:var(--card);font-variant-numeric:tabular-nums}
-th,td{text-align:left;padding:12px 14px;border-bottom:1px solid var(--line);vertical-align:top}
-th{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500}
-td.n{font-family:var(--mono);font-weight:700;white-space:nowrap}
-td.bad{color:var(--red)}td.good{color:var(--green)}
-.tablebox{border:1px solid var(--line);border-radius:6px}
-/* kitchens */
-.kitchens{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-.k{width:30px;height:30px;border:2px solid var(--red);border-radius:3px;position:relative}
-.k::after{content:"";position:absolute;left:5px;right:5px;top:9px;height:2px;background:var(--red);box-shadow:0 7px 0 var(--red)}
-/* packages */
-.pk{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
-.p{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:18px;display:flex;flex-direction:column;gap:10px;min-width:0}
-.p.rec{border:2px solid var(--blue)}
-.p .name{font-family:var(--display);font-weight:700;font-size:18px}
-.p .price{font-family:var(--mono);font-weight:700;font-size:22px}
-.p .tag{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--blue)}
-.p ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px;color:var(--muted)}
-.p .pay{font-size:14px;color:var(--green);font-weight:600}
-footer{border-top:2px solid var(--ink);padding-top:16px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 24px;font-size:14px}
-footer b{font-family:var(--display)}
-.note{font-size:13px}
+.why{font-size:13px;color:var(--muted);border-left:3px solid var(--line);padding-left:10px}
+/* путь клиента */
+.path{display:flex;flex-wrap:wrap;align-items:stretch;gap:8px}
+.step{flex:1 1 120px;min-width:0;border:1px solid var(--line);border-radius:6px;padding:10px;display:flex;flex-direction:column;gap:4px;position:relative}
+.step b{font-size:15px}
+.step small{color:var(--muted);font-size:13px}
+.step.blind{border:2px solid var(--q);background:var(--q-soft)}
+.mark{position:absolute;top:-10px;right:-8px;width:24px;height:24px;border-radius:50%;background:var(--q);color:var(--card);font-weight:700;display:grid;place-items:center;font-size:14px}
+.arrow{align-self:center;color:var(--muted)}
+/* цитаты */
+.quotes{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.quote{background:var(--q-soft);border-radius:6px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.quote q{font-style:italic}
+.quote small{color:var(--q);font-weight:600;font-size:13px}
+/* формула */
+.formula{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.f{flex:1 1 140px;min-width:0;border-radius:6px;padding:10px 12px;display:flex;flex-direction:column;gap:2px}
+.f .v{font-family:var(--mono);font-size:20px;font-weight:700}
+.f .l{font-size:13px}
+.f .s{font-size:12px;font-weight:600}
+.f.known{background:var(--ok-soft)}.f.known .s{color:var(--ok)}
+.f.approx{background:var(--mid-soft)}.f.approx .s{color:var(--mid)}
+.f.unknown{background:var(--q-soft)}.f.unknown .s{color:var(--q)}
+.op{font-family:var(--mono);color:var(--muted);font-size:18px}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:13px}
+.legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.lk::before{background:var(--ok)}.la::before{background:var(--mid)}.lu::before{background:var(--q)}
+.big{font-size:17px}
+.big b{font-family:var(--mono)}
+/* панель */
+.panel{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+.tile{border:1px solid var(--line);border-radius:6px;padding:10px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.tile .l{font-size:13px;color:var(--muted)}
+.tile .v{font-family:var(--mono);font-size:18px;font-weight:700;color:var(--muted)}
+/* шаг */
+.next{border:2px solid var(--ink)}
+.next .price{font-family:var(--mono);font-size:20px;font-weight:700}
+ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
 </style>
 
 <div class="wrap">
 
-  <header class="hero">
-    <div class="eyebrow">Моделирование · кухни на заказ «Дуб и Медь» · Волгоград · образец</div>
-    <h1>Куда утекают ваши деньги</h1>
-    <p class="muted">По вашим ответам на созвоне мы посчитали, сколько заявок теряется по пути от первого сообщения до оплаты.</p>
-    <div class="loss"><span class="big">−144 000 ₽</span><span class="per">каждый месяц</span></div>
-    <p class="year">За год это <b>1 728 000 ₽</b>. Столько выручки уходит к конкурентам, хотя клиент уже сам вам написал.</p>
-  </header>
+  <div class="draft">Черновой макет, без дизайна. Серые подписи «зачем этот блок» — пояснения для Артёма, клиент их не увидит. Клиент и цифры вымышлены.</div>
 
-  <section>
-    <div class="eyebrow">Задача</div>
-    <div class="task">
-      <div class="formula">
-        <span class="t">40<small>заявок в месяц</small></span><span class="op">×</span>
-        <span class="t">20%<small>теряются</small></span><span class="op">×</span>
-        <span class="t">15%<small>покупают</small></span><span class="op">×</span>
-        <span class="t">120 000 ₽<small>средний чек</small></span><span class="op">=</span>
-        <span class="t res">144 000 ₽<small>в месяц</small></span>
-      </div>
-      <p class="muted note">Все цифры, кроме доли потерь, из ваших ответов. Долю потерь вы оценили как «примерно каждая пятая».</p>
+  <div class="block">
+    <div class="num">Шапка</div>
+    <h1>Моделирование продаж: кухни на заказ «Дуб и Медь»</h1>
+    <p class="muted">По итогам созвона 4 октября. Всё ниже составлено из ваших ответов.</p>
+  </div>
+
+  <div class="block">
+    <div class="num">Блок 1 · Ваш путь клиента</div>
+    <h2>Так сейчас клиент доходит до договора</h2>
+    <div class="path">
+      <div class="step"><b>Обращение</b><small>WhatsApp, Авито, звонок</small></div>
+      <div class="arrow">→</div>
+      <div class="step blind"><span class="mark">?</span><b>Первый ответ</b><small>отвечает тот, кто увидел</small></div>
+      <div class="arrow">→</div>
+      <div class="step blind"><span class="mark">?</span><b>Замер</b><small>договариваются по телефону</small></div>
+      <div class="arrow">→</div>
+      <div class="step"><b>Проект и цена</b><small>дизайнер, 3–5 дней</small></div>
+      <div class="arrow">→</div>
+      <div class="step blind"><span class="mark">?</span><b>Решение клиента</b><small>«подумаю»</small></div>
+      <div class="arrow">→</div>
+      <div class="step"><b>Договор</b><small>предоплата 50%</small></div>
     </div>
-  </section>
+    <p class="why">Зачем: клиент узнаёт свой бизнес и видит, что его услышали. Знаком «?» отмечены места, где он сам не знает, что происходит.</p>
+  </div>
 
-  <section>
-    <div class="eyebrow">Ваш процесс сейчас</div>
-    <h2>Путь клиента и где он протекает</h2>
-    <div class="scroll" role="img" aria-label="Схема: 40 заявок проходят этапы, на трёх этапах теряется 8 заявок, итог 144 000 рублей в месяц">
-      <svg viewBox="0 0 900 330" width="900" height="330">
-        <line class="s-pipe" x1="70" y1="70" x2="830" y2="70"/>
-        <g>
-          <rect class="s-stage" x="10" y="40" width="120" height="60" rx="6"/>
-          <text class="s-label" x="70" y="66" text-anchor="middle">Заявка</text>
-          <text class="s-num" x="70" y="86" text-anchor="middle">40</text>
-        </g>
-        <g>
-          <rect class="s-stage" x="200" y="40" width="120" height="60" rx="6"/>
-          <text class="s-label" x="260" y="66" text-anchor="middle">Первый ответ</text>
-          <text class="s-num" x="260" y="86" text-anchor="middle">37</text>
-        </g>
-        <g>
-          <rect class="s-stage" x="390" y="40" width="120" height="60" rx="6"/>
-          <text class="s-label" x="450" y="66" text-anchor="middle">Замер</text>
-          <text class="s-num" x="450" y="86" text-anchor="middle">34</text>
-        </g>
-        <g>
-          <rect class="s-stage" x="580" y="40" width="120" height="60" rx="6"/>
-          <text class="s-label" x="640" y="66" text-anchor="middle">Проект и цена</text>
-          <text class="s-num" x="640" y="86" text-anchor="middle">32</text>
-        </g>
-        <g>
-          <rect class="s-stage" x="770" y="40" width="120" height="60" rx="6"/>
-          <text class="s-label" x="830" y="66" text-anchor="middle">Договор</text>
-          <text class="s-num" x="830" y="86" text-anchor="middle">6 продаж</text>
-        </g>
-        <!-- leaks -->
-        <g>
-          <circle class="s-leak drop" cx="165" cy="80" r="6"/>
-          <text class="s-leaktext" x="165" y="150" text-anchor="middle">−3 заявки</text>
-          <text class="s-leaksub" x="165" y="168" text-anchor="middle">ответили через 4+ часа,</text>
-          <text class="s-leaksub" x="165" y="184" text-anchor="middle">вечером и в выходные</text>
-        </g>
-        <g>
-          <circle class="s-leak drop d2" cx="355" cy="80" r="6"/>
-          <text class="s-leaktext" x="355" y="150" text-anchor="middle">−3 заявки</text>
-          <text class="s-leaksub" x="355" y="168" text-anchor="middle">не перезвонили,</text>
-          <text class="s-leaksub" x="355" y="184" text-anchor="middle">чтобы назначить замер</text>
-        </g>
-        <g>
-          <circle class="s-leak drop d3" cx="735" cy="80" r="6"/>
-          <text class="s-leaktext" x="735" y="150" text-anchor="middle">−2 заявки</text>
-          <text class="s-leaksub" x="735" y="168" text-anchor="middle">«подумаю» — и никто</text>
-          <text class="s-leaksub" x="735" y="184" text-anchor="middle">не напомнил</text>
-        </g>
-        <!-- puddle -->
-        <ellipse class="s-puddle" cx="450" cy="270" rx="260" ry="42"/>
-        <text class="s-puddletext" x="450" y="266" text-anchor="middle">8 заявок = −144 000 ₽ в месяц</text>
-        <text class="s-leaksub" x="450" y="290" text-anchor="middle">клиенты, которые хотели купить, но не дошли</text>
-      </svg>
+  <div class="block">
+    <div class="num">Блок 2 · Слепые зоны</div>
+    <h2>Что вы сказали на созвоне</h2>
+    <div class="quotes">
+      <div class="quote"><q>Вечером и в выходные отвечаем, когда получится</q><small>? Первый ответ</small></div>
+      <div class="quote"><q>Бывает, забываем перезвонить, чтобы договориться о замере</q><small>? Замер</small></div>
+      <div class="quote"><q>Кто сказал «подумаю», тем потом не пишем, неудобно навязываться</q><small>? Решение клиента</small></div>
     </div>
-  </section>
+    <p class="why">Зачем: это не наши выводы, а слова самого клиента. С собой он спорить не будет, поэтому блок не похож на рекламу.</p>
+  </div>
 
-  <section>
-    <div class="eyebrow">В пересчёте на кухни</div>
-    <h2>14 кухонь в год вы отдаёте конкурентам</h2>
-    <div class="kitchens" aria-label="14 кухонь">
-      <span class="k"></span><span class="k"></span><span class="k"></span><span class="k"></span><span class="k"></span><span class="k"></span><span class="k"></span>
-      <span class="k"></span><span class="k"></span><span class="k"></span><span class="k"></span><span class="k"></span><span class="k"></span><span class="k"></span>
+  <div class="block">
+    <div class="num">Блок 3 · Математика вашего бизнеса</div>
+    <h2>Из чего складываются ваши деньги</h2>
+    <div class="formula">
+      <div class="f approx"><span class="v">~40</span><span class="l">обращений в месяц</span><span class="s">примерно</span></div>
+      <span class="op">×</span>
+      <div class="f unknown"><span class="v">?</span><span class="l">из них покупают</span><span class="s">не знаете</span></div>
+      <span class="op">×</span>
+      <div class="f known"><span class="v">120 000 ₽</span><span class="l">средний чек</span><span class="s">знаете точно</span></div>
+      <span class="op">=</span>
+      <div class="f known"><span class="v">деньги</span><span class="l">выручка</span><span class="s">видите</span></div>
     </div>
-    <p class="muted">Каждый месяц мимо проходит больше одной готовой к покупке кухни. Реклама эти заявки уже оплатила.</p>
-  </section>
+    <div class="legend"><span class="lk">знаете точно</span><span class="la">знаете примерно</span><span class="lu">не знаете</span></div>
+    <p class="big">Вы точно видите только итог: деньги. А то, из чего они складываются, видно примерно или не видно совсем.</p>
+    <p class="why">Зачем: главная мысль «Математики бизнеса». Управлять можно только тем, что стоит до денег.</p>
+  </div>
 
-  <section>
-    <div class="eyebrow">Как закрыть дыры</div>
-    <h2>Сейчас и после настройки</h2>
-    <div class="compare">
-      <div class="col now">
-        <h3>Сейчас</h3>
-        <ul>
-          <li><span>1</span><span>Заявки приходят в WhatsApp, Авито и на телефон, каждый менеджер видит только свои.</span></li>
-          <li><span>2</span><span>Вечером и в выходные на сообщения никто не отвечает.</span></li>
-          <li><span>3</span><span>О том, кому перезвонить, помнят «в голове» и в блокноте.</span></li>
-          <li><span>4</span><span>Клиент сказал «подумаю», и про него забыли.</span></li>
-        </ul>
-      </div>
-      <div class="col fut">
-        <h3>После</h3>
-        <ul>
-          <li><span>1</span><span>Все каналы в одном окне amoCRM, ни одна заявка не теряется.</span></li>
-          <li><span>2</span><span>Бот отвечает за 1 минуту в любое время и записывает на замер.</span></li>
-          <li><span>3</span><span>Задача «перезвонить» ставится сама, руководитель видит просрочки.</span></li>
-          <li><span>4</span><span>Через 3 дня клиенту сам уходит напоминание с примерами работ.</span></li>
-        </ul>
-      </div>
+  <div class="block">
+    <div class="num">Блок 4 · Одна оценка</div>
+    <h2>Сколько может стоить одна потерянная заявка</h2>
+    <p class="big">Если из 40 обращений теряется хотя бы <b>одно из десяти</b>, это 4 заявки в месяц. При вашем чеке даже одна из них стоит <b>120 000 ₽</b>.</p>
+    <p class="muted">Это оценка, а не факт. Точную цифру покажет CRM в первый же месяц.</p>
+    <p class="why">Зачем: одна спокойная цифра вместо пугалки. Честно подписано, что это оценка.</p>
+  </div>
+
+  <div class="block">
+    <div class="num">Блок 5 · Что вы будете видеть</div>
+    <h2>Ваша приборная панель после настройки</h2>
+    <div class="panel">
+      <div class="tile"><span class="l">Обращений за месяц</span><span class="v">—</span></div>
+      <div class="tile"><span class="l">Время первого ответа</span><span class="v">—</span></div>
+      <div class="tile"><span class="l">Потеряно заявок</span><span class="v">—</span></div>
+      <div class="tile"><span class="l">Покупают из обратившихся</span><span class="v">—</span></div>
+      <div class="tile"><span class="l">Средний чек</span><span class="v">—</span></div>
     </div>
-  </section>
+    <p>Сейчас эти поля пустые. После настройки вы каждый месяц будете получать их заполненными: где выросло, где просело и что с этим делать.</p>
+    <p class="why">Зачем: обещание. Мост к отчёту «было → стало», где клиент уже за рулём.</p>
+  </div>
 
-  <section>
-    <div class="eyebrow">Точка отсчёта</div>
-    <h2>Ваши цифры сегодня и цель</h2>
-    <div class="scroll tablebox">
-      <table>
-        <thead><tr><th>Показатель</th><th>Сейчас</th><th>Цель через месяц</th></tr></thead>
-        <tbody>
-          <tr><td>Заявок в месяц</td><td class="n">40</td><td class="n">40</td></tr>
-          <tr><td>Время первого ответа</td><td class="n bad">4+ часа</td><td class="n good">до 15 минут</td></tr>
-          <tr><td>Потерянные заявки</td><td class="n bad">≈20%</td><td class="n good">до 5%</td></tr>
-          <tr><td>Покупают из обратившихся</td><td class="n">15%</td><td class="n good">18%</td></tr>
-          <tr><td>Средний чек</td><td class="n">120 000 ₽</td><td class="n">120 000 ₽</td></tr>
-          <tr><td>Потери в месяц</td><td class="n bad">144 000 ₽</td><td class="n good">до 36 000 ₽</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <p class="muted note">Через месяц после настройки пришлём такой же отчёт с фактическими цифрами из CRM.</p>
-  </section>
+  <div class="block next">
+    <div class="num">Блок 6 · Следующий шаг</div>
+    <h2>Что предлагаем</h2>
+    <p>Пакет <b>«Бизнес»</b>: все каналы в одном окне, напоминания о перезвоне и о клиентах, которые «подумают», приборная панель и первый отчёт через месяц.</p>
+    <div class="price">40 000 ₽</div>
+    <p class="muted">Подробности и другие варианты — в коммерческом предложении.</p>
+  </div>
 
-  <section>
-    <div class="eyebrow">Варианты решения</div>
-    <h2>Что можно сделать</h2>
-    <div class="pk">
-      <div class="p">
-        <div class="name">Старт</div>
-        <div class="price">25 000 ₽</div>
-        <ul><li>1 воронка с автоматизацией</li><li>2 канала в одном окне</li><li>Обучение 1 час</li></ul>
-        <div class="pay">Окупается с первой спасённой заявки</div>
-      </div>
-      <div class="p rec">
-        <div class="tag">Подходит вам</div>
-        <div class="name">Бизнес</div>
-        <div class="price">40 000 ₽</div>
-        <ul><li>До 2 воронок, все каналы и телефония</li><li>Бот-ответ 24/7 и напоминания</li><li>Отчёт «было → стало» через месяц</li><li>Месяц техподдержки включён</li></ul>
-        <div class="pay">Окупается с первой спасённой кухни</div>
-      </div>
-      <div class="p">
-        <div class="name">Команда</div>
-        <div class="price">60 000 ₽</div>
-        <ul><li>До 3 воронок, до 5 каналов</li><li>До 5 ботов, обучающие видео</li><li>2 месяца техподдержки</li></ul>
-        <div class="pay">Для команды от 6 человек</div>
-      </div>
-    </div>
-    <p class="muted note">Лицензии amoCRM и сервисов оплачиваются отдельно. При покупке через нас — +1 месяц amoCRM в подарок.</p>
-  </section>
-
-  <footer>
-    <span><b>Математика бизнеса</b> · внедрение amoCRM для малого бизнеса</span>
-    <span class="muted">Образец. Клиент и цифры вымышлены.</span>
-  </footer>
 </div>
