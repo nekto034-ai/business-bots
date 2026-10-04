@@ -6,6 +6,14 @@ cd /opt/business-bots
 
 HOST=$(cat /etc/bots/hostname)   # e.g. 91-186-199-30.sslip.io
 
+# bots-agent updates itself from the repo. Restart is delayed so an exec that
+# triggered this deploy can still return its output.
+if ! cmp -s infra/agent/agent.js /opt/bots-agent/agent.js; then
+  install -m 644 infra/agent/agent.js /opt/bots-agent/agent.js
+  systemd-run --quiet --on-active=5 systemctl restart bots-agent
+  echo "bots-agent updated, restarting in 5s"
+fi
+
 # Services
 install -m 644 deploy/landing.service /etc/systemd/system/landing.service
 systemctl daemon-reload

@@ -64,10 +64,14 @@ function repoCommit() {
 function runCommand(cmd, timeoutS) {
   return new Promise((resolve) => {
     const started = Date.now();
-    const child = spawn('bash', ['-lc', cmd], {
+    // The command goes in via stdin: argv has a ~128 KB per-argument limit (E2BIG).
+    const child = spawn('bash', ['-l', '-s'], {
       cwd: fs.existsSync(REPO_DIR) ? REPO_DIR : '/',
       env: { ...process.env, HOME: '/root' },
     });
+    child.on('error', (err) => resolve({ code: null, stdout: '', stderr: `spawn failed: ${err.message}`, durationMs: 0 }));
+    child.stdin.on('error', () => {});
+    child.stdin.end(cmd);
     let stdout = '', stderr = '', truncated = false;
     const append = (which, chunk) => {
       if (stdout.length + stderr.length > MAX_OUTPUT) { truncated = true; return; }
