@@ -1,0 +1,9 @@
+{
+  "provider": "timeweb-cloud",
+  "server_id": 9261233,
+  "availability_zone": "spb-3",
+  "preset_id": 2453,
+  "floating_ip_id": "d6a907a4-a749-43bd-ac28-ae256aa3cf0c",
+  "ip": "91.186.199.30",
+  "agent_url": "https://91-186-199-30.sslip.io"
+}
