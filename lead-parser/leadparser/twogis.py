@@ -125,7 +125,7 @@ def contacts(firm):
         for c in group.get("contacts") or []:
             t = c.get("type")
             if t == "phone":
-                out["phones"].append(c.get("text") or c.get("value"))
+                out["phones"].append((c.get("text") or c.get("value") or "").replace("‒", "-"))
             elif t == "website":
                 out["websites"].append(_real_url(c))
             elif t == "email":
