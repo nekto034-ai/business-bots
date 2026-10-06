@@ -1,2 +1,7 @@
 .env
 node_modules/
+__pycache__/
+
+# Собранные базы клиентов и служебное состояние парсера — не в публичный репозиторий
+lead-parser/output/
+lead-parser/data/

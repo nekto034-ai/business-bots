@@ -1,0 +1,263 @@
+# Настройки парсера лидов.
+# Меняй цифры и списки здесь — код трогать не нужно.
+
+[run]
+# Сколько подходящих компаний собрать за один запуск
+target_leads = 60
+# Сколько компаний брать максимум из одного поиска «ниша + город»,
+# чтобы список был разнообразным, а не 60 натяжных потолков из Казани
+per_query_limit = 3
+# Сколько страниц выдачи 2ГИС листать на один поиск (на странице 12 компаний)
+max_pages_per_query = 4
+# Пауза между запросами к одному сайту, секунд (от и до). Меньше — быстрее, но выше риск блокировки
+delay_min = 2.5
+delay_max = 5.0
+# Не показывать компании, которые уже попадали в прошлые выгрузки
+skip_already_exported = true
+# Проверять вакансии на hh.ru (+1 запрос на компанию)
+check_hh = true
+# Открывать сайт компании и оценивать его
+check_websites = true
+
+[filters]
+# Жёсткие фильтры: не прошёл — компания не попадает в список
+max_branches = 1          # 1 = только компании без филиалов
+max_reviews = 15          # больше отзывов — уже раскрученная компания
+require_phone = true      # без телефона звонить некуда
+
+[scoring]
+# Сколько баллов даёт каждый признак. Итоговый список сортируется по сумме.
+b2b = 3                   # продают компаниям
+seasonal = 2              # сезонная ниша (сейчас — Новый год)
+reviews_0 = 3             # отзывов нет вообще
+reviews_1_5 = 2
+reviews_6_15 = 1
+new_company = 2           # появилась в 2ГИС недавно
+new_company_months = 18   # «недавно» — это сколько месяцев
+no_website = 2            # сайта нет совсем
+social_only = 2           # вместо сайта — соцсеть / Taplink
+broken_website = 3        # сайт указан, но не открывается
+per_site_issue = 1        # за каждую проблему сайта (нет https, не под телефон, ...)
+max_site_issues = 3       # но не больше стольких баллов за сайт
+hiring_sales = 4          # на hh висит вакансия продажника — у них точно есть продажи
+hiring_sales_unconfirmed = 2  # то же, но сверили только по названию и городу (сайта нет для сверки)
+hiring_any = 1            # на hh есть какие-то вакансии — компания растёт
+
+# Города. alias — как город называется в адресе 2ГИС, hh_area — номер города на hh.ru
+[[cities]]
+name = "Новосибирск"
+alias = "novosibirsk"
+hh_area = 4
+
+[[cities]]
+name = "Екатеринбург"
+alias = "ekaterinburg"
+hh_area = 3
+
+[[cities]]
+name = "Казань"
+alias = "kazan"
+hh_area = 88
+
+[[cities]]
+name = "Краснодар"
+alias = "krasnodar"
+hh_area = 53
+
+[[cities]]
+name = "Нижний Новгород"
+alias = "n_novgorod"
+hh_area = 66
+
+# Запасные города — раскомментируй (убери # в начале строк), чтобы добавить
+# [[cities]]
+# name = "Самара"
+# alias = "samara"
+# hh_area = 78
+#
+# [[cities]]
+# name = "Челябинск"
+# alias = "chelyabinsk"
+# hh_area = 104
+#
+# [[cities]]
+# name = "Красноярск"
+# alias = "krasnoyarsk"
+# hh_area = 54
+#
+# [[cities]]
+# name = "Уфа"
+# alias = "ufa"
+# hh_area = 99
+#
+# [[cities]]
+# name = "Ростов-на-Дону"
+# alias = "rostov"
+# hh_area = 76
+#
+# [[cities]]
+# name = "Пермь"
+# alias = "perm"
+# hh_area = 72
+#
+# [[cities]]
+# name = "Воронеж"
+# alias = "voronezh"
+# hh_area = 26
+#
+# [[cities]]
+# name = "Омск"
+# alias = "omsk"
+# hh_area = 68
+#
+# [[cities]]
+# name = "Тюмень"
+# alias = "tyumen"
+# hh_area = 95
+
+# Ниши. query — что вбиваем в поиск 2ГИС.
+# segment: "b2b" (продают компаниям) или "b2c" (продают людям).
+# seasonal = true — сезонная ниша, получает доп. баллы.
+# Порядок важен: ниши выше обходятся первыми.
+
+# --- Новый год: B2B ---
+[[niches]]
+query = "корпоративные подарки"
+segment = "b2b"
+seasonal = true
+
+[[niches]]
+query = "сувенирная продукция с логотипом"
+segment = "b2b"
+seasonal = true
+
+[[niches]]
+query = "организация корпоративов"
+segment = "b2b"
+seasonal = true
+
+[[niches]]
+query = "event агентство"
+segment = "b2b"
+seasonal = true
+
+[[niches]]
+query = "кейтеринг"
+segment = "b2b"
+seasonal = true
+
+[[niches]]
+query = "новогоднее оформление"
+segment = "b2b"
+seasonal = true
+
+[[niches]]
+query = "типография календари"
+segment = "b2b"
+seasonal = true
+
+# --- Новый год: B2C ---
+[[niches]]
+query = "банкетный зал"
+segment = "b2c"
+seasonal = true
+
+[[niches]]
+query = "ведущий на праздник"
+segment = "b2c"
+seasonal = true
+
+[[niches]]
+query = "дед мороз на дом"
+segment = "b2c"
+seasonal = true
+
+[[niches]]
+query = "аренда коттеджей"
+segment = "b2c"
+seasonal = true
+
+[[niches]]
+query = "торты на заказ"
+segment = "b2c"
+seasonal = true
+
+[[niches]]
+query = "доставка подарков"
+segment = "b2c"
+seasonal = true
+
+[[niches]]
+query = "турагентство"
+segment = "b2c"
+seasonal = true
+
+# --- Круглый год: B2B ---
+[[niches]]
+query = "оптовая компания"
+segment = "b2b"
+
+[[niches]]
+query = "производство на заказ"
+segment = "b2b"
+
+[[niches]]
+query = "грузоперевозки"
+segment = "b2b"
+
+[[niches]]
+query = "рекламное агентство"
+segment = "b2b"
+
+[[niches]]
+query = "бухгалтерские услуги"
+segment = "b2b"
+
+[[niches]]
+query = "юридические услуги"
+segment = "b2b"
+
+[[niches]]
+query = "кадровое агентство"
+segment = "b2b"
+
+[[niches]]
+query = "клининг офисов"
+segment = "b2b"
+
+[[niches]]
+query = "продажа оборудования"
+segment = "b2b"
+
+[[niches]]
+query = "аренда спецтехники"
+segment = "b2b"
+
+# --- Круглый год: B2C со звонками и заявками ---
+[[niches]]
+query = "окна"
+segment = "b2c"
+
+[[niches]]
+query = "натяжные потолки"
+segment = "b2c"
+
+[[niches]]
+query = "кухни на заказ"
+segment = "b2c"
+
+[[niches]]
+query = "ремонт квартир"
+segment = "b2c"
+
+[[niches]]
+query = "строительство домов"
+segment = "b2c"
+
+[[niches]]
+query = "агентство недвижимости"
+segment = "b2c"
+
+[[niches]]
+query = "учебный центр"
+segment = "b2c"
