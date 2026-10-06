@@ -40,6 +40,17 @@ def save_seen(seen):
     SEEN_FILE.write_text(json.dumps(sorted(seen), ensure_ascii=False), encoding="utf-8")
 
 
+def in_stop_list(item, stop):
+    """Федеральные бренды: у 2ГИС их офисы часто числятся отдельными компаниями «без филиалов»."""
+    ex = item.get("name_ex") or {}
+    names = {hhmod.norm(ex.get("primary")), hhmod.norm(item.get("name"))} - {""}
+    for s in stop:
+        for n in names:
+            if n == s or (len(s) >= 7 and n.startswith(s)):
+                return True
+    return False
+
+
 def plan(niches, cities):
     """Порядок поисков: каждая ниша по очереди в разных городах, чтобы список был разнообразным."""
     for rnd in range(len(cities)):
@@ -63,7 +74,9 @@ def main():
     seen = load_seen() if run.get("skip_already_exported", True) else set()
     taken = set()  # org id, уже взятые в этом запуске
     leads = []
-    stats = {"просмотрено": 0, "филиалы": 0, "много отзывов": 0, "уже были": 0, "без телефона": 0}
+    stats = {"просмотрено": 0, "филиалы": 0, "много отзывов": 0, "стоп-лист": 0,
+             "крупные по hh": 0, "уже были": 0, "без телефона": 0}
+    stop = [hhmod.norm(x) for x in flt.get("stop_list", [])]
     hh_ok = run.get("check_hh", True)
 
     try:
@@ -92,6 +105,9 @@ def main():
                     if twogis.review_count(it) > flt["max_reviews"]:
                         stats["много отзывов"] += 1
                         continue
+                    if in_stop_list(it, stop):
+                        stats["стоп-лист"] += 1
+                        continue
 
                     firm = gis.firm(city["alias"], it["id"]) or it
                     cts = twogis.contacts(firm)
@@ -115,6 +131,11 @@ def main():
                         except Blocked as e:
                             log(f"hh.ru: {e} — дальше без проверки вакансий")
                             hh_ok = False
+
+                    if vac and max(v["employer_vacancies"] for v in vac) > flt.get("max_hh_vacancies", 10**9):
+                        stats["крупные по hh"] += 1
+                        log(f"  - {name}: на hh слишком много вакансий — похоже на крупную компанию")
+                        continue
 
                     created = twogis.created_at(firm)
                     lead = {

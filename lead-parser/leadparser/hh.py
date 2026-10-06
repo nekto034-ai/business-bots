@@ -49,7 +49,9 @@ class HH:
     def employer(self, eid):
         if eid not in self._employers:
             st = _state(self.http.get(f"https://hh.ru/employer/{eid}")) or {}
-            self._employers[eid] = st.get("employerInfo") or {}
+            info = dict(st.get("employerInfo") or {})
+            info["vacancy_count"] = st.get("activeEmployerVacancyCount")
+            self._employers[eid] = info
         return self._employers[eid]
 
     def vacancies(self, company, area_id, city, site_url=""):
@@ -92,5 +94,6 @@ class HH:
                     "is_sales": bool(SALES_RE.search(v.get("name", ""))),
                     "employer_url": f"https://hh.ru/employer/{eid}",
                     "confirmed": confirmed,
+                    "employer_vacancies": info.get("vacancy_count") if isinstance(info.get("vacancy_count"), int) else len(vs),
                 })
         return out
