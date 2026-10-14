@@ -66,6 +66,13 @@ const server = http.createServer((req, res) => {
     res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-cache' });
     return fs.createReadStream(path.join(PUBLIC_DIR, 'index.html')).pipe(res);
   }
+  const img = url.pathname.match(/^\/img\/([a-z_]+_[01]\.jpg)$/);
+  if (req.method === 'GET' && img) {
+    const file = path.join(PUBLIC_DIR, 'img', img[1]);
+    if (!fs.existsSync(file)) return json(res, 404, { error: 'not found' });
+    res.writeHead(200, { 'content-type': 'image/jpeg', 'cache-control': 'max-age=604800' });
+    return fs.createReadStream(file).pipe(res);
+  }
   if (req.method === 'GET' && url.pathname === '/api/sessions') {
     return json(res, 200, { sessions: listSessions() });
   }
