@@ -1,11 +1,12 @@
 <!doctype html>
-<html lang="ru">
+<html lang="ru" data-theme="light">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#11161c">
 <title>Тренировки А Б В</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Ccircle cx=%2216%22 cy=%2216%22 r=%2215%22 fill=%22%231f5fd1%22/%3E%3Ccircle cx=%2216%22 cy=%2216%22 r=%223%22 fill=%22%23fff%22/%3E%3C/svg%3E">
+<script>try{document.documentElement.dataset.theme=localStorage.getItem("theme")||"light"}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=Unbounded:wght@500;700;800&display=swap">
@@ -36,11 +37,16 @@
     color-scheme: light;
   }
   @media (prefers-color-scheme: dark) {
-    :root {
+    :root[data-theme="auto"] {
       --bg: #0d1116; --surface: #161c23; --surface-2: #1c242d; --fg: #eaf0f5; --muted: #95a2ae; --line: #27313b;
       --body: #303c48; --plate-a: #4d8cf0; --plate-b: #ec5a4b; --plate-c: #f0c23a; --ok: #4cbf75;
       --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.25); color-scheme: dark;
     }
+  }
+  :root[data-theme="dark"] {
+      --bg: #0d1116; --surface: #161c23; --surface-2: #1c242d; --fg: #eaf0f5; --muted: #95a2ae; --line: #27313b;
+      --body: #303c48; --plate-a: #4d8cf0; --plate-b: #ec5a4b; --plate-c: #f0c23a; --ok: #4cbf75;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.25); color-scheme: dark;
   }
   :root[data-day="B"] { --accent: var(--plate-b); }
   :root[data-day="C"] { --accent: var(--plate-c); --accent-ink: #1a1405; }
@@ -153,6 +159,20 @@
   details.tech[open] summary { background: var(--surface-2); }
   .tech ul { margin: 10px 0 0; padding-left: 18px; display: grid; gap: 4px; font-size: 14px; }
 
+  .ex-note { display: flex; flex-direction: column; gap: 8px; }
+  .flags { display: flex; gap: 6px; flex-wrap: wrap; }
+  .flag { border: 1px solid var(--line); background: transparent; border-radius: 999px; padding: 5px 11px; font-size: 13px; cursor: pointer; }
+  .flag[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
+  .ex-note textarea { width: 100%; min-height: 44px; border: 1px solid var(--line); background: var(--surface-2); border-radius: 12px; padding: 9px 10px; font-size: 14px; resize: vertical; }
+  .finish { background: var(--surface); border-radius: 18px; padding: 16px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 12px; }
+  .finish h3 { margin: 0; font-family: var(--font-display); font-size: 17px; }
+  .finish p { margin: 0; font-size: 14px; color: var(--muted); }
+  .finish .primary { width: 100%; height: 52px; font-size: 16px; }
+  .summary { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .summary div { background: var(--surface-2); border-radius: 12px; padding: 10px 12px; }
+  .summary b { display: block; font-family: var(--font-display); font-size: 20px; font-variant-numeric: tabular-nums; }
+  .summary span { font-size: 12px; color: var(--muted); }
+  .saved-ok { display: flex; gap: 8px; align-items: center; font-weight: 600; color: var(--ok); }
   .note { background: var(--surface); border-radius: 18px; padding: 14px 16px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 8px; }
   .note label { font-weight: 600; font-size: 14px; }
   .note textarea { width: 100%; min-height: 72px; border: 1px solid var(--line); background: var(--surface-2); border-radius: 12px; padding: 10px; resize: vertical; }
@@ -207,6 +227,7 @@
 
   <div class="toolbar">
     <button class="chip-btn" id="rules-btn" type="button" aria-expanded="false">Правила</button>
+    <button class="chip-btn" id="theme-btn" type="button">Тема</button>
     <input type="date" id="date" aria-label="Дата тренировки">
   </div>
 
@@ -228,8 +249,16 @@
 
   <ol class="list" id="list"></ol>
 
+  <section class="finish" id="finish">
+    <h3>Конец тренировки</h3>
+    <p>Всё сохраняется само после каждой цифры. Эта кнопка — финальная точка: сохранит тренировку и покажет итог.</p>
+    <div class="summary" id="summary" hidden></div>
+    <div class="saved-ok" id="saved-ok" hidden></div>
+    <button class="primary" id="finish-btn" type="button">Завершить и сохранить</button>
+  </section>
+
   <section class="note">
-    <label for="note">Самочувствие и заметки</label>
+    <label for="note">Самочувствие и заметки по тренировке</label>
     <textarea id="note" placeholder="Например: дыхалка лучше, плечо не беспокоит"></textarea>
     <div class="toolbar">
       <button class="primary" id="copy" type="button">Скопировать для Claude</button>
@@ -344,8 +373,8 @@ const sid = () => date + "_" + day;
 
 function emptySession() {
   const ex = {};
-  DAYS[day].ex.forEach(e => { ex[e.id] = { name: e.n, sets: Array.from({ length: e.s }, () => ({ kg: "", reps: "", done: false })), rir: "" }; });
-  return { date, day, ex, note: "" };
+  DAYS[day].ex.forEach(e => { ex[e.id] = { name: e.n, sets: Array.from({ length: e.s }, () => ({ kg: "", reps: "", done: false, at: "" })), rir: "", note: "", flags: [] }; });
+  return { date, day, ex, note: "", finishedAt: "" };
 }
 function loadDraft() {
   const stored = sessions[sid()] || ls.get("session-" + sid());
@@ -353,10 +382,13 @@ function loadDraft() {
   if (stored && stored.ex) {
     Object.keys(base.ex).forEach(k => {
       const s = stored.ex[k]; if (!s) return;
-      base.ex[k].sets = base.ex[k].sets.map((v, i) => s.sets && s.sets[i] ? { kg: s.sets[i].kg ?? "", reps: s.sets[i].reps ?? "", done: !!s.sets[i].done } : v);
+      base.ex[k].sets = base.ex[k].sets.map((v, i) => s.sets && s.sets[i] ? { kg: s.sets[i].kg ?? "", reps: s.sets[i].reps ?? "", done: !!s.sets[i].done, at: s.sets[i].at || "" } : v);
       base.ex[k].rir = s.rir ?? "";
+      base.ex[k].note = s.note || "";
+      base.ex[k].flags = Array.isArray(s.flags) ? s.flags.filter(f => FLAGS.includes(f)) : [];
     });
     base.note = stored.note || "";
+    base.finishedAt = stored.finishedAt || "";
   }
   draft = base; dirty = false;
 }
@@ -369,6 +401,7 @@ function previousFor(exId) {
   return `Прошлый раз ${fmtDate(s.date)}: ${sets}${e.rir !== "" ? " · запас " + esc(e.rir) : ""}`;
 }
 
+const FLAGS = ["Легко", "Тяжело", "Заменить", "Дискомфорт"];
 const CHECK = `<svg viewBox="0 0 24 24" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`;
 
 function renderHead() {
@@ -391,6 +424,7 @@ function updateProgress() {
 }
 function render() {
   renderHead();
+  setTimeout(renderSummary, 0);
   const list = document.getElementById("list");
   list.innerHTML = "";
   DAYS[day].ex.forEach((e, i) => {
@@ -437,6 +471,10 @@ function render() {
           <details class="tech"><summary class="link">Техника</summary><ul>${e.c.map(x => `<li>${esc(x)}</li>`).join("")}</ul></details>
           <a class="link" href="${yt(e.q)}" target="_blank" rel="noopener">▶ Видео</a>
         </div>
+        <div class="ex-note">
+          <div class="flags">${FLAGS.map(f => `<button class="flag" type="button" aria-pressed="${st.flags.includes(f)}" data-ex="${e.id}" data-flag="${f}">${f}</button>`).join("")}</div>
+          <textarea placeholder="Примечание: что заметил, что поменять" aria-label="Примечание к упражнению" data-ex="${e.id}" data-f="note">${esc(st.note)}</textarea>
+        </div>
       </div>`;
     list.appendChild(li);
   });
@@ -456,8 +494,9 @@ function save() {
   if (!online) { setStatus("Нет связи с сервером — записи на телефоне. Нажми «Скопировать для Claude»", "off"); return; }
   const id = sid(), body = JSON.parse(JSON.stringify(draft));
   writing = writing.then(() => fetch("/api/sessions/" + encodeURIComponent(id), { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }))
-    .then(r => { if (!r.ok) throw new Error("код " + r.status); sessions[id] = body; dirty = false; setStatus("Сохранено на сервере · Claude видит запись", "on"); })
-    .catch(err => setStatus("Не сохранилось (" + err.message + ") — записи остались на телефоне", "off"));
+    .then(r => { if (!r.ok) throw new Error("код " + r.status); sessions[id] = body; dirty = false; setStatus("Сохранено на сервере в " + new Date().toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" }) + " · Claude видит запись", "on"); return true; })
+    .catch(err => { setStatus("Не сохранилось (" + err.message + ") — записи остались на телефоне", "off"); return false; });
+  return writing;
 }
 function flushNow() { if (dirty) { clearTimeout(saveTimer); save(); } }
 
@@ -497,14 +536,22 @@ const list = document.getElementById("list");
 list.addEventListener("input", ev => {
   const el = ev.target, exId = el.dataset.ex; if (!exId) return;
   if (el.dataset.f === "rir") draft.ex[exId].rir = el.value;
+  else if (el.dataset.f === "note") draft.ex[exId].note = el.value;
   else draft.ex[exId].sets[+el.dataset.set][el.dataset.f] = el.value.trim();
   scheduleSave();
 });
 list.addEventListener("change", ev => { if (ev.target.dataset.f === "rir") { draft.ex[ev.target.dataset.ex].rir = ev.target.value; scheduleSave(); } });
 list.addEventListener("click", ev => {
+  const fl = ev.target.closest(".flag");
+  if (fl) {
+    const arr = draft.ex[fl.dataset.ex].flags, f = fl.dataset.flag, i = arr.indexOf(f);
+    if (i >= 0) arr.splice(i, 1); else arr.push(f);
+    fl.setAttribute("aria-pressed", String(i < 0)); scheduleSave(); return;
+  }
   const b = ev.target.closest(".done"); if (!b) return;
   const e = DAYS[day].ex.find(x => x.id === b.dataset.ex); const s = draft.ex[e.id].sets[+b.dataset.set];
   s.done = !s.done;
+  s.at = s.done ? new Date().toISOString() : "";
   b.setAttribute("aria-pressed", String(s.done));
   b.closest(".set").classList.toggle("is-done", s.done);
   updateProgress(); scheduleSave();
@@ -525,7 +572,8 @@ function reportText() {
   d.ex.forEach(e => {
     const st = draft.ex[e.id];
     const sets = st.sets.filter(x => x.kg || x.reps).map(x => (x.kg || "—") + "×" + (x.reps || "—"));
-    if (sets.length) lines.push("— " + e.n + ": " + sets.join(", ") + (st.rir !== "" ? " (запас " + st.rir + ")" : ""));
+    const extra = [st.flags.join(", "), st.note.trim()].filter(Boolean).join(" — ");
+    if (sets.length || extra) lines.push("— " + e.n + ": " + (sets.join(", ") || "без подходов") + (st.rir !== "" ? " (запас " + st.rir + ")" : "") + (extra ? " [" + extra + "]" : ""));
   });
   if (draft.note) lines.push("Заметки: " + draft.note);
   return lines.join("\n");
@@ -535,6 +583,47 @@ document.getElementById("copy").addEventListener("click", () => {
   const fallback = () => { box.hidden = false; box.value = text; box.focus(); box.select(); msg.textContent = "Выделил текст — скопируй вручную"; };
   try { navigator.clipboard.writeText(text).then(() => { msg.textContent = "Скопировано"; box.hidden = true; }).catch(fallback); } catch (e) { fallback(); }
 });
+
+/* Finish & summary */
+function stats() {
+  const done = [];
+  let tonnage = 0, sets = 0;
+  DAYS[day].ex.forEach(e => draft.ex[e.id].sets.forEach(s => {
+    const kg = parseFloat(String(s.kg).replace(",", ".")), reps = parseInt(s.reps, 10);
+    if (s.kg || s.reps) { sets++; if (kg > 0 && reps > 0) tonnage += kg * reps; }
+    if (s.done && s.at) done.push(Date.parse(s.at));
+  }));
+  done.sort((a, b) => a - b);
+  const rests = []; for (let i = 1; i < done.length; i++) { const d = (done[i] - done[i - 1]) / 1000; if (d > 15 && d < 900) rests.push(d); }
+  const minutes = done.length > 1 ? Math.round((done[done.length - 1] - done[0]) / 60000) : 0;
+  const avgRest = rests.length ? Math.round(rests.reduce((a, b) => a + b, 0) / rests.length) : 0;
+  return { sets, tonnage: Math.round(tonnage), minutes, avgRest };
+}
+function renderSummary() {
+  const box = document.getElementById("summary"), ok = document.getElementById("saved-ok");
+  if (!draft.finishedAt) { box.hidden = true; ok.hidden = true; document.getElementById("finish-btn").textContent = "Завершить и сохранить"; return; }
+  const st = stats();
+  box.innerHTML = `<div><b>${st.sets}</b><span>подходов записано</span></div><div><b>${st.tonnage.toLocaleString("ru-RU")}</b><span>кг поднято (тоннаж)</span></div>
+    <div><b>${st.minutes || "—"}</b><span>минут от первого до последнего подхода</span></div><div><b>${st.avgRest ? Math.floor(st.avgRest / 60) + ":" + pad(st.avgRest % 60) : "—"}</b><span>средний отдых</span></div>`;
+  box.hidden = false;
+  ok.textContent = "✓ Тренировка сохранена " + new Date(draft.finishedAt).toLocaleString("ru-RU", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }) + " · Claude её видит";
+  ok.hidden = false;
+  document.getElementById("finish-btn").textContent = "Сохранить ещё раз";
+}
+document.getElementById("finish-btn").addEventListener("click", async () => {
+  draft.finishedAt = new Date().toISOString();
+  ls.set("session-" + sid(), draft);
+  clearTimeout(saveTimer); dirty = true;
+  const okSaved = await save();
+  if (okSaved === false || !online) { draft.finishedAt = ""; document.getElementById("saved-ok").hidden = false; document.getElementById("saved-ok").textContent = "Сервер недоступен — данные на телефоне. Нажми «Скопировать для Claude» и отправь мне"; return; }
+  renderSummary(); stopTimer();
+});
+
+/* Theme */
+const THEMES = ["light", "dark", "auto"], THEME_NAMES = { light: "☀ Светлая", dark: "☾ Тёмная", auto: "◐ Как в системе" };
+function applyTheme(t) { document.documentElement.dataset.theme = t; document.getElementById("theme-btn").textContent = THEME_NAMES[t]; try { localStorage.setItem("theme", t); } catch (e) {} }
+document.getElementById("theme-btn").addEventListener("click", () => { const cur = document.documentElement.dataset.theme; applyTheme(THEMES[(THEMES.indexOf(cur) + 1) % THEMES.length]); });
+applyTheme(THEMES.includes(document.documentElement.dataset.theme) ? document.documentElement.dataset.theme : "light");
 
 /* Boot */
 const fromHash = (location.hash || "").replace("#", "").toUpperCase();
