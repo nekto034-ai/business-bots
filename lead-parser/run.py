@@ -11,6 +11,7 @@ import argparse
 import json
 import re
 import sys
+import time
 import tomllib
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -26,6 +27,10 @@ DATA = ROOT / "data"
 OUTPUT = ROOT / "output"
 SEEN_FILE = DATA / "exported.json"
 COOLDOWN_FILE = DATA / "cooldown.json"
+
+
+class TimeUp(Exception):
+    """Истекло время, отведённое на запуск."""
 
 
 def log(*a):
@@ -114,10 +119,16 @@ class Collector:
         self.is_competitor = competitor_check(self.flt)
         self.stop = [hhmod.norm(x) for x in self.flt.get("stop_list", [])]
         self.hh_ok = self.run.get("check_hh", True)
+        self.deadline = None
+
+    def check_time(self):
+        if self.deadline and time.monotonic() > self.deadline:
+            raise TimeUp()
 
     def process(self, it, city, source, segment="", seasonal=False, amocrm=None):
         """Проверить карточку из выдачи 2ГИС; если подходит — добавить в лиды. Вернуть True/False."""
         flt = self.flt
+        self.check_time()
         if it.get("type") != "branch":
             return False
         self.stats["просмотрено"] += 1
@@ -254,6 +265,7 @@ def main():
     ap.add_argument("--config", default=str(ROOT / "config.toml"))
     ap.add_argument("--target", type=int, help="сколько лидов собрать (перекрывает config)")
     ap.add_argument("--force", action="store_true", help="запустить, даже если идёт пауза после блокировки")
+    ap.add_argument("--minutes", type=int, help="максимум минут работы (перекрывает config)")
     args = ap.parse_args()
 
     # Главное правило: не попасть в блокировку. Если недавно ловили капчу/429 — не стучимся.
@@ -267,6 +279,10 @@ def main():
     target = args.target or cfg["run"]["target_leads"]
     src = cfg.get("sources", {})
     c = Collector(cfg)
+    minutes = args.minutes or cfg["run"].get("max_minutes")
+    if minutes:
+        c.deadline = time.monotonic() + minutes * 60
+        log(f"Ограничение по времени: {minutes} мин — потом остановлюсь и сохраню собранное")
 
     try:
         if src.get("hh_amocrm", True):
@@ -276,6 +292,8 @@ def main():
     except Blocked as e:
         until = start_cooldown(cfg["run"].get("cooldown_hours", 12), str(e))
         log(f"СТОП: {e}. Сохраняю то, что успел собрать. Следующий запуск — не раньше {until:%d.%m %H:%M}.")
+    except TimeUp:
+        log("Время вышло. Сохраняю то, что успел собрать.")
     except KeyboardInterrupt:
         log("Остановлено вручную. Сохраняю то, что успел собрать.")
 
