@@ -17,8 +17,14 @@ const PUBLIC_DIR = path.join(__dirname, 'public');
 const USER = 'artem';
 const MAX_BODY = 200_000;
 const SESSION_ID = /^\d{4}-\d{2}-\d{2}_[ABC]$/;
+// Health data from the phone (Health Connect via the FitCourier app): one file per day / per session.
+const HEALTH_DIR = path.join(DATA_DIR, 'health');
+const HEALTH_KINDS = ['days', 'sleep', 'exercise', 'weight'];
+const APK_FILE = path.join(DATA_DIR, 'app', 'fitcourier.apk');
+const MAX_HEALTH_BODY = 3_000_000;
 
 fs.mkdirSync(SESSIONS_DIR, { recursive: true });
+for (const k of HEALTH_KINDS) fs.mkdirSync(path.join(HEALTH_DIR, k), { recursive: true });
 if (!fs.existsSync(PASSWORD_FILE)) {
   fs.writeFileSync(PASSWORD_FILE, crypto.randomBytes(9).toString('base64url') + '\n', { mode: 0o600 });
 }
@@ -35,16 +41,53 @@ function json(res, status, obj) {
   res.end(JSON.stringify(obj));
 }
 
-function readBody(req, cb) {
+function readBody(req, cb, limit = MAX_BODY) {
   const chunks = [];
   let size = 0;
   req.on('data', (c) => {
     size += c.length;
-    if (size > MAX_BODY) req.destroy(); else chunks.push(c);
+    if (size > limit) req.destroy(); else chunks.push(c);
   });
   req.on('end', () => {
     try { cb(JSON.parse(Buffer.concat(chunks).toString('utf8'))); } catch { cb(null); }
   });
+}
+
+const safeId = (v) => String(v || '').replace(/[^A-Za-z0-9_.-]/g, '').slice(0, 120);
+
+function writeJson(file, obj) {
+  const tmp = file + '.tmp';
+  fs.writeFileSync(tmp, JSON.stringify(obj));
+  fs.renameSync(tmp, file);
+}
+
+function saveHealth(data) {
+  const counts = {};
+  const put = (kind, id, obj) => { if (!id) return; writeJson(path.join(HEALTH_DIR, kind, id + '.json'), obj); counts[kind] = (counts[kind] || 0) + 1; };
+  for (const d of Array.isArray(data.days) ? data.days : []) {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(d.date)) put('days', d.date, d);
+  }
+  for (const kind of ['sleep', 'exercise', 'weight']) {
+    for (const r of Array.isArray(data[kind]) ? data[kind] : []) put(kind, safeId(r.id), r);
+  }
+  writeJson(path.join(HEALTH_DIR, 'last-sync.json'), {
+    received_at: new Date().toISOString(), synced_at: data.synced_at, timezone: data.timezone, app_version: data.app_version, counts,
+  });
+  return counts;
+}
+
+function readHealth(sinceIso) {
+  const out = {};
+  for (const kind of HEALTH_KINDS) {
+    out[kind] = fs.readdirSync(path.join(HEALTH_DIR, kind))
+      .filter((f) => f.endsWith('.json'))
+      .map((f) => { try { return JSON.parse(fs.readFileSync(path.join(HEALTH_DIR, kind, f), 'utf8')); } catch { return null; } })
+      .filter(Boolean)
+      .filter((r) => (r.date || r.start || r.time || '') >= sinceIso)
+      .sort((a, b) => ((a.date || a.start || a.time) < (b.date || b.start || b.time) ? -1 : 1));
+  }
+  try { out.last_sync = JSON.parse(fs.readFileSync(path.join(HEALTH_DIR, 'last-sync.json'), 'utf8')); } catch { out.last_sync = null; }
+  return out;
 }
 
 function listSessions() {
@@ -72,6 +115,33 @@ const server = http.createServer((req, res) => {
     if (!fs.existsSync(file)) return json(res, 404, { error: 'not found' });
     res.writeHead(200, { 'content-type': 'image/jpeg', 'cache-control': 'max-age=604800' });
     return fs.createReadStream(file).pipe(res);
+  }
+  if (req.method === 'GET' && url.pathname === '/app.apk') {
+    if (!fs.existsSync(APK_FILE)) return json(res, 404, { error: 'apk not uploaded yet' });
+    res.writeHead(200, {
+      'content-type': 'application/vnd.android.package-archive',
+      'content-disposition': 'attachment; filename="fitcourier.apk"',
+      'content-length': fs.statSync(APK_FILE).size,
+    });
+    return fs.createReadStream(APK_FILE).pipe(res);
+  }
+  if (req.method === 'POST' && url.pathname === '/api/health') {
+    return readBody(req, (data) => {
+      if (!data || typeof data !== 'object' || Array.isArray(data)) return json(res, 400, { error: 'bad json' });
+      try {
+        const counts = saveHealth(data);
+        console.log('health sync', JSON.stringify(counts));
+        json(res, 200, { ok: true, counts });
+      } catch (err) {
+        console.error('health save failed:', err.message);
+        json(res, 500, { error: 'save failed' });
+      }
+    }, MAX_HEALTH_BODY);
+  }
+  if (req.method === 'GET' && url.pathname === '/api/health') {
+    const days = Math.min(Math.max(Number(url.searchParams.get('days')) || 30, 1), 400);
+    const since = new Date(Date.now() - days * 86400000).toISOString().slice(0, 10);
+    return json(res, 200, readHealth(since));
   }
   if (req.method === 'GET' && url.pathname === '/api/sessions') {
     return json(res, 200, { sessions: listSessions() });
