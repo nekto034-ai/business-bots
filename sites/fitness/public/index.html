@@ -1,245 +1,329 @@
-<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style></head><body>
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#11161c">
 <title>Тренировки А Б В</title>
-<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Ccircle cx=%2216%22 cy=%2216%22 r=%2215%22 fill=%22%231f5fd1%22/%3E%3Ccircle cx=%2216%22 cy=%2216%22 r=%223%22 fill=%22%23fff%22/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=Unbounded:wght@600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=Unbounded:wght@500;700;800&display=swap">
 <style>
-  /* Layout: phone-first gym card — tabs A/B/C, date, numbered exercise cards (order = execution order) with a muscle map and set log */
+  /* Layout: a gym logbook. Day colors follow Olympic plates (A — blue 20 kg, B — red 25 kg, C — yellow 15 kg).
+     Hero with today's plate + progress ring, plate switcher, exercise cards (photo, sets, rest timer), sticky timer bar. */
   :root {
-    --bg: #f3f5f7;
+    --bg: #eef1f4;
     --surface: #ffffff;
-    --fg: #16202a;
-    --muted: #5d6b78;
-    --line: #dde3e9;
-    --field: #f6f8fa;
-    --accent: #1f5fbf;
-    --accent-soft: #9dbbe6;
-    --accent-ink: #ffffff;
-    --body: #d3dae1;
-    --rir-g: #3f8f4a;
+    --surface-2: #f6f8fa;
+    --fg: #121820;
+    --muted: #5f6b77;
+    --line: #dbe1e7;
+    --body: #cfd6dd;
+    --plate-a: #1f5fd1;
+    --plate-b: #cf3a2c;
+    --plate-c: #d9a50f;
+    --ok: #2f9e57;
     --rir-y: #c9a227;
     --rir-o: #d9822b;
     --rir-r: #c8473b;
+    --accent: var(--plate-a);
+    --accent-ink: #ffffff;
+    --accent-soft: color-mix(in srgb, var(--accent) 22%, var(--surface));
+    --shadow: 0 1px 2px rgba(18,24,32,.06), 0 6px 20px rgba(18,24,32,.06);
     --font-display: "Unbounded", "Arial Black", sans-serif;
     --font-body: "Golos Text", "Segoe UI", Roboto, Arial, sans-serif;
+    color-scheme: light;
   }
   @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-      --bg: #0f1418; --surface: #172028; --fg: #e8eef3; --muted: #9aa8b4; --line: #2a3640; --field: #111920;
-      --accent: #5b95ea; --accent-soft: #2f4f7a; --accent-ink: #0f1418; --body: #34424e; color-scheme: dark;
+    :root {
+      --bg: #0d1116; --surface: #161c23; --surface-2: #1c242d; --fg: #eaf0f5; --muted: #95a2ae; --line: #27313b;
+      --body: #303c48; --plate-a: #4d8cf0; --plate-b: #ec5a4b; --plate-c: #f0c23a; --ok: #4cbf75;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.25); color-scheme: dark;
     }
   }
-  :root[data-theme="dark"] {
-    --bg: #0f1418; --surface: #172028; --fg: #e8eef3; --muted: #9aa8b4; --line: #2a3640; --field: #111920;
-    --accent: #5b95ea; --accent-soft: #2f4f7a; --accent-ink: #0f1418; --body: #34424e; color-scheme: dark;
-  }
-  * { box-sizing: border-box; }
+  :root[data-day="B"] { --accent: var(--plate-b); }
+  :root[data-day="C"] { --accent: var(--plate-c); --accent-ink: #1a1405; }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html { padding-top: env(safe-area-inset-top, 0px); }
   body {
-    background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.45;
-    padding-left: max(16px, env(safe-area-inset-left, 0px));
-    padding-right: max(16px, env(safe-area-inset-right, 0px));
-    padding-block: 20px 40px;
+    margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.45;
+    padding-left: max(14px, env(safe-area-inset-left, 0px)); padding-right: max(14px, env(safe-area-inset-right, 0px));
+    padding-block: 14px calc(110px + env(safe-area-inset-bottom, 0px));
   }
-  .wrap { max-width: 640px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
-  h1 { font-family: var(--font-display); font-size: 22px; margin: 0; text-wrap: balance; }
-  .sub { color: var(--muted); margin: 4px 0 0; font-size: 14px; }
-  .status { font-size: 13px; color: var(--muted); }
-  .status b { color: var(--rir-g); font-weight: 600; }
-
-  .tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; position: sticky; top: env(safe-area-inset-top, 0px); z-index: 2; background: var(--bg); padding-block: 8px; }
-  .tab { font: inherit; border: 1px solid var(--line); background: var(--surface); color: var(--fg); border-radius: 10px; padding: 8px 6px; cursor: pointer; display: flex; flex-direction: column; gap: 2px; align-items: center; }
-  .tab b { font-family: var(--font-display); font-size: 18px; }
-  .tab span { font-size: 12px; color: var(--muted); text-align: center; }
-  .tab[aria-selected="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
-  .tab[aria-selected="true"] span { color: var(--accent-ink); opacity: 0.85; }
+  .wrap { max-width: 620px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
+  button, input, select, textarea { font: inherit; color: inherit; }
   :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  [hidden] { display: none !important; }
 
-  details.rules { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
-  details.rules summary { cursor: pointer; font-weight: 600; }
-  details.rules ul { margin: 10px 0 0; padding-left: 18px; display: grid; gap: 4px; font-size: 14px; }
-  .rir { display: flex; gap: 4px; margin-top: 10px; flex-wrap: wrap; }
-  .rir i { font-style: normal; font-size: 12px; padding: 2px 8px; border-radius: 6px; color: #fff; }
+  /* Hero */
+  .hero {
+    position: relative; overflow: hidden; border-radius: 22px; padding: 18px; color: var(--accent-ink);
+    background: radial-gradient(120% 140% at 100% 0%, color-mix(in srgb, var(--accent) 65%, #fff) 0%, var(--accent) 45%, color-mix(in srgb, var(--accent) 70%, #000) 100%);
+    box-shadow: var(--shadow); display: grid; grid-template-columns: 1fr auto; gap: 10px 14px; align-items: center;
+  }
+  .hero::after { /* knurling texture */
+    content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .09;
+    background-image: repeating-linear-gradient(45deg, currentColor 0 1px, transparent 1px 7px), repeating-linear-gradient(-45deg, currentColor 0 1px, transparent 1px 7px);
+  }
+  .hero .kicker { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; opacity: .85; }
+  .hero h1 { font-family: var(--font-display); font-weight: 800; font-size: 30px; line-height: 1.05; margin: 2px 0 4px; text-wrap: balance; }
+  .hero .meta { font-size: 13px; opacity: .9; }
+  .ring { position: relative; width: 84px; height: 84px; z-index: 1; }
+  .ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .ring .num { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; font-family: var(--font-display); font-weight: 700; font-size: 18px; line-height: 1; }
+  .ring .num small { display: block; font-family: var(--font-body); font-weight: 500; font-size: 10px; opacity: .85; margin-top: 3px; }
+  .hero .status { grid-column: 1 / -1; font-size: 12.5px; display: flex; align-items: center; gap: 6px; opacity: .95; z-index: 1; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; opacity: .5; flex: none; }
+  .dot.on { background: #8ff0b0; opacity: 1; box-shadow: 0 0 0 3px rgba(143,240,176,.25); }
+  .dot.off { background: #ffb3a8; opacity: 1; }
 
-  .dayhead { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
-  .dayhead h2 { font-family: var(--font-display); font-size: 18px; margin: 0; }
-  .dayhead label { font-size: 13px; color: var(--muted); display: flex; gap: 6px; align-items: center; }
-  input, select, textarea { font: inherit; color: var(--fg); background: var(--field); border: 1px solid var(--line); border-radius: 8px; }
-  input[type="date"] { padding: 4px 8px; }
+  /* Plate switcher */
+  .plates { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .plate {
+    border: 0; background: var(--surface); border-radius: 18px; padding: 10px 6px 9px; cursor: pointer; box-shadow: var(--shadow);
+    display: flex; flex-direction: column; align-items: center; gap: 4px; transition: transform .15s ease;
+  }
+  .plate:active { transform: scale(.97); }
+  .plate .disc { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-family: var(--font-display); font-weight: 800; font-size: 16px; color: #fff;
+    background: radial-gradient(circle, var(--bg) 0 3px, var(--pc) 3.5px 13px, color-mix(in srgb, var(--pc) 75%, #000) 13.5px 14.5px, var(--pc) 15px); position: relative; }
+  .plate span { font-size: 11.5px; color: var(--muted); text-align: center; line-height: 1.2; }
+  .plate[data-day="A"] { --pc: var(--plate-a); }
+  .plate[data-day="B"] { --pc: var(--plate-b); }
+  .plate[data-day="C"] { --pc: var(--plate-c); }
+  .plate[aria-selected="true"] { outline: 2px solid var(--pc); outline-offset: -2px; }
+  .plate[aria-selected="true"] span { color: var(--fg); font-weight: 600; }
 
-  .list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
-  .ex { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
-  .ex.opt { border-style: dashed; }
-  .top { display: grid; grid-template-columns: 28px 1fr auto; gap: 10px; align-items: start; }
-  .num { font-family: var(--font-display); font-size: 20px; color: var(--accent); line-height: 1.1; }
-  .title { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
-  .title h3 { margin: 0; font-size: 16px; font-weight: 600; }
-  .dose { display: flex; gap: 8px; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
-  .dose b { color: var(--fg); font-weight: 600; }
-  .tag { font-size: 12px; color: var(--muted); }
-  .opt-badge { font-size: 11px; border: 1px solid var(--line); border-radius: 6px; padding: 0 6px; color: var(--muted); align-self: flex-start; }
-  .map { display: flex; gap: 2px; }
-  .map svg { width: 34px; height: 68px; }
-  .demo { position: relative; width: 100%; max-width: 280px; aspect-ratio: 3 / 2; border-radius: 10px; overflow: hidden; background: #fff; border: 1px solid var(--line); }
-  .demo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
-  .demo img.b { animation: swap 2.4s ease-in-out infinite; }
-  .demo span { position: absolute; left: 6px; bottom: 4px; font-size: 11px; color: #5d6b78; background: rgba(255,255,255,.85); border-radius: 4px; padding: 0 4px; }
-  @keyframes swap { 0%, 40% { opacity: 0; } 50%, 90% { opacity: 1; } 100% { opacity: 0; } }
-  @media (prefers-reduced-motion: reduce) { .demo img.b { animation: none; opacity: 0; } }
-  .cues { margin: 0; padding-left: 18px; font-size: 14px; display: grid; gap: 2px; }
-  .last { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
-  .sets { display: grid; grid-template-columns: auto 1fr 1fr; gap: 6px 8px; align-items: center; font-size: 13px; }
-  .sets .h { color: var(--muted); font-size: 12px; }
-  .sets .lbl { color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
-  .sets input { width: 100%; padding: 6px 8px; font-variant-numeric: tabular-nums; }
-  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-  .row select { padding: 5px 8px; font-size: 13px; }
-  .btn { font: inherit; font-size: 13px; text-decoration: none; color: var(--accent); border: 1px solid var(--accent); border-radius: 8px; padding: 5px 10px; background: transparent; cursor: pointer; }
-  .btn.solid { background: var(--accent); color: var(--accent-ink); }
-  .note { display: flex; flex-direction: column; gap: 6px; }
-  .note textarea { width: 100%; min-height: 64px; padding: 8px; }
-  .foot { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-  .copybox { width: 100%; min-height: 80px; padding: 8px; font-size: 13px; }
-  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+  /* Toolbar */
+  .toolbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .chip-btn { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 6px 12px; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+  .toolbar input[type="date"] { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 5px 12px; font-size: 13px; margin-left: auto; }
+  .rules { background: var(--surface); border-radius: 16px; padding: 14px 16px; box-shadow: var(--shadow); }
+  .rules h3 { margin: 0 0 8px; font-size: 15px; }
+  .rules ul { margin: 0; padding-left: 18px; display: grid; gap: 5px; font-size: 14px; }
+  .scale { display: flex; gap: 4px; margin-top: 10px; flex-wrap: wrap; }
+  .scale i { font-style: normal; font-size: 11.5px; padding: 2px 8px; border-radius: 6px; color: #fff; }
+
+  /* Exercise card */
+  .list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+  .ex { background: var(--surface); border-radius: 20px; box-shadow: var(--shadow); overflow: hidden; }
+  .ex.opt { opacity: .92; }
+  .ex.opt .photo { filter: saturate(.7); }
+  .photo { position: relative; aspect-ratio: 3 / 2; background: #fff; }
+  .photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .photo img.b { animation: swap 2.6s ease-in-out infinite; }
+  @keyframes swap { 0%, 38% { opacity: 0; } 50%, 88% { opacity: 1; } 100% { opacity: 0; } }
+  .photo .badge { position: absolute; top: 10px; left: 10px; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center;
+    font-family: var(--font-display); font-weight: 800; font-size: 15px; color: var(--accent-ink); background: var(--accent); box-shadow: 0 2px 8px rgba(0,0,0,.25); }
+  .photo .rest { position: absolute; top: 12px; right: 10px; font-size: 12px; font-weight: 600; padding: 4px 9px; border-radius: 999px; background: rgba(10,14,18,.72); color: #fff; backdrop-filter: blur(4px); }
+  .photo .opt-tag { position: absolute; bottom: 10px; left: 10px; font-size: 11.5px; padding: 3px 8px; border-radius: 999px; background: rgba(255,255,255,.9); color: #333; }
+  .ex-body { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+  .ex-head { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: start; }
+  .ex-head h3 { margin: 0 0 6px; font-size: 17px; line-height: 1.25; font-weight: 700; }
+  .tags { display: flex; gap: 6px; flex-wrap: wrap; }
+  .tag { font-size: 12px; padding: 3px 9px; border-radius: 999px; background: var(--surface-2); color: var(--muted); }
+  .tag.dose { background: var(--accent); color: var(--accent-ink); font-weight: 700; font-variant-numeric: tabular-nums; }
+  .tag.main { background: var(--accent-soft); color: var(--fg); font-weight: 600; }
+  .fig { display: flex; gap: 2px; }
+  .fig svg { width: 38px; height: 76px; }
+  .last { font-size: 13px; color: var(--muted); background: var(--surface-2); border-radius: 10px; padding: 7px 10px; font-variant-numeric: tabular-nums; }
+  .last b { color: var(--fg); font-weight: 600; }
+
+  .sets { display: flex; flex-direction: column; gap: 8px; }
+  .set { display: grid; grid-template-columns: 26px 1fr 14px 1fr 46px; gap: 8px; align-items: center; }
+  .set .n { font-family: var(--font-display); font-weight: 700; font-size: 13px; color: var(--muted); text-align: center; }
+  .field { position: relative; }
+  .field input { width: 100%; height: 46px; border: 1px solid var(--line); background: var(--surface-2); border-radius: 12px; padding: 0 34px 0 12px;
+    font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .field input::placeholder { color: color-mix(in srgb, var(--muted) 60%, transparent); font-weight: 500; }
+  .field small { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-size: 11.5px; color: var(--muted); pointer-events: none; }
+  .x { text-align: center; color: var(--muted); }
+  .done { width: 46px; height: 46px; border-radius: 12px; border: 1.5px solid var(--line); background: transparent; cursor: pointer; display: grid; place-items: center; transition: background .15s, border-color .15s; }
+  .done svg { width: 20px; height: 20px; stroke: var(--muted); }
+  .done[aria-pressed="true"] { background: var(--ok); border-color: var(--ok); }
+  .done[aria-pressed="true"] svg { stroke: #fff; }
+  .set.is-done input { border-color: color-mix(in srgb, var(--ok) 55%, var(--line)); }
+
+  .ex-foot { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .ex-foot select { height: 36px; border: 1px solid var(--line); background: var(--surface-2); border-radius: 999px; padding: 0 12px; font-size: 13px; }
+  .link { height: 36px; display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 0 13px; font-size: 13px; font-weight: 600; text-decoration: none; color: var(--fg); border: 1px solid var(--line); background: transparent; cursor: pointer; }
+  details.tech summary { list-style: none; }
+  details.tech summary::-webkit-details-marker { display: none; }
+  details.tech[open] summary { background: var(--surface-2); }
+  .tech ul { margin: 10px 0 0; padding-left: 18px; display: grid; gap: 4px; font-size: 14px; }
+
+  .note { background: var(--surface); border-radius: 18px; padding: 14px 16px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 8px; }
+  .note label { font-weight: 600; font-size: 14px; }
+  .note textarea { width: 100%; min-height: 72px; border: 1px solid var(--line); background: var(--surface-2); border-radius: 12px; padding: 10px; resize: vertical; }
+  .primary { height: 46px; border: 0; border-radius: 14px; background: var(--accent); color: var(--accent-ink); font-weight: 700; cursor: pointer; padding: 0 18px; }
+  .copybox { width: 100%; min-height: 90px; border: 1px solid var(--line); background: var(--surface-2); border-radius: 12px; padding: 10px; font-size: 13px; }
+  .muted { color: var(--muted); font-size: 13px; }
+
+  /* Rest timer bar */
+  .timer {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
+    padding: 10px max(14px, env(safe-area-inset-right, 0px)) calc(10px + env(safe-area-inset-bottom, 0px)) max(14px, env(safe-area-inset-left, 0px));
+    background: color-mix(in srgb, var(--surface) 92%, transparent); backdrop-filter: blur(10px); border-top: 1px solid var(--line);
+    transform: translateY(110%); transition: transform .25s ease;
+  }
+  .timer.show { transform: translateY(0); }
+  .timer .in { max-width: 620px; margin: 0 auto; display: grid; grid-template-columns: 1fr auto auto; gap: 10px; align-items: center; }
+  .timer .t { font-family: var(--font-display); font-weight: 800; font-size: 28px; font-variant-numeric: tabular-nums; line-height: 1; }
+  .timer .l { font-size: 12px; color: var(--muted); margin-top: 3px; }
+  .timer .bar { grid-column: 1 / -1; height: 5px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
+  .timer .bar i { display: block; height: 100%; width: 0; background: var(--accent); border-radius: inherit; transition: width .25s linear; }
+  .timer.over .t { color: var(--ok); }
+  .timer button { height: 42px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface-2); padding: 0 14px; font-weight: 700; cursor: pointer; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+    .photo img.b { animation: none; opacity: 0; }
+  }
 </style>
-
+</head>
+<body>
 <div class="wrap">
-  <header>
-    <h1>Тренировки А · Б · В</h1>
-    <p class="sub">Вт / Чт / Сб по кругу. Вписывай вес и повторы по ходу — Claude видит записи.</p>
-    <p class="status" id="status">Подключаюсь к серверу…</p>
+
+  <header class="hero" id="hero">
+    <div>
+      <div class="kicker" id="kicker">Тренировка</div>
+      <h1 id="title">Жимы</h1>
+      <div class="meta" id="meta"></div>
+    </div>
+    <div class="ring" aria-label="Прогресс тренировки">
+      <svg viewBox="0 0 84 84"><circle cx="42" cy="42" r="36" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="8"/>
+        <circle id="ring" cx="42" cy="42" r="36" fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-dasharray="226.2" stroke-dashoffset="226.2"/></svg>
+      <div class="num"><div><span id="ring-num">0/0</span><small>подходов</small></div></div>
+    </div>
+    <div class="status"><span class="dot" id="dot"></span><span id="status">Подключаюсь к серверу…</span></div>
   </header>
 
-  <div class="tabs" role="tablist" aria-label="Тренировка">
-    <button class="tab" role="tab" data-day="A"><b>А</b><span>грудь · плечи · трицепс</span></button>
-    <button class="tab" role="tab" data-day="B"><b>Б</b><span>ноги · пресс</span></button>
-    <button class="tab" role="tab" data-day="C"><b>В</b><span>спина · бицепс · пресс</span></button>
+  <nav class="plates" role="tablist" aria-label="Тренировка">
+    <button class="plate" role="tab" data-day="A"><span class="disc" title="блин 20 кг">А</span><span>грудь · плечи · трицепс</span></button>
+    <button class="plate" role="tab" data-day="B"><span class="disc" title="блин 25 кг">Б</span><span>ноги · пресс</span></button>
+    <button class="plate" role="tab" data-day="C"><span class="disc" title="блин 15 кг">В</span><span>спина · бицепс</span></button>
+  </nav>
+
+  <div class="toolbar">
+    <button class="chip-btn" id="rules-btn" type="button" aria-expanded="false">Правила</button>
+    <input type="date" id="date" aria-label="Дата тренировки">
   </div>
 
-  <details class="rules">
-    <summary>Правила на каждую тренировку</summary>
+  <section class="rules" id="rules" hidden>
+    <h3>Каждую тренировку</h3>
     <ul>
-      <li>Разминка: 5–10 мин кардио</li>
-      <li>Разминочные подходы — по самочувствию, не записываем. Записываем 4 рабочих подхода</li>
+      <li>Разминка 5–10 мин кардио; разминочные подходы — по самочувствию, не записываем</li>
+      <li>Записываем 4 рабочих подхода</li>
       <li>Недели 1–2: в рабочих подходах запас 2–3 повтора</li>
-      <li>Отдых: базовые ~2 мин (до 3 на тяжёлых), изолирующие и пресс 60–90 с</li>
-      <li>Рабочие подходы — верх диапазона с нужным запасом → в следующий раз +вес (тренажёр +5 кг, гантели +1–2 кг)</li>
+      <li>Отдых: базовые ~2 мин, изолирующие и пресс 60–90 с. Нажми ✓ — запустится таймер</li>
+      <li>Все рабочие подходы — верх диапазона с нужным запасом → в следующий раз +вес (тренажёр +5 кг, гантели +1–2 кг)</li>
       <li>Тяжёлые подходы: выдох на усилии, без долгой задержки дыхания</li>
-      <li>Нет нужного тренажёра — бери похожий на ту же мышцу</li>
-      <li>Пунктирная карточка — по желанию, если остаётся время</li>
+      <li>Нет нужного тренажёра — бери похожий на ту же мышцу. Блеклая карточка — по желанию</li>
     </ul>
-    <div class="rir" aria-label="Шкала запаса">
-      <i style="background:var(--rir-g)">запас 5–4</i><i style="background:var(--rir-y)">3–2</i><i style="background:var(--rir-o)">2–1</i><i style="background:var(--rir-r)">1–0</i>
+    <div class="scale" aria-label="Шкала запаса">
+      <i style="background:var(--ok)">запас 5–4</i><i style="background:var(--rir-y)">3–2</i><i style="background:var(--rir-o)">2–1</i><i style="background:var(--rir-r)">1–0</i>
     </div>
-  </details>
-
-  <section role="tabpanel" aria-live="polite">
-    <div class="dayhead">
-      <h2 id="day-title"></h2>
-      <label for="date">Дата <input type="date" id="date"></label>
-    </div>
-    <p class="tag" id="day-meta"></p>
-    <ol class="list" id="list"></ol>
   </section>
 
-  <div class="note">
-    <label for="note" class="tag">Самочувствие, заметки</label>
-    <textarea id="note" placeholder="Например: дыхалка лучше, плечо не беспокоит"></textarea>
-  </div>
+  <ol class="list" id="list"></ol>
 
-  <div class="foot">
-    <button class="btn solid" id="copy" type="button">Скопировать для Claude</button>
-    <span class="tag" id="copy-msg"></span>
+  <section class="note">
+    <label for="note">Самочувствие и заметки</label>
+    <textarea id="note" placeholder="Например: дыхалка лучше, плечо не беспокоит"></textarea>
+    <div class="toolbar">
+      <button class="primary" id="copy" type="button">Скопировать для Claude</button>
+      <span class="muted" id="copy-msg"></span>
+    </div>
+    <textarea class="copybox" id="copybox" readonly hidden aria-label="Текст отчёта"></textarea>
+  </section>
+</div>
+
+<div class="timer" id="timer" aria-live="polite">
+  <div class="in">
+    <div><div class="t" id="t-time">2:00</div><div class="l" id="t-label">Отдых</div></div>
+    <button type="button" id="t-plus">+30 с</button>
+    <button type="button" id="t-stop">Готов</button>
+    <div class="bar"><i id="t-bar"></i></div>
   </div>
-  <textarea class="copybox" id="copybox" readonly hidden aria-label="Текст отчёта"></textarea>
 </div>
 
 <script>
 const M = {
   chest: "грудь", delts: "плечи", tri: "трицепс", bi: "бицепс", back: "спина", rear: "задняя дельта",
-  abs: "пресс", quads: "квадрицепс", hams: "задняя поверхность бедра", glutes: "ягодицы", adduct: "приводящие", lower: "поясница"
+  abs: "пресс", quads: "квадрицепс", hams: "бицепс бедра", glutes: "ягодицы", adduct: "приводящие", lower: "поясница"
 };
 const DAYS = {
-  A: { title: "А — Жимы", meta: "грудь · плечи · трицепс · пресс", ex: [
-    { id: "chest_machine", n: "Жим в тренажёре на грудь (Хаммер или блочный)", s: 4, r: "8–10", rest: "2 мин", p: ["chest"], x: ["delts","tri"], q: "жим от груди в тренажере хаммер техника",
+  A: { title: "Жимы", plate: "20", meta: "Грудь, плечи, трицепс, пресс", ex: [
+    { id: "chest_machine", n: "Жим в тренажёре на грудь", alt: "Хаммер или блочный", s: 4, r: "8–10", rest: 120, p: ["chest"], x: ["delts","tri"], q: "жим от груди в тренажере хаммер техника",
       c: ["Лопатки сведены и прижаты к спинке", "Рукояти на уровне середины груди", "Вверх на выдохе, локти не выпрямлять до щелчка"] },
-    { id: "incline_db", n: "Жим гантелей на наклонной скамье", s: 4, r: "8–12", rest: "2 мин", p: ["chest"], x: ["delts","tri"], q: "жим гантелей на наклонной скамье техника",
+    { id: "incline_db", n: "Жим гантелей на наклонной", alt: "скамья 30°", s: 4, r: "8–12", rest: 120, p: ["chest"], x: ["delts","tri"], q: "жим гантелей на наклонной скамье техника",
       c: ["Наклон скамьи 30°", "Локти под ~45° к корпусу", "Опускай до уровня груди, вверх по дуге"] },
-    { id: "shoulder_press", n: "Жим на плечи (тренажёр или гантели сидя)", s: 4, r: "8–12", rest: "2 мин", p: ["delts"], x: ["tri"], q: "жим гантелей сидя на плечи техника",
+    { id: "shoulder_press", n: "Жим на плечи", alt: "тренажёр или гантели сидя", s: 4, r: "8–12", rest: 120, p: ["delts"], x: ["tri"], q: "жим гантелей сидя на плечи техника",
       c: ["Спина прижата, без прогиба в пояснице", "Вниз до уровня ушей", "Вверх без рывка"] },
-    { id: "lateral", n: "Махи гантелями в стороны", s: 4, r: "12–15", rest: "60–90 с", p: ["delts"], x: [], q: "махи гантелями в стороны техника",
+    { id: "lateral", n: "Махи гантелями в стороны", s: 4, r: "12–15", rest: 75, p: ["delts"], x: [], q: "махи гантелями в стороны техника",
       c: ["Руки чуть согнуты, до уровня плеч", "Ведёт локоть, а не кисть", "Без раскачки корпусом"] },
-    { id: "tri_pushdown", n: "Разгибание рук на трицепс в блоке", s: 4, r: "12–15", rest: "60–90 с", p: ["tri"], x: [], q: "разгибание рук на блоке трицепс техника",
+    { id: "tri_pushdown", n: "Разгибание рук в блоке", alt: "трицепс", s: 4, r: "12–15", rest: 75, p: ["tri"], x: [], q: "разгибание рук на блоке трицепс техника",
       c: ["Локти прижаты к бокам и неподвижны", "Разгибай до конца, внизу пауза", "Вверх медленно"] },
-    { id: "abs_ddx", n: "Скручивания в тренажёре DDX (блины 5–20 кг)", s: 4, r: "12–15", rest: "60–90 с", p: ["abs"], x: [], q: "скручивания в тренажере на пресс техника",
+    { id: "abs_ddx", n: "Скручивания в тренажёре DDX", alt: "блины 5–20 кг", s: 4, r: "12–15", rest: 75, p: ["abs"], x: [], q: "скручивания в тренажере на пресс техника",
       c: ["Скручивайся прессом, а не тяни руками", "Внизу пауза 1 с, выдох", "Вверх медленно, без бросания веса"] },
-    { id: "fly", opt: true, n: "Сведение рук в тренажёре (бабочка)", s: 4, r: "12–15", rest: "60–90 с", p: ["chest"], x: [], q: "сведение рук в тренажере бабочка техника",
+    { id: "fly", opt: true, n: "Сведение рук (бабочка)", s: 4, r: "12–15", rest: 75, p: ["chest"], x: [], q: "сведение рук в тренажере бабочка техника",
       c: ["Локти чуть согнуты и не меняют угол", "Своди грудью", "В точке сведения пауза 1 с"] }
   ]},
-  B: { title: "Б — Ноги", meta: "ноги · ягодицы · пресс · поясница", ex: [
-    { id: "leg_press", n: "Жим ногами", s: 4, r: "10–12", rest: "2–3 мин", p: ["quads","glutes"], x: ["hams"], q: "жим ногами в тренажере техника",
+  B: { title: "Ноги", plate: "25", meta: "Ноги, ягодицы, пресс, поясница", ex: [
+    { id: "leg_press", n: "Жим ногами", s: 4, r: "10–12", rest: 150, p: ["quads","glutes"], x: ["hams"], q: "жим ногами в тренажере техника",
       c: ["Поясница и таз прижаты к спинке", "Колени смотрят туда же, куда носки", "Выдох на жиме, колени не выпрямлять до щелчка"] },
-    { id: "lunge", n: "Выпады с шагом назад или испанские приседания", s: 4, r: "10–12 на ногу", rest: "2 мин", p: ["quads","glutes"], x: ["hams"], q: "обратные выпады с гантелями техника",
+    { id: "lunge", n: "Выпады с шагом назад", alt: "или испанские приседания", s: 4, r: "10–12 на ногу", rest: 120, p: ["quads","glutes"], x: ["hams"], q: "обратные выпады с гантелями техника",
       c: ["Корпус ровно, шаг достаточно длинный", "Колено задней ноги почти касается пола", "Толчок пяткой передней ноги"] },
-    { id: "leg_curl", n: "Сгибание ног в тренажёре (лёжа или сидя)", s: 4, r: "12–15", rest: "90 с", p: ["hams"], x: [], q: "сгибание ног в тренажере лежа техника",
+    { id: "leg_curl", n: "Сгибание ног в тренажёре", alt: "лёжа или сидя", s: 4, r: "12–15", rest: 90, p: ["hams"], x: [], q: "сгибание ног в тренажере лежа техника",
       c: ["Таз прижат", "Сгибай до упора, вниз медленно", "Без рывков"] },
-    { id: "leg_ext", n: "Разгибание ног в тренажёре", s: 4, r: "12–15", rest: "90 с", p: ["quads"], x: [], q: "разгибание ног в тренажере техника",
+    { id: "leg_ext", n: "Разгибание ног в тренажёре", s: 4, r: "12–15", rest: 90, p: ["quads"], x: [], q: "разгибание ног в тренажере техника",
       c: ["Колено на оси тренажёра", "Вверху пауза 1 с", "Вниз медленно"] },
-    { id: "abs_leg_raise", n: "Подъём ног в упоре (турник / брусья)", s: 4, r: "10–15", rest: "60–90 с", p: ["abs"], x: [], q: "подъем ног в упоре на брусьях техника",
+    { id: "abs_leg_raise", n: "Подъём ног в упоре", alt: "турник / брусья", s: 4, r: "10–15", rest: 75, p: ["abs"], x: [], q: "подъем ног в упоре на брусьях техника",
       c: ["Без раскачки — поднимай прессом", "Вверху подкручивай таз", "Тяжело — сгибай колени"] },
-    { id: "hyper", n: "Гиперэкстензия", s: 4, r: "12–15", rest: "60–90 с", p: ["lower","glutes"], x: ["hams"], q: "гиперэкстензия техника",
+    { id: "hyper", n: "Гиперэкстензия", s: 4, r: "12–15", rest: 75, p: ["lower","glutes"], x: ["hams"], q: "гиперэкстензия техника",
       c: ["Вниз с ровной спиной", "Вверх до прямой линии, не прогибайся сильнее", "Медленно, без рывков"] },
-    { id: "adduct", opt: true, n: "Сведение или разведение ног в тренажёре", s: 4, r: "15", rest: "60–90 с", p: ["adduct"], x: ["glutes"], q: "сведение ног в тренажере техника",
+    { id: "adduct", opt: true, n: "Сведение или разведение ног", s: 4, r: "15", rest: 75, p: ["adduct"], x: ["glutes"], q: "сведение ног в тренажере техника",
       c: ["Спина прижата", "Плавно, без рывков", "Пауза в крайней точке"] }
   ]},
-  C: { title: "В — Тяги", meta: "спина · бицепс · задняя дельта · пресс", ex: [
-    { id: "gravitron", n: "Подтягивания в гравитроне", s: 4, r: "6–10", rest: "2 мин", p: ["back"], x: ["bi"], q: "подтягивания в гравитроне техника",
+  C: { title: "Тяги", plate: "15", meta: "Спина, бицепс, задняя дельта, пресс", ex: [
+    { id: "gravitron", n: "Подтягивания в гравитроне", s: 4, r: "6–10", rest: 120, p: ["back"], x: ["bi"], q: "подтягивания в гравитроне техника",
       c: ["Сначала опусти плечи, потом тяни", "Тянись грудью к рукояти", "Вниз медленно"] },
-    { id: "row_horiz", n: "Тяга горизонтальная (Хаммер или блок)", s: 4, r: "10–12", rest: "2 мин", p: ["back"], x: ["bi","rear"], q: "тяга горизонтального блока техника",
+    { id: "row_horiz", n: "Тяга горизонтальная", alt: "Хаммер или блок", s: 4, r: "10–12", rest: 120, p: ["back"], x: ["bi","rear"], q: "тяга горизонтального блока техника",
       c: ["Спина ровная, грудь вперёд", "Тяни локтями к поясу, сведи лопатки", "Без наклона корпусом"] },
-    { id: "pulldown", n: "Тяга вертикальная (верхний блок)", s: 4, r: "10–12", rest: "2 мин", p: ["back"], x: ["bi"], q: "тяга верхнего блока к груди техника",
+    { id: "pulldown", n: "Тяга верхнего блока", s: 4, r: "10–12", rest: 120, p: ["back"], x: ["bi"], q: "тяга верхнего блока к груди техника",
       c: ["Небольшой наклон назад, грудь вверх", "Тяни к верху груди, не за голову", "Вверх подконтрольно"] },
-    { id: "rear_fly", n: "Обратные махи (задняя дельта)", s: 4, r: "12–15", rest: "60–90 с", p: ["rear"], x: ["back"], q: "обратные разведения гантелей задняя дельта техника",
+    { id: "rear_fly", n: "Обратные махи", alt: "задняя дельта", s: 4, r: "12–15", rest: 75, p: ["rear"], x: ["back"], q: "обратные разведения гантелей задняя дельта техника",
       c: ["Лёгкий вес, руки чуть согнуты", "Разводи в стороны, а не назад", "Пауза наверху"] },
-    { id: "curl", n: "Сгибания на бицепс с гантелями", s: 4, r: "10–12", rest: "60–90 с", p: ["bi"], x: [], q: "сгибание рук с гантелями молот техника",
+    { id: "curl", n: "Сгибания на бицепс", alt: "гантели, молот или супинация", s: 4, r: "10–12", rest: 75, p: ["bi"], x: [], q: "сгибание рук с гантелями молот техника",
       c: ["Локти прижаты к корпусу", "Без раскачки спиной", "Вниз медленно"] },
-    { id: "abs_situp", n: "Подъём корпуса, руки вперёд", s: 4, r: "15–20", rest: "60 с", p: ["abs"], x: [], q: "подъем корпуса на пресс руки вперед техника",
+    { id: "abs_situp", n: "Подъём корпуса, руки вперёд", s: 4, r: "15–20", rest: 60, p: ["abs"], x: [], q: "подъем корпуса на пресс руки вперед техника",
       c: ["Тянись руками вперёд, поднимаясь", "Поясница не отрывается рывком", "Вниз медленно, выдох на подъёме"] },
-    { id: "row_one", opt: true, n: "Тяга одной рукой (Хаммер или гантель)", s: 4, r: "10–12 на руку", rest: "2 мин", p: ["back"], x: ["bi","rear"], q: "тяга гантели одной рукой в наклоне техника",
+    { id: "row_one", opt: true, n: "Тяга одной рукой", alt: "Хаммер или гантель", s: 4, r: "10–12 на руку", rest: 120, p: ["back"], x: ["bi","rear"], q: "тяга гантели одной рукой в наклоне техника",
       c: ["Не скручивай корпус", "Тяни локоть к бедру", "Внизу растяни спину"] }
   ]}
 };
 
-/* Muscle map: front + back silhouettes, regions keyed by muscle */
-const FRONT = [
-  ["c", 25, 9, 6, "head"], ["r", 22, 14, 6, 4, "neck"],
-  ["r", 14, 17, 22, 32, "torso", 4], ["c", 13, 21, 4, "delts"], ["c", 37, 21, 4, "delts"],
-  ["r", 16, 19, 18, 9, "chest", 3], ["r", 19, 30, 12, 17, "abs", 2],
-  ["r", 7, 23, 5, 13, "bi", 2.5], ["r", 38, 23, 5, 13, "bi", 2.5],
-  ["r", 6, 37, 5, 13, "arm", 2.5], ["r", 39, 37, 5, 13, "arm", 2.5],
-  ["r", 15, 48, 20, 7, "hip", 3], ["r", 15, 54, 9, 22, "quads", 3], ["r", 26, 54, 9, 22, "quads", 3],
-  ["r", 22, 55, 6, 12, "adduct", 2], ["r", 16, 78, 7, 18, "calf", 3], ["r", 27, 78, 7, 18, "calf", 3]
-];
-const BACK = [
-  ["c", 25, 9, 6, "head"], ["r", 22, 14, 6, 4, "neck"],
-  ["r", 14, 17, 22, 32, "torso", 4], ["c", 13, 21, 4, "rear"], ["c", 37, 21, 4, "rear"],
-  ["r", 19, 18, 12, 7, "back", 2], ["r", 14, 25, 7, 15, "back", 3], ["r", 29, 25, 7, 15, "back", 3],
-  ["r", 20, 38, 10, 10, "lower", 2],
-  ["r", 7, 23, 5, 13, "tri", 2.5], ["r", 38, 23, 5, 13, "tri", 2.5],
-  ["r", 6, 37, 5, 13, "arm", 2.5], ["r", 39, 37, 5, 13, "arm", 2.5],
-  ["r", 15, 47, 20, 9, "glutes", 4], ["r", 15, 56, 9, 20, "hams", 3], ["r", 26, 56, 9, 20, "hams", 3],
-  ["r", 16, 78, 7, 18, "calf", 3], ["r", 27, 78, 7, 18, "calf", 3]
-];
-function figure(shapes, p, x, label) {
-  const fill = k => p.includes(k) ? "var(--accent)" : x.includes(k) ? "var(--accent-soft)" : "var(--body)";
-  const parts = shapes.map(s => s[0] === "c"
-    ? `<circle cx="${s[1]}" cy="${s[2]}" r="${s[3]}" fill="${fill(s[4])}"/>`
-    : `<rect x="${s[1]}" y="${s[2]}" width="${s[3]}" height="${s[4]}" rx="${s[6] || 0}" fill="${fill(s[5])}"/>`).join("");
-  return `<svg viewBox="0 0 50 100" role="img" aria-label="${label}">${parts}</svg>`;
+/* Muscle figure: soft anatomical silhouette, front + back */
+const BASE = [["e",30,10,7,8],["r",26,16,8,6,2],["p","M16 23 Q30 18 44 23 L42 57 Q30 62 18 57 Z"],["e",11,51,2.8,7],["e",49,51,2.8,7],["r",19,55,22,9,4],["e",24,100,3.6,9],["e",36,100,3.6,9]];
+const FRONT = [["delts","e",15.5,26,5,4.5],["delts","e",44.5,26,5,4.5],["chest","e",24.5,30.5,6,4.6],["chest","e",35.5,30.5,6,4.6],
+  ["abs","r",25.5,37,9,18,3],["bi","e",12.2,37.5,3.3,7.5],["bi","e",47.8,37.5,3.3,7.5],
+  ["quads","e",24,76,5.6,12.5],["quads","e",36,76,5.6,12.5],["adduct","e",28.3,71,1.8,7],["adduct","e",31.7,71,1.8,7]];
+const BACKV = [["rear","e",15.5,26,5,4.5],["rear","e",44.5,26,5,4.5],["back","e",30,25.5,9,4],["back","e",22.5,38,5,10],["back","e",37.5,38,5,10],
+  ["lower","r",26,45,8,11,3],["tri","e",12.2,37.5,3.3,7.5],["tri","e",47.8,37.5,3.3,7.5],
+  ["glutes","e",25,63,6,5.5],["glutes","e",35,63,6,5.5],["hams","e",24,79,5.4,11],["hams","e",36,79,5.4,11]];
+function shape(s, fill) {
+  if (s[0] === "e") return `<ellipse cx="${s[1]}" cy="${s[2]}" rx="${s[3]}" ry="${s[4]}" fill="${fill}"/>`;
+  if (s[0] === "r") return `<rect x="${s[1]}" y="${s[2]}" width="${s[3]}" height="${s[4]}" rx="${s[5] || 0}" fill="${fill}"/>`;
+  return `<path d="${s[1]}" fill="${fill}"/>`;
 }
-function muscleMap(e) {
-  const label = "Работают: " + e.p.map(k => M[k]).join(", ") + (e.x.length ? "; помогают: " + e.x.map(k => M[k]).join(", ") : "");
-  return `<div class="map" title="${label}">${figure(FRONT, e.p, e.x, "спереди. " + label)}${figure(BACK, e.p, e.x, "сзади. " + label)}</div>`;
+function figure(set, p, x, label) {
+  const base = BASE.map(s => shape(s, "var(--body)")).join("");
+  const mus = set.map(([k, ...s]) => {
+    const f = p.includes(k) ? "var(--accent)" : x.includes(k) ? "color-mix(in srgb, var(--accent) 45%, var(--body))" : "var(--body)";
+    return shape(s, f).replace("/>", ` stroke="var(--surface)" stroke-width=".8"/>`);
+  }).join("");
+  return `<svg viewBox="0 0 60 112" role="img" aria-label="${label}">${base}${mus}</svg>`;
 }
 
 /* State */
@@ -247,138 +331,197 @@ const yt = q => "https://www.youtube.com/results?search_query=" + encodeURICompo
 const pad = n => String(n).padStart(2, "0");
 const todayISO = () => { const d = new Date(); return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); };
 const fmtDate = iso => iso ? iso.slice(8, 10) + "." + iso.slice(5, 7) : "";
+const fmtLong = iso => new Date(iso + "T12:00:00").toLocaleDateString("ru-RU", { weekday: "long", day: "numeric", month: "long" });
 const ls = {
   get(k) { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } },
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
 };
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
-let day = "A";
-let date = todayISO();
-let db = null;
-let sessions = {};          // id -> data, from the store
-let draft = null;           // current session being edited
-let dirty = false;
-let writing = Promise.resolve();
-let saveTimer = null;
-
+let day = "A", date = todayISO(), online = false, sessions = {}, draft = null, dirty = false;
+let writing = Promise.resolve(), saveTimer = null;
 const sid = () => date + "_" + day;
+
 function emptySession() {
   const ex = {};
-  DAYS[day].ex.forEach(e => { ex[e.id] = { name: e.n, sets: Array.from({ length: e.s }, () => ({ kg: "", reps: "" })), rir: "" }; });
-  return { date, day, ex, note: "", updatedAt: "" };
+  DAYS[day].ex.forEach(e => { ex[e.id] = { name: e.n, sets: Array.from({ length: e.s }, () => ({ kg: "", reps: "", done: false })), rir: "" }; });
+  return { date, day, ex, note: "" };
 }
 function loadDraft() {
   const stored = sessions[sid()] || ls.get("session-" + sid());
   const base = emptySession();
   if (stored && stored.ex) {
     Object.keys(base.ex).forEach(k => {
-      const s = stored.ex[k];
-      if (s) base.ex[k] = { name: base.ex[k].name, sets: base.ex[k].sets.map((v, i) => (s.sets && s.sets[i]) ? { kg: s.sets[i].kg ?? "", reps: s.sets[i].reps ?? "" } : v), rir: s.rir ?? "" };
+      const s = stored.ex[k]; if (!s) return;
+      base.ex[k].sets = base.ex[k].sets.map((v, i) => s.sets && s.sets[i] ? { kg: s.sets[i].kg ?? "", reps: s.sets[i].reps ?? "", done: !!s.sets[i].done } : v);
+      base.ex[k].rir = s.rir ?? "";
     });
     base.note = stored.note || "";
-    base.updatedAt = stored.updatedAt || "";
   }
-  draft = base;
-  dirty = false;
+  draft = base; dirty = false;
 }
 function previousFor(exId) {
   const list = Object.values(sessions).filter(s => s.day === day && s.date < date && s.ex && s.ex[exId] && s.ex[exId].sets.some(x => x.kg || x.reps));
   list.sort((a, b) => a.date < b.date ? 1 : -1);
   if (!list.length) return "";
-  const s = list[0];
-  const sets = s.ex[exId].sets.filter(x => x.kg || x.reps).map(x => (x.kg || "—") + "×" + (x.reps || "—")).join(" · ");
-  return "Прошлый раз " + fmtDate(s.date) + ": " + sets + (s.ex[exId].rir !== "" ? " (запас " + s.ex[exId].rir + ")" : "");
+  const s = list[0], e = s.ex[exId];
+  const sets = e.sets.filter(x => x.kg || x.reps).map(x => `<b>${esc(x.kg || "—")}</b>×${esc(x.reps || "—")}`).join("  ·  ");
+  return `Прошлый раз ${fmtDate(s.date)}: ${sets}${e.rir !== "" ? " · запас " + esc(e.rir) : ""}`;
 }
 
-function render() {
+const CHECK = `<svg viewBox="0 0 24 24" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`;
+
+function renderHead() {
   const d = DAYS[day];
-  document.querySelectorAll(".tab").forEach(t => t.setAttribute("aria-selected", String(t.dataset.day === day)));
-  document.getElementById("day-title").textContent = d.title;
-  document.getElementById("day-meta").textContent = d.meta;
+  document.documentElement.dataset.day = day;
+  document.querySelectorAll(".plate").forEach(t => t.setAttribute("aria-selected", String(t.dataset.day === day)));
+  document.getElementById("kicker").textContent = "Тренировка " + { A: "А", B: "Б", C: "В" }[day] + " · " + fmtLong(date);
+  document.getElementById("title").textContent = d.title;
+  document.getElementById("meta").textContent = d.meta;
   document.getElementById("date").value = date;
   document.getElementById("note").value = draft.note;
+  updateProgress();
+}
+function updateProgress() {
+  const core = DAYS[day].ex.filter(e => !e.opt);
+  const total = core.reduce((a, e) => a + e.s, 0);
+  const done = core.reduce((a, e) => a + draft.ex[e.id].sets.filter(s => s.done).length, 0);
+  document.getElementById("ring-num").textContent = done + "/" + total;
+  document.getElementById("ring").setAttribute("stroke-dashoffset", String(226.2 * (1 - (total ? done / total : 0))));
+}
+function render() {
+  renderHead();
   const list = document.getElementById("list");
   list.innerHTML = "";
-  d.ex.forEach((e, i) => {
+  DAYS[day].ex.forEach((e, i) => {
     const st = draft.ex[e.id];
     const li = document.createElement("li");
     li.className = "ex" + (e.opt ? " opt" : "");
-    const rows = st.sets.map((v, j) => `
-      <span class="lbl">${j + 1}</span>
-      <input inputmode="decimal" aria-label="Подход ${j + 1}, кг" placeholder="кг" data-ex="${e.id}" data-set="${j}" data-f="kg" value="${v.kg}">
-      <input inputmode="numeric" aria-label="Подход ${j + 1}, повторы" placeholder="повт" data-ex="${e.id}" data-set="${j}" data-f="reps" value="${v.reps}">`).join("");
-    const rirOpts = ["", "0", "1", "2", "3", "4", "5"].map(o => `<option value="${o}"${st.rir === o ? " selected" : ""}>${o === "" ? "запас —" : "запас " + o}</option>`).join("");
+    const label = "Работают: " + e.p.map(k => M[k]).join(", ") + (e.x.length ? "; помогают: " + e.x.map(k => M[k]).join(", ") : "");
+    const sets = st.sets.map((v, j) => `
+      <div class="set${v.done ? " is-done" : ""}" data-row="${j}">
+        <span class="n">${j + 1}</span>
+        <label class="field"><input inputmode="decimal" placeholder="0" aria-label="Подход ${j + 1}, вес" data-ex="${e.id}" data-set="${j}" data-f="kg" value="${esc(v.kg)}"><small>кг</small></label>
+        <span class="x">×</span>
+        <label class="field"><input inputmode="numeric" placeholder="0" aria-label="Подход ${j + 1}, повторы" data-ex="${e.id}" data-set="${j}" data-f="reps" value="${esc(v.reps)}"><small>раз</small></label>
+        <button class="done" type="button" aria-pressed="${v.done}" aria-label="Подход ${j + 1} сделан" data-ex="${e.id}" data-set="${j}">${CHECK}</button>
+      </div>`).join("");
+    const rirOpts = ["", "0", "1", "2", "3", "4", "5"].map(o => `<option value="${o}"${st.rir === o ? " selected" : ""}>${o === "" ? "Запас —" : "Запас " + o}</option>`).join("");
     const prev = previousFor(e.id);
+    const restTxt = e.rest >= 120 ? (e.rest === 150 ? "2–3 мин" : "2 мин") : e.rest + " с";
     li.innerHTML = `
-      <div class="top">
-        <div class="num">${i + 1}</div>
-        <div class="title">
-          <h3>${e.n}</h3>
-          <div class="dose"><span><b>${e.s} × ${e.r}</b></span><span>отдых ${e.rest}</span></div>
-          <span class="tag">${e.p.map(k => M[k]).join(", ")}${e.x.length ? " · помогают: " + e.x.map(k => M[k]).join(", ") : ""}</span>
-          ${e.opt ? '<span class="opt-badge">по желанию</span>' : ""}
-        </div>
-        ${muscleMap(e)}
+      <div class="photo">
+        <img class="a" src="img/${e.id}_0.jpg" alt="${esc(e.n)} — начало движения" loading="lazy">
+        <img class="b" src="img/${e.id}_1.jpg" alt="" loading="lazy">
+        <span class="badge">${i + 1}</span>
+        <span class="rest">отдых ${restTxt}</span>
+        ${e.opt ? '<span class="opt-tag">по желанию</span>' : ""}
       </div>
-      <div class="demo"><img class="a" src="img/${e.id}_0.jpg" alt="${e.n} — начало" loading="lazy"><img class="b" src="img/${e.id}_1.jpg" alt="${e.n} — конец" loading="lazy"></div>
-      <ul class="cues">${e.c.map(x => `<li>${x}</li>`).join("")}</ul>
-      ${prev ? `<div class="last">${prev}</div>` : ""}
-      <div class="sets"><span class="h">рабочий</span><span class="h">вес, кг</span><span class="h">повторы</span>${rows}</div>
-      <div class="row">
-        <select aria-label="Запас в последнем рабочем подходе" data-ex="${e.id}" data-f="rir">${rirOpts}</select>
-        <a class="btn" href="${yt(e.q)}" target="_blank" rel="noopener">▶ Техника на видео</a>
+      <div class="ex-body">
+        <div class="ex-head">
+          <div>
+            <h3>${esc(e.n)}</h3>
+            <div class="tags">
+              <span class="tag dose">${e.s} × ${esc(e.r)}</span>
+              ${e.p.map(k => `<span class="tag main">${M[k]}</span>`).join("")}
+              ${e.x.map(k => `<span class="tag">${M[k]}</span>`).join("")}
+              ${e.alt ? `<span class="tag">${esc(e.alt)}</span>` : ""}
+            </div>
+          </div>
+          <div class="fig" title="${esc(label)}">${figure(FRONT, e.p, e.x, "спереди. " + label)}${figure(BACKV, e.p, e.x, "сзади. " + label)}</div>
+        </div>
+        ${prev ? `<div class="last">${prev}</div>` : ""}
+        <div class="sets">${sets}</div>
+        <div class="ex-foot">
+          <select aria-label="Запас в последнем рабочем подходе" data-ex="${e.id}" data-f="rir">${rirOpts}</select>
+          <details class="tech"><summary class="link">Техника</summary><ul>${e.c.map(x => `<li>${esc(x)}</li>`).join("")}</ul></details>
+          <a class="link" href="${yt(e.q)}" target="_blank" rel="noopener">▶ Видео</a>
+        </div>
       </div>`;
     list.appendChild(li);
   });
 }
 
-function setStatus(html) { document.getElementById("status").innerHTML = html; }
-
+function setStatus(text, state) {
+  document.getElementById("status").textContent = text;
+  document.getElementById("dot").className = "dot" + (state ? " " + state : "");
+}
 function scheduleSave() {
   dirty = true;
   ls.set("session-" + sid(), draft);
   clearTimeout(saveTimer);
-  saveTimer = setTimeout(save, 900);
+  saveTimer = setTimeout(save, 800);
 }
 function save() {
-  if (!db) { setStatus("Нет связи с сервером. Записи остались на телефоне — нажми «Скопировать для Claude»."); return; }
-  const id = sid();
-  const body = JSON.parse(JSON.stringify(draft));
-  writing = writing.then(() => fetch("/api/sessions/" + encodeURIComponent(id), {
-    method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify(body)
-  })).then(r => {
-    if (!r.ok) throw new Error("код " + r.status);
-    sessions[id] = body;
-    dirty = false;
-    setStatus("<b>Сохранено на сервере</b> — Claude видит эту запись");
-  }).catch(err => {
-    setStatus("Не сохранилось (" + err.message + "). Записи остались на телефоне — попробуй ещё раз или «Скопировать для Claude».");
-  });
+  if (!online) { setStatus("Нет связи с сервером — записи на телефоне. Нажми «Скопировать для Claude»", "off"); return; }
+  const id = sid(), body = JSON.parse(JSON.stringify(draft));
+  writing = writing.then(() => fetch("/api/sessions/" + encodeURIComponent(id), { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }))
+    .then(r => { if (!r.ok) throw new Error("код " + r.status); sessions[id] = body; dirty = false; setStatus("Сохранено на сервере · Claude видит запись", "on"); })
+    .catch(err => setStatus("Не сохранилось (" + err.message + ") — записи остались на телефоне", "off"));
 }
+function flushNow() { if (dirty) { clearTimeout(saveTimer); save(); } }
 
-document.getElementById("list").addEventListener("input", ev => {
-  const el = ev.target; const exId = el.dataset.ex; if (!exId) return;
+/* Rest timer */
+const timerEl = document.getElementById("timer");
+let tEnd = 0, tTotal = 0, tTick = null, wake = null, beeped = false;
+const fmt = s => (s < 0 ? "+" : "") + Math.floor(Math.abs(s) / 60) + ":" + pad(Math.abs(s) % 60);
+function beep() {
+  try { const ctx = new (window.AudioContext || window.webkitAudioContext)(); const o = ctx.createOscillator(); const g = ctx.createGain();
+    o.frequency.value = 880; g.gain.setValueAtTime(.18, ctx.currentTime); g.gain.exponentialRampToValueAtTime(.001, ctx.currentTime + .5);
+    o.connect(g); g.connect(ctx.destination); o.start(); o.stop(ctx.currentTime + .5); } catch (e) {}
+}
+function tickTimer() {
+  const left = Math.round((tEnd - Date.now()) / 1000);
+  document.getElementById("t-time").textContent = fmt(left);
+  document.getElementById("t-bar").style.width = Math.min(100, Math.max(0, 100 * (1 - left / tTotal))) + "%";
+  timerEl.classList.toggle("over", left <= 0);
+  document.getElementById("t-label").textContent = left > 0 ? "Отдых" : "Можно работать";
+  if (left <= 0 && !beeped) { beeped = true; beep(); try { navigator.vibrate && navigator.vibrate([200, 100, 200]); } catch (e) {} }
+}
+async function startTimer(seconds, label) {
+  tTotal = seconds; tEnd = Date.now() + seconds * 1000; beeped = false;
+  document.getElementById("t-label").textContent = label || "Отдых";
+  timerEl.classList.add("show");
+  clearInterval(tTick); tTick = setInterval(tickTimer, 250); tickTimer();
+  try { if ("wakeLock" in navigator && !wake) { wake = await navigator.wakeLock.request("screen"); wake.addEventListener("release", () => { wake = null; }); } } catch (e) {}
+}
+function stopTimer() {
+  clearInterval(tTick); timerEl.classList.remove("show");
+  try { wake && wake.release(); } catch (e) {} wake = null;
+}
+document.getElementById("t-plus").addEventListener("click", () => { tEnd += 30000; tTotal += 30; beeped = false; tickTimer(); });
+document.getElementById("t-stop").addEventListener("click", stopTimer);
+
+/* Events */
+const list = document.getElementById("list");
+list.addEventListener("input", ev => {
+  const el = ev.target, exId = el.dataset.ex; if (!exId) return;
   if (el.dataset.f === "rir") draft.ex[exId].rir = el.value;
   else draft.ex[exId].sets[+el.dataset.set][el.dataset.f] = el.value.trim();
   scheduleSave();
 });
-document.getElementById("list").addEventListener("change", ev => {
-  if (ev.target.dataset.f === "rir") { draft.ex[ev.target.dataset.ex].rir = ev.target.value; scheduleSave(); }
+list.addEventListener("change", ev => { if (ev.target.dataset.f === "rir") { draft.ex[ev.target.dataset.ex].rir = ev.target.value; scheduleSave(); } });
+list.addEventListener("click", ev => {
+  const b = ev.target.closest(".done"); if (!b) return;
+  const e = DAYS[day].ex.find(x => x.id === b.dataset.ex); const s = draft.ex[e.id].sets[+b.dataset.set];
+  s.done = !s.done;
+  b.setAttribute("aria-pressed", String(s.done));
+  b.closest(".set").classList.toggle("is-done", s.done);
+  updateProgress(); scheduleSave();
+  if (s.done) startTimer(e.rest, "Отдых · " + e.n);
 });
 document.getElementById("note").addEventListener("input", ev => { draft.note = ev.target.value; scheduleSave(); });
-document.querySelector(".tabs").addEventListener("click", ev => {
-  const t = ev.target.closest(".tab"); if (!t || t.dataset.day === day) return;
-  flushNow(); day = t.dataset.day; ls.set("day", day); loadDraft(); render();
+document.querySelector(".plates").addEventListener("click", ev => {
+  const t = ev.target.closest(".plate"); if (!t || t.dataset.day === day) return;
+  flushNow(); day = t.dataset.day; ls.set("day", day); loadDraft(); render(); window.scrollTo({ top: 0 });
 });
-document.getElementById("date").addEventListener("change", ev => {
-  if (!ev.target.value) return;
-  flushNow(); date = ev.target.value; loadDraft(); render();
+document.getElementById("date").addEventListener("change", ev => { if (!ev.target.value) return; flushNow(); date = ev.target.value; loadDraft(); render(); });
+document.getElementById("rules-btn").addEventListener("click", ev => {
+  const r = document.getElementById("rules"); r.hidden = !r.hidden; ev.currentTarget.setAttribute("aria-expanded", String(!r.hidden));
 });
-function flushNow() { if (dirty) { clearTimeout(saveTimer); save(); } }
 
 function reportText() {
-  const d = DAYS[day];
-  const lines = [d.title.split(" — ")[0] + ", " + fmtDate(date) + ":"];
+  const d = DAYS[day], lines = [{ A: "А", B: "Б", C: "В" }[day] + " (" + d.title + "), " + fmtDate(date) + ":"];
   d.ex.forEach(e => {
     const st = draft.ex[e.id];
     const sets = st.sets.filter(x => x.kg || x.reps).map(x => (x.kg || "—") + "×" + (x.reps || "—"));
@@ -388,29 +531,22 @@ function reportText() {
   return lines.join("\n");
 }
 document.getElementById("copy").addEventListener("click", () => {
-  const text = reportText(); const box = document.getElementById("copybox"); const msg = document.getElementById("copy-msg");
+  const text = reportText(), box = document.getElementById("copybox"), msg = document.getElementById("copy-msg");
   const fallback = () => { box.hidden = false; box.value = text; box.focus(); box.select(); msg.textContent = "Выделил текст — скопируй вручную"; };
-  try {
-    navigator.clipboard.writeText(text).then(() => { msg.textContent = "Скопировано — вставь в чат с Claude"; box.hidden = true; }).catch(fallback);
-  } catch (e) { fallback(); }
+  try { navigator.clipboard.writeText(text).then(() => { msg.textContent = "Скопировано"; box.hidden = true; }).catch(fallback); } catch (e) { fallback(); }
 });
 
 /* Boot */
 const fromHash = (location.hash || "").replace("#", "").toUpperCase();
 const savedDay = ls.get("day");
 day = DAYS[fromHash] ? fromHash : (DAYS[savedDay] ? savedDay : "A");
-loadDraft();
-render();
-
+loadDraft(); render();
 fetch("/api/sessions", { cache: "no-store" }).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }).then(d => {
-  db = true;
-  sessions = {};
+  online = true; sessions = {};
   (d.sessions || []).forEach(s => { if (s.date && s.day) sessions[s.date + "_" + s.day] = s; });
   if (!dirty) { loadDraft(); render(); }
-  setStatus("<b>Сохранение подключено</b> — записи хранятся на твоём сервере");
-}).catch(() => {
-  setStatus("Нет связи с сервером. Записи сохраняются на телефоне — нажми «Скопировать для Claude».");
-});
+  setStatus("Сохранение подключено · записи на твоём сервере", "on");
+}).catch(() => setStatus("Нет связи с сервером — записи сохраняются на телефоне", "off"));
 </script>
-
-</body></html>
+</body>
+</html>
