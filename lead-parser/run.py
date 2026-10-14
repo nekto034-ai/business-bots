@@ -9,6 +9,7 @@
 
 import argparse
 import json
+import re
 import sys
 import tomllib
 from datetime import datetime
@@ -53,6 +54,24 @@ def in_stop_list(item, stop):
     return False
 
 
+def competitor_check(flt):
+    """Функция «это конкурент?» по рубрикам и словам в названии из config.toml."""
+    any_r = {r.lower() for r in flt.get("competitor_rubrics", [])}
+    prim_r = {r.lower() for r in flt.get("competitor_primary_rubrics", [])}
+    words = flt.get("competitor_name_words", [])
+    name_rx = re.compile(r"(?<![a-zа-яё])(" + "|".join(map(re.escape, words)) + r")(?![a-zа-яё])", re.I) if words else None
+
+    def is_competitor(item):
+        for r in item.get("rubrics") or []:
+            n = (r.get("name") or "").lower()
+            if n in any_r or (r.get("kind") == "primary" and n in prim_r):
+                return True
+        ex = item.get("name_ex") or {}
+        return bool(name_rx and name_rx.search(f"{item.get('name', '')} {ex.get('primary', '')}"))
+
+    return is_competitor
+
+
 def plan(niches, cities):
     """Порядок поисков: каждая ниша по очереди в разных городах, чтобы список был разнообразным."""
     for rnd in range(len(cities)):
@@ -70,7 +89,8 @@ class Collector:
         self.taken = set()  # org id, уже взятые в этом запуске
         self.leads = []
         self.stats = {"просмотрено": 0, "филиалы": 0, "много отзывов": 0, "стоп-лист": 0,
-                      "крупные по hh": 0, "уже были": 0, "без телефона": 0}
+                      "конкуренты": 0, "крупные по hh": 0, "уже были": 0, "без телефона": 0}
+        self.is_competitor = competitor_check(self.flt)
         self.stop = [hhmod.norm(x) for x in self.flt.get("stop_list", [])]
         self.hh_ok = self.run.get("check_hh", True)
 
@@ -94,6 +114,9 @@ class Collector:
             return False
         if in_stop_list(it, self.stop):
             self.stats["стоп-лист"] += 1
+            return False
+        if self.is_competitor(it):
+            self.stats["конкуренты"] += 1
             return False
 
         firm = self.gis.firm(city["alias"], it["id"]) or it
