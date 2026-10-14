@@ -16,9 +16,10 @@ fi
 
 # Services
 install -m 644 deploy/landing.service /etc/systemd/system/landing.service
+install -m 644 deploy/fitness.service /etc/systemd/system/fitness.service
 systemctl daemon-reload
-systemctl enable --quiet landing
-systemctl restart landing
+systemctl enable --quiet landing fitness
+systemctl restart landing fitness
 
 # Caddy: agent on the bare host, sites on subdomains. Validate before swapping,
 # so a broken config never takes down the agent.
@@ -31,6 +32,11 @@ $HOST {
 site.$HOST, site2.$HOST {
 	encode gzip
 	reverse_proxy 127.0.0.1:8080
+}
+
+fit.$HOST {
+	encode gzip
+	reverse_proxy 127.0.0.1:8090
 }
 CADDY
 caddy validate --adapter caddyfile --config "$NEW" >/dev/null

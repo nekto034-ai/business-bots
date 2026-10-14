@@ -1,0 +1,15 @@
+[Unit]
+Description=Fitness log site (fit.<host>)
+After=network-online.target
+
+[Service]
+ExecStart=/usr/bin/node /opt/business-bots/sites/fitness/server.js
+Environment=PORT=8090
+Environment=DATA_DIR=/var/lib/fitness
+DynamicUser=yes
+StateDirectory=fitness
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
