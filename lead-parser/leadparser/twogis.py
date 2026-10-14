@@ -144,6 +144,13 @@ def city_name(item):
     return ""
 
 
+def region_name(item):
+    for a in item.get("adm_div") or []:
+        if a.get("type") == "region":
+            return a.get("name")
+    return ""
+
+
 def msk_offset(item):
     """Сдвиг местного времени относительно Москвы, в часах (Новосибирск: +4)."""
     off = item.get("timezone_offset")

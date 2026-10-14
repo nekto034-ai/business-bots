@@ -114,12 +114,13 @@ class Collector:
         self.seen = load_seen() if self.run.get("skip_already_exported", True) else set()
         self.taken = set()  # org id, уже взятые в этом запуске
         self.leads = []
-        self.stats = {"просмотрено": 0, "филиалы": 0, "много отзывов": 0, "стоп-лист": 0,
+        self.stats = {"просмотрено": 0, "чужой регион": 0, "филиалы": 0, "много отзывов": 0, "стоп-лист": 0,
                       "конкуренты": 0, "крупные по hh": 0, "уже были": 0, "без телефона": 0}
         self.is_competitor = competitor_check(self.flt)
         self.stop = [hhmod.norm(x) for x in self.flt.get("stop_list", [])]
         self.hh_ok = self.run.get("check_hh", True)
         self.deadline = None
+        self.regions = {}  # город из config → его область (узнаём по первой карточке из этого города)
 
     def check_time(self):
         if self.deadline and time.monotonic() > self.deadline:
@@ -137,6 +138,13 @@ class Collector:
             return False
         if org_id in self.seen:
             self.stats["уже были"] += 1
+            return False
+        # 2ГИС иногда подмешивает в выдачу компании из других регионов — берём только город и его область
+        it_city, it_region = twogis.city_name(it), twogis.region_name(it)
+        if it_city == city["name"] and it_region:
+            self.regions.setdefault(city["name"], it_region)
+        if it_city != city["name"] and it_region != self.regions.get(city["name"]):
+            self.stats["чужой регион"] += 1
             return False
         if twogis.branch_count(it) > flt["max_branches"]:
             self.stats["филиалы"] += 1
