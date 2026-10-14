@@ -17,8 +17,11 @@ class Blocked(Exception):
 
 
 class Http:
-    def __init__(self, delay=(2.5, 5.0)):
+    def __init__(self, delay=(4.0, 8.0), rest_every=40, rest=(30, 60)):
         self.delay = delay
+        self.rest_every = rest_every  # каждые N запросов к одному сайту — перерыв
+        self.rest = rest
+        self._count = {}
         self.session = requests.Session()
         self.session.headers.update({
             "User-Agent": USER_AGENT,
@@ -27,6 +30,9 @@ class Http:
         self._last = {}  # host -> время последнего запроса
 
     def _wait(self, host):
+        n = self._count[host] = self._count.get(host, 0) + 1
+        if self.rest_every and n % self.rest_every == 0:
+            time.sleep(random.uniform(*self.rest))  # «человек отвлёкся»
         last = self._last.get(host)
         if last is not None:
             pause = random.uniform(*self.delay) - (time.monotonic() - last)

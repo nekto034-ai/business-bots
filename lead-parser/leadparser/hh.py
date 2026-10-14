@@ -13,6 +13,8 @@ import json
 import re
 from urllib.parse import urlencode, urlparse
 
+from .net import Blocked
+
 _STATE_RE = re.compile(r'<template[^>]*id="HH-Lux-InitialState"[^>]*>(.*?)</template>', re.S)
 SALES_RE = re.compile(r"продаж|продавец|sales|менеджер по работе с клиент|аккаунт|торгов\w* представ|агент", re.I)
 _LEGAL_RE = re.compile(r"\b(ооо|ип|оао|зао|пао|ао|тд|гк|компания|группа компаний)\b")
@@ -42,7 +44,10 @@ def domain(url):
 
 def _state(resp):
     m = _STATE_RE.search(resp.text)
-    return json.loads(htmllib.unescape(m.group(1))) if m else None
+    if not m:
+        # Нет данных на странице — значит, hh показал капчу или защиту. Дальше не стучимся.
+        raise Blocked(f"hh.ru не отдал данные ({resp.status_code}) на {resp.url}")
+    return json.loads(htmllib.unescape(m.group(1)))
 
 
 class HH:

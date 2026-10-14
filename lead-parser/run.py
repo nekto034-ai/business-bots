@@ -12,7 +12,7 @@ import json
 import re
 import sys
 import tomllib
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 from leadparser import hh as hhmod
@@ -25,6 +25,7 @@ ROOT = Path(__file__).parent
 DATA = ROOT / "data"
 OUTPUT = ROOT / "output"
 SEEN_FILE = DATA / "exported.json"
+COOLDOWN_FILE = DATA / "cooldown.json"
 
 
 def log(*a):
@@ -41,6 +42,24 @@ def load_seen():
 def save_seen(seen):
     DATA.mkdir(exist_ok=True)
     SEEN_FILE.write_text(json.dumps(sorted(seen), ensure_ascii=False), encoding="utf-8")
+
+
+def cooldown_left():
+    """Сколько ещё «затихариться» после блокировки: (осталось, причина) или (None, None)."""
+    try:
+        c = json.loads(COOLDOWN_FILE.read_text(encoding="utf-8"))
+    except (FileNotFoundError, ValueError):
+        return None, None
+    left = datetime.fromisoformat(c["until"]) - datetime.now()
+    return (left, c.get("reason")) if left.total_seconds() > 0 else (None, None)
+
+
+def start_cooldown(hours, reason):
+    DATA.mkdir(exist_ok=True)
+    until = datetime.now() + timedelta(hours=hours)
+    COOLDOWN_FILE.write_text(json.dumps({"until": until.isoformat(timespec="minutes"), "reason": reason},
+                                        ensure_ascii=False), encoding="utf-8")
+    return until
 
 
 def in_stop_list(item, stop):
@@ -82,7 +101,9 @@ def plan(niches, cities):
 class Collector:
     def __init__(self, cfg):
         self.run, self.flt, self.w = cfg["run"], cfg["filters"], cfg["scoring"]
-        self.http = Http(delay=(self.run["delay_min"], self.run["delay_max"]))
+        self.http = Http(delay=(self.run["delay_min"], self.run["delay_max"]),
+                         rest_every=self.run.get("rest_every", 40),
+                         rest=(self.run.get("rest_min", 30), self.run.get("rest_max", 60)))
         self.gis = twogis.TwoGis(self.http)
         self.hh = hhmod.HH(self.http)
         self.seen = load_seen() if self.run.get("skip_already_exported", True) else set()
@@ -143,7 +164,8 @@ class Collector:
                     eid = next((v["employer_id"] for v in vac if v["confirmed"]), vac[0]["employer_id"])
                     amocrm = self.hh.mentions_amocrm(eid)
             except Blocked as e:
-                log(f"hh.ru: {e} — дальше без проверки вакансий")
+                log(f"hh.ru: {e} — дальше без hh, пауза для hh записана")
+                start_cooldown(self.run.get("cooldown_hours", 12), str(e))
                 self.hh_ok = False
 
         if vac and max(v["employer_vacancies"] for v in vac) > flt.get("max_hh_vacancies", 10**9):
@@ -231,7 +253,15 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", default=str(ROOT / "config.toml"))
     ap.add_argument("--target", type=int, help="сколько лидов собрать (перекрывает config)")
+    ap.add_argument("--force", action="store_true", help="запустить, даже если идёт пауза после блокировки")
     args = ap.parse_args()
+
+    # Главное правило: не попасть в блокировку. Если недавно ловили капчу/429 — не стучимся.
+    left, reason = cooldown_left()
+    if left and not args.force:
+        log(f"Пауза после блокировки ещё {int(left.total_seconds() // 3600)} ч "
+            f"{int(left.total_seconds() % 3600 // 60)} мин ({reason}). Не запускаюсь.")
+        return 2
 
     cfg = tomllib.loads(Path(args.config).read_text(encoding="utf-8"))
     target = args.target or cfg["run"]["target_leads"]
@@ -244,7 +274,8 @@ def main():
         if src.get("niches_2gis", True):
             c.from_2gis_niches(cfg["niches"], cfg["cities"], target)
     except Blocked as e:
-        log(f"СТОП: {e}. Сохраняю то, что успел собрать.")
+        until = start_cooldown(cfg["run"].get("cooldown_hours", 12), str(e))
+        log(f"СТОП: {e}. Сохраняю то, что успел собрать. Следующий запуск — не раньше {until:%d.%m %H:%M}.")
     except KeyboardInterrupt:
         log("Остановлено вручную. Сохраняю то, что успел собрать.")
 
