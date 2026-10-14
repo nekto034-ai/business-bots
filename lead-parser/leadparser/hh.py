@@ -18,8 +18,12 @@ SALES_RE = re.compile(r"продаж|продавец|sales|менеджер п�
 _LEGAL_RE = re.compile(r"\b(ооо|ип|оао|зао|пао|ао|тд|гк|компания|группа компаний)\b")
 
 
+AMO_QUERY = "amoCRM OR АмоСРМ OR амоCRM OR amoСРМ"
+
+
 def norm(name):
-    s = (name or "").lower().replace("ё", "е")
+    s = re.sub(r"\(.*?\)", " ", name or "")  # «Coral Travel (ИП Иванова)» → «Coral Travel»
+    s = s.lower().replace("ё", "е")
     s = re.sub(r"[\"'«»“”„]", " ", s)
     s = _LEGAL_RE.sub(" ", s)
     return re.sub(r"[^0-9a-zа-я]+", "", s)
@@ -54,6 +58,44 @@ class HH:
             self._employers[eid] = info
         return self._employers[eid]
 
+    def _search(self, **params):
+        st = _state(self.http.get("https://hh.ru/search/vacancy?" + urlencode(params)))
+        return None if st is None else (st.get("vacancySearchResult") or {})
+
+    def mentions_amocrm(self, eid):
+        """Первая вакансия работодателя, где упомянута amoCRM, или None."""
+        res = self._search(text=AMO_QUERY, employer_id=eid) or {}
+        for v in res.get("vacancies") or []:
+            if (v.get("company") or {}).get("id") == eid:
+                return {"title": v.get("name", ""), "url": (v.get("links") or {}).get("desktop", "")}
+        return None
+
+    def amocrm_employers(self, area_id, city, max_pages=5):
+        """Работодатели города, у которых в вакансиях упомянута amoCRM.
+
+        Возвращает {eid: {"name", "title", "url"}} — по первой найденной вакансии.
+        """
+        out = {}
+        for page in range(max_pages):
+            res = self._search(text=AMO_QUERY, area=area_id, page=page, items_on_page=50)
+            vs = (res or {}).get("vacancies") or []
+            for v in vs:
+                c = v.get("company") or {}
+                if not c.get("id") or (v.get("area") or {}).get("name") != city:
+                    continue
+                out.setdefault(c["id"], {
+                    "name": c.get("name") or c.get("visibleName") or "",
+                    "title": v.get("name", ""),
+                    "url": (v.get("links") or {}).get("desktop", ""),
+                })
+            if len(vs) < 20:
+                break
+        return out
+
+    def site_of(self, eid):
+        site = self.employer(eid).get("site") or ""
+        return domain(site.get("href", "") if isinstance(site, dict) else site)
+
     def vacancies(self, company, area_id, city, site_url=""):
         """Вакансии компании в городе.
 
@@ -82,8 +124,7 @@ class HH:
         site = domain(site_url)
         for eid, vs in by_employer.items():
             info = self.employer(eid)
-            hh_site = info.get("site") or ""
-            hh_site = domain(hh_site.get("href", "") if isinstance(hh_site, dict) else hh_site)
+            hh_site = self.site_of(eid)
             if site and hh_site and site != hh_site:
                 continue  # однофамилец: другой сайт
             confirmed = bool(site and hh_site and site == hh_site)
@@ -93,6 +134,7 @@ class HH:
                     "url": (v.get("links") or {}).get("desktop", ""),
                     "is_sales": bool(SALES_RE.search(v.get("name", ""))),
                     "employer_url": f"https://hh.ru/employer/{eid}",
+                    "employer_id": eid,
                     "confirmed": confirmed,
                     "employer_vacancies": info.get("vacancy_count") if isinstance(info.get("vacancy_count"), int) else len(vs),
                 })

@@ -1,8 +1,10 @@
 """Запуск: python run.py [--config config.toml] [--target 60]
 
-Собирает компании из 2ГИС по нишам и городам из config.toml, отсеивает
-по фильтрам, проверяет сайт и вакансии на hh.ru, считает баллы и сохраняет
-Excel в папку output/.
+Два входа в одну воронку:
+  1. hh.ru: работодатели, у которых в вакансиях упомянута amoCRM → ищем их в 2ГИС;
+  2. 2ГИС: поиск по нишам из config.toml.
+Дальше каждая компания проходит фильтры, проверку сайта и вакансий,
+получает баллы, и всё сохраняется в Excel в папку output/.
 """
 
 import argparse
@@ -16,7 +18,7 @@ from leadparser import hh as hhmod
 from leadparser import site_check, twogis
 from leadparser.export_xlsx import write
 from leadparser.net import Blocked, Http
-from leadparser.scoring import score
+from leadparser.scoring import crm_label, score
 
 ROOT = Path(__file__).parent
 DATA = ROOT / "data"
@@ -58,6 +60,150 @@ def plan(niches, cities):
             yield niche, cities[(i + rnd) % len(cities)]
 
 
+class Collector:
+    def __init__(self, cfg):
+        self.run, self.flt, self.w = cfg["run"], cfg["filters"], cfg["scoring"]
+        self.http = Http(delay=(self.run["delay_min"], self.run["delay_max"]))
+        self.gis = twogis.TwoGis(self.http)
+        self.hh = hhmod.HH(self.http)
+        self.seen = load_seen() if self.run.get("skip_already_exported", True) else set()
+        self.taken = set()  # org id, уже взятые в этом запуске
+        self.leads = []
+        self.stats = {"просмотрено": 0, "филиалы": 0, "много отзывов": 0, "стоп-лист": 0,
+                      "крупные по hh": 0, "уже были": 0, "без телефона": 0}
+        self.stop = [hhmod.norm(x) for x in self.flt.get("stop_list", [])]
+        self.hh_ok = self.run.get("check_hh", True)
+
+    def process(self, it, city, source, segment="", seasonal=False, amocrm=None):
+        """Проверить карточку из выдачи 2ГИС; если подходит — добавить в лиды. Вернуть True/False."""
+        flt = self.flt
+        if it.get("type") != "branch":
+            return False
+        self.stats["просмотрено"] += 1
+        org_id = (it.get("org") or {}).get("id") or it["id"]
+        if org_id in self.taken:
+            return False
+        if org_id in self.seen:
+            self.stats["уже были"] += 1
+            return False
+        if twogis.branch_count(it) > flt["max_branches"]:
+            self.stats["филиалы"] += 1
+            return False
+        if twogis.review_count(it) > flt["max_reviews"]:
+            self.stats["много отзывов"] += 1
+            return False
+        if in_stop_list(it, self.stop):
+            self.stats["стоп-лист"] += 1
+            return False
+
+        firm = self.gis.firm(city["alias"], it["id"]) or it
+        cts = twogis.contacts(firm)
+        if flt.get("require_phone", True) and not cts["phones"]:
+            self.stats["без телефона"] += 1
+            return False
+        self.taken.add(org_id)
+
+        site_url = cts["websites"][0] if cts["websites"] else ""
+        if self.run.get("check_websites", True):
+            site = site_check.check(self.http.session, site_url)
+        else:
+            site = {"status": "ok" if site_url else "none", "issues": [], "url": site_url}
+
+        name = firm.get("name") or it.get("name")
+        short = (firm.get("name_ex") or {}).get("primary") or name
+        vac = None
+        if self.hh_ok:
+            try:
+                vac = self.hh.vacancies(short, city.get("hh_area"), city["name"], site_url)
+                if vac and amocrm is None:
+                    # Нашли компанию на hh — заодно проверим, упоминает ли она amoCRM в вакансиях
+                    eid = next((v["employer_id"] for v in vac if v["confirmed"]), vac[0]["employer_id"])
+                    amocrm = self.hh.mentions_amocrm(eid)
+            except Blocked as e:
+                log(f"hh.ru: {e} — дальше без проверки вакансий")
+                self.hh_ok = False
+
+        if vac and max(v["employer_vacancies"] for v in vac) > flt.get("max_hh_vacancies", 10**9):
+            self.stats["крупные по hh"] += 1
+            log(f"  - {name}: на hh слишком много вакансий — похоже на крупную компанию")
+            return False
+
+        created = twogis.created_at(firm)
+        lead = {
+            "id": org_id,
+            "name": name,
+            "rubric": ", ".join(r["name"] for r in firm.get("rubrics") or [])[:120],
+            "segment": segment,
+            "seasonal": seasonal,
+            "query": source,
+            "city": twogis.city_name(firm) or city["name"],
+            "msk_offset": twogis.msk_offset(firm),
+            "address": firm.get("address_name") or "",
+            "contacts": cts,
+            "site": site,
+            "reviews": twogis.review_count(firm),
+            "rating": twogis.rating(firm),
+            "months_on_map": twogis.months_on_map(firm),
+            "created": created.strftime("%m.%Y") if created else "",
+            "hh": vac,
+            "amocrm": amocrm,
+            "url": twogis.firm_url(city["alias"], it["id"]),
+        }
+        lead["score"], lead["why"] = score(lead, self.w)
+        lead["crm"] = crm_label(lead)
+        self.leads.append(lead)
+        log(f"  + {name} — балл {lead['score']}: {'; '.join(lead['why'])}")
+        return True
+
+    def from_hh_amocrm(self, cities, target):
+        """Вход 1: работодатели с amoCRM в вакансиях → та же компания в 2ГИС."""
+        for city in cities:
+            if len(self.leads) >= target:
+                return
+            log(f"hh.ru: ищу работодателей с amoCRM в вакансиях — {city['name']}")
+            emps = self.hh.amocrm_employers(city["hh_area"], city["name"],
+                                            self.run.get("hh_amocrm_pages", 5))
+            log(f"  найдено работодателей: {len(emps)}")
+            for eid, e in emps.items():
+                if len(self.leads) >= target:
+                    return
+                info = self.hh.employer(eid)
+                cnt = info.get("vacancy_count")
+                if isinstance(cnt, int) and cnt > self.flt.get("max_hh_vacancies", 10**9):
+                    self.stats["крупные по hh"] += 1
+                    continue
+                want = hhmod.norm(e["name"])
+                if len(want) < 3:
+                    continue
+                items, _ = self.gis.search(city["alias"], e["name"])
+                match = next((it for it in items
+                              if want in (hhmod.norm((it.get("name_ex") or {}).get("primary")),
+                                          hhmod.norm((it.get("org") or {}).get("primary")))), None)
+                if not match:
+                    continue
+                self.process(match, city, "hh: вакансии с amoCRM",
+                             amocrm={"title": e["title"], "url": e["url"]})
+
+    def from_2gis_niches(self, niches, cities, target):
+        """Вход 2: поиск в 2ГИС по нишам."""
+        run = self.run
+        for niche, city in plan(niches, cities):
+            if len(self.leads) >= target:
+                return
+            got = 0
+            log(f"Ищу «{niche['query']}» — {city['name']} (собрано {len(self.leads)}/{target})")
+            for page in range(1, run["max_pages_per_query"] + 1):
+                items, pages = self.gis.search(city["alias"], niche["query"], page)
+                for it in items:
+                    if got >= run["per_query_limit"] or len(self.leads) >= target:
+                        break
+                    if self.process(it, city, niche["query"], niche.get("segment", ""),
+                                    niche.get("seasonal", False)):
+                        got += 1
+                if got >= run["per_query_limit"] or page >= pages or len(self.leads) >= target:
+                    break
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", default=str(ROOT / "config.toml"))
@@ -65,120 +211,31 @@ def main():
     args = ap.parse_args()
 
     cfg = tomllib.loads(Path(args.config).read_text(encoding="utf-8"))
-    run, flt, w = cfg["run"], cfg["filters"], cfg["scoring"]
-    target = args.target or run["target_leads"]
-
-    http = Http(delay=(run["delay_min"], run["delay_max"]))
-    gis = twogis.TwoGis(http)
-    hh = hhmod.HH(http)
-    seen = load_seen() if run.get("skip_already_exported", True) else set()
-    taken = set()  # org id, уже взятые в этом запуске
-    leads = []
-    stats = {"просмотрено": 0, "филиалы": 0, "много отзывов": 0, "стоп-лист": 0,
-             "крупные по hh": 0, "уже были": 0, "без телефона": 0}
-    stop = [hhmod.norm(x) for x in flt.get("stop_list", [])]
-    hh_ok = run.get("check_hh", True)
+    target = args.target or cfg["run"]["target_leads"]
+    src = cfg.get("sources", {})
+    c = Collector(cfg)
 
     try:
-        for niche, city in plan(cfg["niches"], cfg["cities"]):
-            if len(leads) >= target:
-                break
-            got = 0
-            log(f"Ищу «{niche['query']}» — {city['name']} (собрано {len(leads)}/{target})")
-            for page in range(1, run["max_pages_per_query"] + 1):
-                items, pages = gis.search(city["alias"], niche["query"], page)
-                for it in items:
-                    if got >= run["per_query_limit"] or len(leads) >= target:
-                        break
-                    if it.get("type") != "branch":
-                        continue
-                    stats["просмотрено"] += 1
-                    org_id = (it.get("org") or {}).get("id") or it["id"]
-                    if org_id in taken:
-                        continue
-                    if org_id in seen:
-                        stats["уже были"] += 1
-                        continue
-                    if twogis.branch_count(it) > flt["max_branches"]:
-                        stats["филиалы"] += 1
-                        continue
-                    if twogis.review_count(it) > flt["max_reviews"]:
-                        stats["много отзывов"] += 1
-                        continue
-                    if in_stop_list(it, stop):
-                        stats["стоп-лист"] += 1
-                        continue
-
-                    firm = gis.firm(city["alias"], it["id"]) or it
-                    cts = twogis.contacts(firm)
-                    if flt.get("require_phone", True) and not cts["phones"]:
-                        stats["без телефона"] += 1
-                        continue
-                    taken.add(org_id)
-
-                    site_url = cts["websites"][0] if cts["websites"] else ""
-                    if run.get("check_websites", True):
-                        site = site_check.check(http.session, site_url)
-                    else:
-                        site = {"status": "ok" if site_url else "none", "issues": [], "url": site_url}
-
-                    name = firm.get("name") or it.get("name")
-                    short = (firm.get("name_ex") or {}).get("primary") or name
-                    vac = None
-                    if hh_ok:
-                        try:
-                            vac = hh.vacancies(short, city.get("hh_area"), city["name"], site_url)
-                        except Blocked as e:
-                            log(f"hh.ru: {e} — дальше без проверки вакансий")
-                            hh_ok = False
-
-                    if vac and max(v["employer_vacancies"] for v in vac) > flt.get("max_hh_vacancies", 10**9):
-                        stats["крупные по hh"] += 1
-                        log(f"  - {name}: на hh слишком много вакансий — похоже на крупную компанию")
-                        continue
-
-                    created = twogis.created_at(firm)
-                    lead = {
-                        "id": org_id,
-                        "name": name,
-                        "rubric": ", ".join(r["name"] for r in firm.get("rubrics") or [])[:120],
-                        "segment": niche["segment"],
-                        "seasonal": niche.get("seasonal", False),
-                        "query": niche["query"],
-                        "city": twogis.city_name(firm) or city["name"],
-                        "msk_offset": twogis.msk_offset(firm),
-                        "address": firm.get("address_name") or "",
-                        "contacts": cts,
-                        "site": site,
-                        "reviews": twogis.review_count(firm),
-                        "rating": twogis.rating(firm),
-                        "months_on_map": twogis.months_on_map(firm),
-                        "created": created.strftime("%m.%Y") if created else "",
-                        "hh": vac,
-                        "url": twogis.firm_url(city["alias"], it["id"]),
-                    }
-                    lead["score"], lead["why"] = score(lead, w)
-                    leads.append(lead)
-                    got += 1
-                    log(f"  + {name} — балл {lead['score']}: {'; '.join(lead['why'])}")
-                if got >= run["per_query_limit"] or page >= pages or len(leads) >= target:
-                    break
+        if src.get("hh_amocrm", True):
+            c.from_hh_amocrm(cfg["cities"], target)
+        if src.get("niches_2gis", True):
+            c.from_2gis_niches(cfg["niches"], cfg["cities"], target)
     except Blocked as e:
         log(f"СТОП: {e}. Сохраняю то, что успел собрать.")
     except KeyboardInterrupt:
         log("Остановлено вручную. Сохраняю то, что успел собрать.")
 
-    leads.sort(key=lambda L: -L["score"])
+    leads = sorted(c.leads, key=lambda L: -L["score"])
     OUTPUT.mkdir(exist_ok=True)
     stamp = datetime.now().strftime("%Y-%m-%d_%H%M")
     xlsx = OUTPUT / f"leads_{stamp}.xlsx"
     write(leads, xlsx)
     (OUTPUT / f"leads_{stamp}.json").write_text(
         json.dumps(leads, ensure_ascii=False, indent=1, default=str), encoding="utf-8")
-    save_seen(seen | {L["id"] for L in leads})
+    save_seen(c.seen | {L["id"] for L in leads})
 
     log(f"Готово: {len(leads)} компаний → {xlsx}")
-    log("Отсеяно: " + ", ".join(f"{k} — {v}" for k, v in stats.items()))
+    log("Отсеяно: " + ", ".join(f"{k} — {v}" for k, v in c.stats.items()))
     return 0 if leads else 1
 
 

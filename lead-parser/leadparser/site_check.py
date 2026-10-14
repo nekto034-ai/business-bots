@@ -22,6 +22,11 @@ _COPY_RE = re.compile(r"(?:©|\(c\)|copyright)\D{0,30}?(?<!\d)((?:19|20)\d{2})(?
     r"|(?<!\d)((?:19|20)\d{2})\s*(?:©|\(c\))", re.I)
 _TAG_RE = re.compile(r"<(script|style)[^>]*>.*?</\1>|<[^>]+>", re.S | re.I)
 MAX_BYTES = 2_000_000
+# Следы CRM в коде сайта: формы заявок, чаты, кнопки обратного звонка
+CRM_MARKERS = {
+    "amoCRM": re.compile(r"amocrm\.(?:ru|com)|amo_social_button|amoforms|amo-forms|gso\.amocrm", re.I),
+    "Битрикс24": re.compile(r"bitrix24\.(?:ru|com|by|kz)|b24-widget|b24-form", re.I),
+}
 
 
 def _host(url):
@@ -100,4 +105,5 @@ def check(session, url, timeout=15):
         issues.append("почти пустая страница")
     if "<form" not in low:
         issues.append("нет формы заявки")
-    return {"status": "ok", "issues": issues, "url": url}
+    crm = [name for name, rx in CRM_MARKERS.items() if rx.search(html)]
+    return {"status": "ok", "issues": issues, "url": url, "crm": crm}
