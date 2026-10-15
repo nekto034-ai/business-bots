@@ -124,10 +124,18 @@
   .rir-seg button[aria-pressed="true"][data-v="2"], .rir-seg button[aria-pressed="true"][data-v="3"] { background: var(--rir-y); }
   .rir-seg button[aria-pressed="true"][data-v="4"], .rir-seg button[aria-pressed="true"][data-v="5"] { background: var(--ok); }
   .note-btn { align-self: flex-start; }
+  .after textarea { width: 100%; min-height: 64px; border: 1px solid var(--line); background: var(--surface-2); border-radius: 12px; padding: 9px 10px; font-size: 14px; resize: vertical; }
+  .note-row { display: flex; gap: 10px; align-items: center; }
+  .note-ok { height: 36px; padding: 0 14px; border-radius: 10px; border: 0; background: var(--accent); color: var(--accent-ink); font-weight: 700; cursor: pointer; }
+  .note-saved { font-size: 12.5px; color: var(--ok); }
+  .note-view { font-size: 13.5px; color: var(--muted); white-space: pre-wrap; cursor: pointer; border-left: 3px solid var(--line); padding-left: 8px; }
+  .setup { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+  .setup input { flex: 1; min-width: 0; height: 36px; border: 1px solid var(--line); background: var(--surface-2); border-radius: 10px; padding: 0 10px; font-size: 14px; color: var(--ink, inherit); }
+  .ref .collapse { margin-left: auto; }
   .mini { display: none; width: 26px; height: 26px; border-radius: 50%; background: var(--ok); color: #fff; font-family: var(--font-display); font-size: 12px; font-weight: 800; place-items: center; flex: none; }
   .ex-title { display: flex; gap: 8px; align-items: center; }
   .done-sum { display: none; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
-  .ex.collapsed .photo, .ex.collapsed .ref, .ex.collapsed .sets, .ex.collapsed .after, .ex.collapsed .last, .ex.collapsed .fig, .ex.collapsed .tags { display: none; }
+  .ex.collapsed .photo, .ex.collapsed .ref, .ex.collapsed .setup, .ex.collapsed .sets, .ex.collapsed .after, .ex.collapsed .last, .ex.collapsed .fig, .ex.collapsed .tags { display: none; }
   .ex.collapsed .mini { display: grid; }
   .ex.collapsed .done-sum { display: block; }
   .ex.collapsed .ex-body { padding-block: 12px; gap: 6px; }
@@ -146,8 +154,8 @@
   .ex.opt .photo { filter: saturate(.7); }
   .photo { position: relative; aspect-ratio: 3 / 2; background: #fff; }
   .photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-  .photo img.b { animation: swap 2.6s ease-in-out infinite; }
-  @keyframes swap { 0%, 38% { opacity: 0; } 50%, 88% { opacity: 1; } 100% { opacity: 0; } }
+  .photo img.b { opacity: 0; transition: opacity .45s ease-in-out; }
+  .photo.flip img.b { opacity: 1; }
   .photo .badge { position: absolute; top: 10px; left: 10px; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center;
     font-family: var(--font-display); font-weight: 800; font-size: 15px; color: var(--accent-ink); background: var(--accent); box-shadow: 0 2px 8px rgba(0,0,0,.25); }
   .photo .rest { position: absolute; top: 12px; right: 10px; font-size: 12px; font-weight: 600; padding: 4px 9px; border-radius: 999px; background: rgba(10,14,18,.72); color: #fff; backdrop-filter: blur(4px); }
@@ -227,7 +235,7 @@
 
   @media (prefers-reduced-motion: reduce) {
     * { transition: none !important; }
-    .photo img.b { animation: none; opacity: 0; }
+    .photo img.b { transition: none; }
   }
 </style>
 </head>
@@ -316,6 +324,8 @@ const M = {
 };
 const DAYS = {
   A: { title: "Жимы", plate: "20", meta: "Грудь, плечи, трицепс, пресс", ex: [
+    { id: "abs_ddx", n: "Скручивания в тренажёре DDX", alt: "блины 5–20 кг", s: 4, r: "12–15", rest: 75, p: ["abs"], x: [], q: "скручивания в тренажере на пресс техника",
+      c: ["Скручивайся прессом, а не тяни руками", "Внизу пауза 1 с, выдох", "Вверх медленно, без бросания веса"] },
     { id: "chest_machine", n: "Жим в тренажёре на грудь", alt: "Хаммер или блочный", s: 4, r: "8–10", rest: 120, p: ["chest"], x: ["delts","tri"], q: "жим от груди в тренажере хаммер техника",
       c: ["Лопатки сведены и прижаты к спинке", "Рукояти на уровне середины груди", "Вверх на выдохе, локти не выпрямлять до щелчка"] },
     { id: "incline_db", n: "Жим гантелей на наклонной", alt: "скамья 30°", s: 4, r: "8–12", rest: 120, p: ["chest"], x: ["delts","tri"], q: "жим гантелей на наклонной скамье техника",
@@ -326,12 +336,12 @@ const DAYS = {
       c: ["Руки чуть согнуты, до уровня плеч", "Ведёт локоть, а не кисть", "Без раскачки корпусом"] },
     { id: "tri_pushdown", n: "Разгибание рук в блоке", alt: "трицепс", s: 4, r: "12–15", rest: 75, p: ["tri"], x: [], q: "разгибание рук на блоке трицепс техника",
       c: ["Локти прижаты к бокам и неподвижны", "Разгибай до конца, внизу пауза", "Вверх медленно"] },
-    { id: "abs_ddx", n: "Скручивания в тренажёре DDX", alt: "блины 5–20 кг", s: 4, r: "12–15", rest: 75, p: ["abs"], x: [], q: "скручивания в тренажере на пресс техника",
-      c: ["Скручивайся прессом, а не тяни руками", "Внизу пауза 1 с, выдох", "Вверх медленно, без бросания веса"] },
     { id: "fly", opt: true, n: "Сведение рук (бабочка)", s: 4, r: "12–15", rest: 75, p: ["chest"], x: [], q: "сведение рук в тренажере бабочка техника",
       c: ["Локти чуть согнуты и не меняют угол", "Своди грудью", "В точке сведения пауза 1 с"] }
   ]},
   B: { title: "Ноги", plate: "25", meta: "Ноги, ягодицы, пресс, поясница", ex: [
+    { id: "abs_leg_raise", n: "Подъём ног в упоре", alt: "турник / брусья", s: 4, r: "10–15", rest: 75, p: ["abs"], x: [], q: "подъем ног в упоре на брусьях техника",
+      c: ["Без раскачки — поднимай прессом", "Вверху подкручивай таз", "Тяжело — сгибай колени"] },
     { id: "leg_press", n: "Жим ногами", s: 4, r: "10–12", rest: 150, p: ["quads","glutes"], x: ["hams"], q: "жим ногами в тренажере техника",
       c: ["Поясница и таз прижаты к спинке", "Колени смотрят туда же, куда носки", "Выдох на жиме, колени не выпрямлять до щелчка"] },
     { id: "lunge", n: "Выпады с шагом назад", alt: "или испанские приседания", s: 4, r: "10–12 на ногу", rest: 120, p: ["quads","glutes"], x: ["hams"], q: "обратные выпады с гантелями техника",
@@ -340,14 +350,14 @@ const DAYS = {
       c: ["Таз прижат", "Сгибай до упора, вниз медленно", "Без рывков"] },
     { id: "leg_ext", n: "Разгибание ног в тренажёре", s: 4, r: "12–15", rest: 90, p: ["quads"], x: [], q: "разгибание ног в тренажере техника",
       c: ["Колено на оси тренажёра", "Вверху пауза 1 с", "Вниз медленно"] },
-    { id: "abs_leg_raise", n: "Подъём ног в упоре", alt: "турник / брусья", s: 4, r: "10–15", rest: 75, p: ["abs"], x: [], q: "подъем ног в упоре на брусьях техника",
-      c: ["Без раскачки — поднимай прессом", "Вверху подкручивай таз", "Тяжело — сгибай колени"] },
     { id: "hyper", n: "Гиперэкстензия", s: 4, r: "12–15", rest: 75, p: ["lower","glutes"], x: ["hams"], q: "гиперэкстензия техника",
       c: ["Вниз с ровной спиной", "Вверх до прямой линии, не прогибайся сильнее", "Медленно, без рывков"] },
     { id: "adduct", opt: true, n: "Сведение или разведение ног", s: 4, r: "15", rest: 75, p: ["adduct"], x: ["glutes"], q: "сведение ног в тренажере техника",
       c: ["Спина прижата", "Плавно, без рывков", "Пауза в крайней точке"] }
   ]},
   C: { title: "Тяги", plate: "15", meta: "Спина, бицепс, задняя дельта, пресс", ex: [
+    { id: "abs_situp", n: "Подъём корпуса, руки вперёд", s: 4, r: "15–20", rest: 60, p: ["abs"], x: [], q: "подъем корпуса на пресс руки вперед техника",
+      c: ["Тянись руками вперёд, поднимаясь", "Поясница не отрывается рывком", "Вниз медленно, выдох на подъёме"] },
     { id: "gravitron", n: "Подтягивания в гравитроне", s: 4, r: "6–10", rest: 120, p: ["back"], x: ["bi"], q: "подтягивания в гравитроне техника",
       c: ["Сначала опусти плечи, потом тяни", "Тянись грудью к рукояти", "Вниз медленно"] },
     { id: "row_horiz", n: "Тяга горизонтальная", alt: "Хаммер или блок", s: 4, r: "10–12", rest: 120, p: ["back"], x: ["bi","rear"], q: "тяга горизонтального блока техника",
@@ -358,8 +368,6 @@ const DAYS = {
       c: ["Лёгкий вес, руки чуть согнуты", "Разводи в стороны, а не назад", "Пауза наверху"] },
     { id: "curl", n: "Сгибания на бицепс", alt: "гантели, молот или супинация", s: 4, r: "10–12", rest: 75, p: ["bi"], x: [], q: "сгибание рук с гантелями молот техника",
       c: ["Локти прижаты к корпусу", "Без раскачки спиной", "Вниз медленно"] },
-    { id: "abs_situp", n: "Подъём корпуса, руки вперёд", s: 4, r: "15–20", rest: 60, p: ["abs"], x: [], q: "подъем корпуса на пресс руки вперед техника",
-      c: ["Тянись руками вперёд, поднимаясь", "Поясница не отрывается рывком", "Вниз медленно, выдох на подъёме"] },
     { id: "row_one", opt: true, n: "Тяга одной рукой", alt: "Хаммер или гантель", s: 4, r: "10–12 на руку", rest: 120, p: ["back"], x: ["bi","rear"], q: "тяга гантели одной рукой в наклоне техника",
       c: ["Не скручивай корпус", "Тяни локоть к бедру", "Внизу растяни спину"] }
   ]}
@@ -406,12 +414,16 @@ function applyCollapsed(li) {
   const on = collapsed.has(li.dataset.ex);
   li.classList.toggle("collapsed", on);
   const b = li.querySelector(".expand"); if (b) b.hidden = !on;
+  const c = li.querySelector(".collapse"); if (c) c.hidden = on;
+}
+function sumText(st) {
+  return st.sets.filter(x => x.kg || x.reps).map(x => (x.kg || "—") + "×" + (x.reps || "—")).join("  ·  ") + (st.rir !== "" ? " · запас " + rirText(st.rir) : "");
 }
 const sid = () => date + "_" + day;
 
 function emptySession() {
   const ex = {};
-  DAYS[day].ex.forEach(e => { ex[e.id] = { name: e.n, sets: Array.from({ length: e.s }, () => ({ kg: "", reps: "", done: false, at: "" })), rir: "", note: "", flags: [] }; });
+  DAYS[day].ex.forEach(e => { ex[e.id] = { name: e.n, sets: Array.from({ length: e.s }, () => ({ kg: "", reps: "", done: false, at: "" })), rir: "", note: "", flags: [], setup: "" }; });
   return { date, day, ex, note: "", finishedAt: "" };
 }
 function loadDraft() {
@@ -424,11 +436,18 @@ function loadDraft() {
       base.ex[k].rir = s.rir ?? "";
       base.ex[k].note = s.note || "";
       base.ex[k].flags = Array.isArray(s.flags) ? s.flags.filter(f => FLAGS.includes(f)) : [];
+      base.ex[k].setup = s.setup || "";
     });
     base.note = stored.note || "";
     base.finishedAt = stored.finishedAt || "";
   }
+  Object.keys(base.ex).forEach(k => { if (!base.ex[k].setup) base.ex[k].setup = lastSetup(k); });
   draft = base; dirty = false;
+}
+function lastSetup(exId) {
+  const list = Object.values(sessions).filter(s => s.day === day && s.date < date && s.ex && s.ex[exId] && s.ex[exId].setup);
+  list.sort((a, b) => a.date < b.date ? 1 : -1);
+  return list.length ? list[0].ex[exId].setup : "";
 }
 function previousFor(exId) {
   const list = Object.values(sessions).filter(s => s.day === day && s.date < date && s.ex && s.ex[exId] && s.ex[exId].sets.some(x => x.kg || x.reps));
@@ -436,10 +455,14 @@ function previousFor(exId) {
   if (!list.length) return "";
   const s = list[0], e = s.ex[exId];
   const sets = e.sets.filter(x => x.kg || x.reps).map(x => `<b>${esc(x.kg || "—")}</b>×${esc(x.reps || "—")}`).join("  ·  ");
-  return `Прошлый раз ${fmtDate(s.date)}: ${sets}${e.rir !== "" ? " · запас " + esc(e.rir) : ""}`;
+  return `Прошлый раз ${fmtDate(s.date)}: ${sets}${e.rir !== "" ? " · запас " + esc(rirText(e.rir)) : ""}`;
 }
 
-const FLAGS = ["Легко", "Тяжело", "Заменить", "Дискомфорт"];
+const FLAGS = ["Легко", "Средне", "Тяжело", "Заменить", "Дискомфорт"];
+const FEEL = ["Легко", "Средне", "Тяжело"]; // pick one of these
+// Reserve (RIR) can be one number or a range like "1-2": sets inside one exercise often feel different.
+const rirHas = (rir, v) => { if (rir === "") return false; const [a, b = a] = String(rir).split("-").map(Number); return +v >= a && +v <= b; };
+const rirText = rir => String(rir).replace("-", "–");
 const CHECK = `<svg viewBox="0 0 24 24" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`;
 
 function renderHead() {
@@ -479,8 +502,8 @@ function render() {
         <label class="field"><input inputmode="numeric" placeholder="0" aria-label="Подход ${j + 1}, повторы" data-ex="${e.id}" data-set="${j}" data-f="reps" value="${esc(v.reps)}"><small>раз</small></label>
         <button class="done" type="button" aria-pressed="${v.done}" aria-label="Подход ${j + 1} сделан" data-ex="${e.id}" data-set="${j}">${CHECK}</button>
       </div>`).join("");
-    const rirBtns = ["0", "1", "2", "3", "4", "5"].map(o => `<button type="button" data-ex="${e.id}" data-v="${o}" aria-pressed="${st.rir === o}">${o}</button>`).join("");
-    const doneSum = st.sets.filter(x => x.kg || x.reps).map(x => esc(x.kg || "—") + "×" + esc(x.reps || "—")).join("  ·  ");
+    const rirBtns = ["0", "1", "2", "3", "4", "5"].map(o => `<button type="button" data-ex="${e.id}" data-v="${o}" aria-pressed="${rirHas(st.rir, o)}">${o}</button>`).join("");
+    const doneSum = sumText(st);
     if (st.sets.every(x => x.done)) collapsed.add(e.id);
     const prev = previousFor(e.id);
     const restTxt = e.rest >= 120 ? (e.rest === 150 ? "2–3 мин" : "2 мин") : e.rest + " с";
@@ -496,7 +519,7 @@ function render() {
         <div class="ex-head">
           <div>
             <div class="ex-title"><span class="mini">✓</span><h3>${esc(e.n)}</h3></div>
-            <div class="done-sum">${doneSum}${st.rir !== "" ? " · запас " + esc(st.rir) : ""}</div>
+            <div class="done-sum">${esc(doneSum)}</div>
             <div class="tags">
               <span class="tag dose">${e.s} × ${esc(e.r)}</span>
               ${e.p.map(k => `<span class="tag main">${M[k]}</span>`).join("")}
@@ -510,15 +533,21 @@ function render() {
         <div class="ref">
           <details class="tech"><summary class="link">Техника</summary><ul>${e.c.map(x => `<li>${esc(x)}</li>`).join("")}</ul></details>
           <a class="link" href="${yt(e.q)}" target="_blank" rel="noopener">▶ Видео</a>
+          <button class="link collapse" type="button" data-ex="${e.id}">Свернуть</button>
         </div>
         ${prev ? `<div class="last">${prev}</div>` : ""}
+        <label class="setup">⚙ <input data-ex="${e.id}" data-f="setup" value="${esc(st.setup)}" placeholder="Настройка: сиденье, наклон, ручка" aria-label="Настройка тренажёра"></label>
         <div class="sets">${sets}</div>
         <div class="after">
           <div class="lbl">После упражнения</div>
-          <div class="rir-seg"><span>Запас</span>${rirBtns}</div>
+          <div class="rir-seg" title="Можно выбрать две цифры — например 1 и 2"><span>Запас</span>${rirBtns}</div>
           <div class="flags">${FLAGS.map(f => `<button class="flag" type="button" aria-pressed="${st.flags.includes(f)}" data-ex="${e.id}" data-flag="${f}">${f}</button>`).join("")}</div>
           <button class="link note-btn" type="button" data-ex="${e.id}"${st.note ? " hidden" : ""}>✎ Примечание</button>
-          <textarea placeholder="Что заметил, что поменять" aria-label="Примечание к упражнению" data-ex="${e.id}" data-f="note"${st.note ? "" : " hidden"}>${esc(st.note)}</textarea>
+          <div class="note-view" data-ex="${e.id}" title="Нажми, чтобы изменить"${st.note ? "" : " hidden"}>${esc(st.note)}</div>
+          <div class="note-edit" hidden>
+            <textarea placeholder="Что заметил, что поменять" aria-label="Примечание к упражнению" data-ex="${e.id}" data-f="note">${esc(st.note)}</textarea>
+            <div class="note-row"><button class="note-ok" type="button" data-ex="${e.id}">Готово ✓</button><span class="note-saved"></span></div>
+          </div>
         </div>
       </div>`;
     applyCollapsed(li);
@@ -548,23 +577,38 @@ function flushNow() { if (dirty) { clearTimeout(saveTimer); save(); } }
 
 /* Rest timer */
 const timerEl = document.getElementById("timer");
-let tEnd = 0, tTotal = 0, tTick = null, wake = null, beeped = false;
+let tEnd = 0, tTotal = 0, tTick = null, wake = null, beeped = false, warned = false, audio = null;
 const fmt = s => (s < 0 ? "+" : "") + Math.floor(Math.abs(s) / 60) + ":" + pad(Math.abs(s) % 60);
-function beep() {
-  try { const ctx = new (window.AudioContext || window.webkitAudioContext)(); const o = ctx.createOscillator(); const g = ctx.createGain();
-    o.frequency.value = 880; g.gain.setValueAtTime(.18, ctx.currentTime); g.gain.exponentialRampToValueAtTime(.001, ctx.currentTime + .5);
-    o.connect(g); g.connect(ctx.destination); o.start(); o.stop(ctx.currentTime + .5); } catch (e) {}
+// Loud two-tone signal; notes = [[frequency, start, length], ...]
+function tone(notes) {
+  try {
+    audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+    if (audio.state === "suspended") audio.resume();
+    notes.forEach(([f, at, len]) => {
+      const o = audio.createOscillator(), g = audio.createGain(), t = audio.currentTime + at;
+      o.type = "square"; o.frequency.value = f;
+      g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(.5, t + .02); g.gain.exponentialRampToValueAtTime(.0001, t + len);
+      o.connect(g); g.connect(audio.destination); o.start(t); o.stop(t + len + .05);
+    });
+  } catch (e) {}
 }
+const beepWarn = () => tone([[660, 0, .18]]); // 5 s left: put the phone down, take position
+const beepGo = () => tone([[784, 0, .22], [1175, .25, .22], [784, .5, .22], [1175, .75, .4]]);
 function tickTimer() {
   const left = Math.round((tEnd - Date.now()) / 1000);
   document.getElementById("t-time").textContent = fmt(left);
   document.getElementById("t-bar").style.width = Math.min(100, Math.max(0, 100 * (1 - left / tTotal))) + "%";
   timerEl.classList.toggle("over", left <= 0);
-  document.getElementById("t-label").textContent = left > 0 ? "Отдых" : "Можно работать";
-  if (left <= 0 && !beeped) { beeped = true; beep(); try { navigator.vibrate && navigator.vibrate([200, 100, 200]); } catch (e) {} }
+  document.getElementById("t-label").textContent = left > 5 ? "Отдых" : left > 0 ? "Приготовься" : "Поехали!";
+  if (left <= 5 && left > 0 && !warned) { warned = true; beepWarn(); try { navigator.vibrate && navigator.vibrate(150); } catch (e) {} }
+  if (left <= 0 && !beeped) {
+    beeped = true; beepGo(); try { navigator.vibrate && navigator.vibrate([300, 120, 300, 120, 300]); } catch (e) {}
+    setTimeout(() => { if (beeped && tEnd <= Date.now()) stopTimer(); }, 4000); // hide by itself
+  }
 }
 async function startTimer(seconds, label) {
-  tTotal = seconds; tEnd = Date.now() + seconds * 1000; beeped = false;
+  tTotal = seconds; tEnd = Date.now() + seconds * 1000; beeped = false; warned = false;
+  tone([[1, 0, .01]]); // unlock audio on this tap so the end signal can play
   document.getElementById("t-label").textContent = label || "Отдых";
   timerEl.classList.add("show");
   clearInterval(tTick); tTick = setInterval(tickTimer, 250); tickTimer();
@@ -574,7 +618,10 @@ function stopTimer() {
   clearInterval(tTick); timerEl.classList.remove("show");
   try { wake && wake.release(); } catch (e) {} wake = null;
 }
-document.getElementById("t-plus").addEventListener("click", () => { tEnd += 30000; tTotal += 30; beeped = false; tickTimer(); });
+document.getElementById("t-plus").addEventListener("click", () => {
+  if (tEnd < Date.now()) tEnd = Date.now();
+  tEnd += 30000; tTotal += 30; beeped = false; warned = false; timerEl.classList.add("show"); tickTimer();
+});
 document.getElementById("t-stop").addEventListener("click", stopTimer);
 
 /* Events */
@@ -583,6 +630,7 @@ list.addEventListener("input", ev => {
   const el = ev.target, exId = el.dataset.ex; if (!exId) return;
   if (el.dataset.f === "rir") draft.ex[exId].rir = el.value;
   else if (el.dataset.f === "note") draft.ex[exId].note = el.value;
+  else if (el.dataset.f === "setup") draft.ex[exId].setup = el.value;
   else draft.ex[exId].sets[+el.dataset.set][el.dataset.f] = el.value.trim();
   scheduleSave();
 });
@@ -590,19 +638,47 @@ list.addEventListener("change", ev => { if (ev.target.dataset.f === "rir") { dra
 list.addEventListener("click", ev => {
   const ex = ev.target.closest(".expand");
   if (ex) { collapsed.delete(ex.dataset.ex); applyCollapsed(ex.closest(".ex")); return; }
+  const co = ev.target.closest(".collapse");
+  if (co) {
+    const card = co.closest(".ex"); collapsed.add(co.dataset.ex); applyCollapsed(card);
+    card.querySelector(".done-sum").textContent = sumText(draft.ex[co.dataset.ex]); return;
+  }
   const rb = ev.target.closest(".rir-seg button");
   if (rb) {
-    const st = draft.ex[rb.dataset.ex]; st.rir = st.rir === rb.dataset.v ? "" : rb.dataset.v;
-    rb.parentElement.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.v === st.rir)));
+    const st = draft.ex[rb.dataset.ex], v = rb.dataset.v, cur = String(st.rir);
+    if (cur === v) st.rir = "";                                  // tap the same number again — clear
+    else if (cur !== "" && !cur.includes("-")) st.rir = [cur, v].sort().join("-"); // second number — range
+    else st.rir = v;
+    rb.parentElement.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(rirHas(st.rir, x.dataset.v))));
     scheduleSave(); return;
   }
   const nb = ev.target.closest(".note-btn");
-  if (nb) { nb.hidden = true; const ta = nb.nextElementSibling; ta.hidden = false; ta.focus(); return; }
+  const nv = ev.target.closest(".note-view");
+  if (nb || nv) {
+    const after = (nb || nv).closest(".after");
+    after.querySelector(".note-btn").hidden = true; after.querySelector(".note-view").hidden = true;
+    const ed = after.querySelector(".note-edit"); ed.hidden = false; ed.querySelector(".note-saved").textContent = "";
+    ed.querySelector("textarea").focus(); return;
+  }
+  const ok = ev.target.closest(".note-ok");
+  if (ok) {
+    const after = ok.closest(".after"), text = draft.ex[ok.dataset.ex].note.trim();
+    flushNow();
+    after.querySelector(".note-edit").hidden = true;
+    const view = after.querySelector(".note-view"); view.textContent = text; view.hidden = !text;
+    after.querySelector(".note-btn").hidden = !!text;
+    writing.then(okSaved => { if (okSaved !== false && text) { view.textContent = text + "  ✓ сохранено"; setTimeout(() => { view.textContent = draft.ex[ok.dataset.ex].note.trim(); }, 2500); } });
+    return;
+  }
   const fl = ev.target.closest(".flag");
   if (fl) {
     const arr = draft.ex[fl.dataset.ex].flags, f = fl.dataset.flag, i = arr.indexOf(f);
-    if (i >= 0) arr.splice(i, 1); else arr.push(f);
-    fl.setAttribute("aria-pressed", String(i < 0)); scheduleSave(); return;
+    if (i >= 0) arr.splice(i, 1);
+    else {
+      if (FEEL.includes(f)) for (let k = arr.length - 1; k >= 0; k--) if (FEEL.includes(arr[k])) arr.splice(k, 1); // one of Легко / Средне / Тяжело
+      arr.push(f);
+    }
+    fl.parentElement.querySelectorAll(".flag").forEach(x => x.setAttribute("aria-pressed", String(arr.includes(x.dataset.flag)))); scheduleSave(); return;
   }
   const b = ev.target.closest(".done"); if (!b) return;
   const e = DAYS[day].ex.find(x => x.id === b.dataset.ex); const s = draft.ex[e.id].sets[+b.dataset.set];
@@ -611,13 +687,15 @@ list.addEventListener("click", ev => {
   b.setAttribute("aria-pressed", String(s.done));
   b.closest(".set").classList.toggle("is-done", s.done);
   updateProgress(); scheduleSave();
-  if (s.done) startTimer(e.rest, "Отдых · " + e.n);
   const card = b.closest(".ex");
-  if (s.done && draft.ex[e.id].sets.every(x => x.done)) {
+  const allDone = draft.ex[e.id].sets.every(x => x.done);
+  if (s.done && !allDone) startTimer(e.rest, "Отдых · " + e.n);
+  if (s.done && allDone) stopTimer(); // exercise finished: no rest countdown while moving to the next machine
+  if (s.done && allDone) {
     // exercise finished: fold the card and bring the next one into view
     setTimeout(() => {
       collapsed.add(e.id); applyCollapsed(card);
-      card.querySelector(".done-sum").textContent = draft.ex[e.id].sets.map(x => (x.kg || "—") + "×" + (x.reps || "—")).join("  ·  ") + (draft.ex[e.id].rir !== "" ? " · запас " + draft.ex[e.id].rir : "");
+      card.querySelector(".done-sum").textContent = sumText(draft.ex[e.id]);
       const next = card.nextElementSibling; if (next) next.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 700);
   }
@@ -638,7 +716,7 @@ function reportText() {
     const st = draft.ex[e.id];
     const sets = st.sets.filter(x => x.kg || x.reps).map(x => (x.kg || "—") + "×" + (x.reps || "—"));
     const extra = [st.flags.join(", "), st.note.trim()].filter(Boolean).join(" — ");
-    if (sets.length || extra) lines.push("— " + e.n + ": " + (sets.join(", ") || "без подходов") + (st.rir !== "" ? " (запас " + st.rir + ")" : "") + (extra ? " [" + extra + "]" : ""));
+    if (sets.length || extra) lines.push("— " + e.n + ": " + (sets.join(", ") || "без подходов") + (st.rir !== "" ? " (запас " + rirText(st.rir) + ")" : "") + (st.setup ? " {" + st.setup + "}" : "") + (extra ? " [" + extra + "]" : ""));
   });
   if (draft.note) lines.push("Заметки: " + draft.note);
   return lines.join("\n");
@@ -689,6 +767,9 @@ const THEMES = ["light", "dark", "auto"], THEME_NAMES = { light: '<svg viewBox="
 function applyTheme(t) { document.documentElement.dataset.theme = t; const tb = document.getElementById("theme-btn"); tb.innerHTML = THEME_NAMES[t]; tb.title = THEME_TITLES[t]; tb.setAttribute("aria-label", THEME_TITLES[t]); try { localStorage.setItem("theme", t); } catch (e) {} }
 document.getElementById("theme-btn").addEventListener("click", () => { const cur = document.documentElement.dataset.theme; applyTheme(THEMES[(THEMES.indexOf(cur) + 1) % THEMES.length]); });
 applyTheme(THEMES.includes(document.documentElement.dataset.theme) ? document.documentElement.dataset.theme : "light");
+
+/* Photo pairs: start ↔ end of the movement */
+setInterval(() => document.querySelectorAll(".ex:not(.collapsed) .photo").forEach(p => p.classList.toggle("flip")), 1300);
 
 /* Boot */
 const fromHash = (location.hash || "").replace("#", "").toUpperCase();
