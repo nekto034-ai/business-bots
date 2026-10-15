@@ -118,6 +118,10 @@ const server = http.createServer((req, res) => {
     res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-cache' });
     return fs.createReadStream(path.join(PUBLIC_DIR, 'index.html')).pipe(res);
   }
+  if (req.method === 'GET' && url.pathname === '/tips.json') {
+    res.writeHead(200, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-cache' });
+    return fs.createReadStream(path.join(PUBLIC_DIR, 'tips.json')).pipe(res);
+  }
   const img = url.pathname.match(/^\/img\/([a-z_]+_[01]\.jpg)$/);
   if (req.method === 'GET' && img) {
     const file = path.join(PUBLIC_DIR, 'img', img[1]);

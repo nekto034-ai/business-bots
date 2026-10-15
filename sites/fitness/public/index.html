@@ -132,6 +132,20 @@
   .setup { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
   .setup input { flex: 1; min-width: 0; height: 36px; border: 1px solid var(--line); background: var(--surface-2); border-radius: 10px; padding: 0 10px; font-size: 14px; color: var(--ink, inherit); }
   .ref .collapse { margin-left: auto; }
+  .tips ul { list-style: none; padding: 0; margin: 10px 0 0; display: flex; flex-direction: column; gap: 12px; }
+  .tips li { border-left: 3px solid var(--accent); padding-left: 10px; font-size: 14px; line-height: 1.45; }
+  .tips li b { display: block; margin-bottom: 3px; }
+  .tips li .new { font-size: 11px; font-weight: 700; color: var(--accent-ink); background: var(--accent); border-radius: 999px; padding: 1px 7px; margin-left: 6px; vertical-align: 1px; }
+  .tips li a { display: inline-block; margin-top: 4px; font-size: 13.5px; font-weight: 600; color: var(--accent); }
+  .lockbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 4px 0 12px; padding: 12px 14px; border-radius: 16px; background: var(--surface); border: 1px solid var(--line); font-size: 14px; }
+  .lockbar b { font-weight: 700; }
+  .lockbar .grow { flex: 1; min-width: 160px; color: var(--muted); }
+  .lockbar button { height: 38px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface-2); font-weight: 700; cursor: pointer; }
+  .lockbar button.go { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+  body.locked .list .ex { filter: grayscale(1); opacity: .6; }
+  body.locked .list .ex .sets, body.locked .list .ex .after, body.locked .list .ex .setup { pointer-events: none; }
+  body.locked .note textarea { opacity: .6; pointer-events: none; }
+  body.locked #finish-btn { display: none; }
   .mini { display: none; width: 26px; height: 26px; border-radius: 50%; background: var(--ok); color: #fff; font-family: var(--font-display); font-size: 12px; font-weight: 800; place-items: center; flex: none; }
   .ex-title { display: flex; gap: 8px; align-items: center; }
   .done-sum { display: none; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
@@ -286,6 +300,8 @@
   </nav>
 
 
+  <div class="lockbar" id="lockbar" hidden></div>
+
   <ol class="list" id="list"></ol>
 
 
@@ -410,11 +426,33 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;",
 let day = "A", date = todayISO(), online = false, sessions = {}, draft = null, dirty = false;
 let writing = Promise.resolve(), saveTimer = null;
 let collapsed = new Set();
+let tips = {}, unlocked = new Set(); // unlocked: finished sessions opened for editing
+const isLocked = () => !!draft.finishedAt && !unlocked.has(sid());
+const NEXT = { A: "B", B: "C", C: "A" }, DAY_RU = { A: "А", B: "Б", C: "В" };
 function applyCollapsed(li) {
   const on = collapsed.has(li.dataset.ex);
   li.classList.toggle("collapsed", on);
   const b = li.querySelector(".expand"); if (b) b.hidden = !on;
   const c = li.querySelector(".collapse"); if (c) c.hidden = on;
+}
+function tipsHtml(exId) {
+  const list = Array.isArray(tips[exId]) ? tips[exId] : [];
+  if (!list.length) return "";
+  const fresh = t => t.date && (Date.now() - Date.parse(t.date)) < 8 * 86400000;
+  return `<details class="tech tips"><summary class="link">💬 Ответы (${list.length})${list.some(fresh) ? " •" : ""}</summary><ul>${list.map(t => `
+    <li><b>${esc(t.q)}${fresh(t) ? '<span class="new">новое</span>' : ""}</b>${esc(t.a)}${t.v ? `<br><a href="${yt(t.v)}" target="_blank" rel="noopener">▶ Видео-объяснение</a>` : ""}</li>`).join("")}</ul></details>`;
+}
+function renderLock() {
+  const bar = document.getElementById("lockbar"), locked = isLocked();
+  document.body.classList.toggle("locked", locked);
+  document.querySelectorAll("#list input, #list textarea, #list .done, #list .rir-seg button, #list .flag, #list .note-btn, #note").forEach(el => { el.disabled = locked; });
+  if (!draft.finishedAt) { bar.hidden = true; return; }
+  const when = new Date(draft.finishedAt).toLocaleString("ru-RU", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
+  const nx = NEXT[day];
+  bar.innerHTML = locked
+    ? `<span class="grow">🔒 <b>Тренировка завершена</b> ${esc(when)} · только просмотр</span><button type="button" id="unlock">Изменить</button><button type="button" class="go" id="go-next">Следующая: ${DAY_RU[nx]} →</button>`
+    : `<span class="grow">✎ Правишь завершённую тренировку — всё сохраняется само</span><button type="button" id="relock">Готово 🔒</button>`;
+  bar.hidden = false;
 }
 function sumText(st) {
   return st.sets.filter(x => x.kg || x.reps).map(x => (x.kg || "—") + "×" + (x.reps || "—")).join("  ·  ") + (st.rir !== "" ? " · запас " + rirText(st.rir) : "");
@@ -533,6 +571,7 @@ function render() {
         <div class="ref">
           <details class="tech"><summary class="link">Техника</summary><ul>${e.c.map(x => `<li>${esc(x)}</li>`).join("")}</ul></details>
           <a class="link" href="${yt(e.q)}" target="_blank" rel="noopener">▶ Видео</a>
+          ${tipsHtml(e.id)}
           <button class="link collapse" type="button" data-ex="${e.id}">Свернуть</button>
         </div>
         ${prev ? `<div class="last">${prev}</div>` : ""}
@@ -550,9 +589,11 @@ function render() {
           </div>
         </div>
       </div>`;
+    if (isLocked()) collapsed.add(e.id);
     applyCollapsed(li);
     list.appendChild(li);
   });
+  renderLock();
 }
 
 function setStatus(text, state) {
@@ -636,6 +677,7 @@ list.addEventListener("input", ev => {
 });
 list.addEventListener("change", ev => { if (ev.target.dataset.f === "rir") { draft.ex[ev.target.dataset.ex].rir = ev.target.value; scheduleSave(); } });
 list.addEventListener("click", ev => {
+  if (isLocked() && ev.target.closest(".done, .rir-seg button, .flag, .note-btn, .note-view, .note-ok")) return;
   const ex = ev.target.closest(".expand");
   if (ex) { collapsed.delete(ex.dataset.ex); applyCollapsed(ex.closest(".ex")); return; }
   const co = ev.target.closest(".collapse");
@@ -700,6 +742,11 @@ list.addEventListener("click", ev => {
     }, 700);
   }
 });
+document.getElementById("lockbar").addEventListener("click", ev => {
+  if (ev.target.closest("#unlock")) { unlocked.add(sid()); collapsed = new Set(); render(); return; }
+  if (ev.target.closest("#relock")) { flushNow(); unlocked.delete(sid()); collapsed = new Set(); stopTimer(); render(); window.scrollTo({ top: 0 }); return; }
+  if (ev.target.closest("#go-next")) { flushNow(); day = NEXT[day]; ls.set("day", day); loadDraft(); collapsed = new Set(); render(); window.scrollTo({ top: 0 }); }
+});
 document.getElementById("note").addEventListener("input", ev => { draft.note = ev.target.value; scheduleSave(); });
 document.querySelector(".plates").addEventListener("click", ev => {
   const t = ev.target.closest(".plate"); if (!t || t.dataset.day === day) return;
@@ -759,7 +806,7 @@ document.getElementById("finish-btn").addEventListener("click", async () => {
   clearTimeout(saveTimer); dirty = true;
   const okSaved = await save();
   if (okSaved === false || !online) { draft.finishedAt = ""; document.getElementById("saved-ok").hidden = false; document.getElementById("saved-ok").textContent = "Сервер недоступен — данные на телефоне. Нажми «Скопировать для Claude» и отправь мне"; return; }
-  renderSummary(); stopTimer();
+  unlocked.delete(sid()); collapsed = new Set(); stopTimer(); render(); window.scrollTo({ top: 0, behavior: "smooth" });
 });
 
 /* Theme */
@@ -767,6 +814,8 @@ const THEMES = ["light", "dark", "auto"], THEME_NAMES = { light: '<svg viewBox="
 function applyTheme(t) { document.documentElement.dataset.theme = t; const tb = document.getElementById("theme-btn"); tb.innerHTML = THEME_NAMES[t]; tb.title = THEME_TITLES[t]; tb.setAttribute("aria-label", THEME_TITLES[t]); try { localStorage.setItem("theme", t); } catch (e) {} }
 document.getElementById("theme-btn").addEventListener("click", () => { const cur = document.documentElement.dataset.theme; applyTheme(THEMES[(THEMES.indexOf(cur) + 1) % THEMES.length]); });
 applyTheme(THEMES.includes(document.documentElement.dataset.theme) ? document.documentElement.dataset.theme : "light");
+
+fetch("tips.json", { cache: "no-store" }).then(r => r.ok ? r.json() : {}).then(t => { tips = t || {}; if (!dirty) render(); }).catch(() => {});
 
 /* Photo pairs: start ↔ end of the movement */
 setInterval(() => document.querySelectorAll(".ex:not(.collapsed) .photo").forEach(p => p.classList.toggle("flip")), 1300);
