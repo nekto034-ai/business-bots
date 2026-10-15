@@ -22,6 +22,7 @@ const HEALTH_DIR = path.join(DATA_DIR, 'health');
 const HEALTH_KINDS = ['days', 'sleep', 'exercise', 'weight'];
 const APK_FILE = path.join(DATA_DIR, 'app', 'fitcourier.apk');
 const MAX_HEALTH_BODY = 3_000_000;
+const SYNC_LOG = path.join(HEALTH_DIR, 'syncs.jsonl');
 
 fs.mkdirSync(SESSIONS_DIR, { recursive: true });
 for (const k of HEALTH_KINDS) fs.mkdirSync(path.join(HEALTH_DIR, k), { recursive: true });
@@ -70,9 +71,13 @@ function saveHealth(data) {
   for (const kind of ['sleep', 'exercise', 'weight']) {
     for (const r of Array.isArray(data[kind]) ? data[kind] : []) put(kind, safeId(r.id), r);
   }
-  writeJson(path.join(HEALTH_DIR, 'last-sync.json'), {
-    received_at: new Date().toISOString(), synced_at: data.synced_at, timezone: data.timezone, app_version: data.app_version, counts,
-  });
+  const sync = {
+    received_at: new Date().toISOString(), synced_at: data.synced_at, timezone: data.timezone, app_version: data.app_version,
+    trigger: data.trigger, bg_permission: data.bg_permission, battery_unrestricted: data.battery_unrestricted, counts,
+  };
+  writeJson(path.join(HEALTH_DIR, 'last-sync.json'), sync);
+  // One line per sync: shows whether the phone keeps sending on its own.
+  fs.appendFileSync(SYNC_LOG, JSON.stringify(sync) + '\n');
   return counts;
 }
 
@@ -87,6 +92,10 @@ function readHealth(sinceIso) {
       .sort((a, b) => ((a.date || a.start || a.time) < (b.date || b.start || b.time) ? -1 : 1));
   }
   try { out.last_sync = JSON.parse(fs.readFileSync(path.join(HEALTH_DIR, 'last-sync.json'), 'utf8')); } catch { out.last_sync = null; }
+  try {
+    out.syncs = fs.readFileSync(SYNC_LOG, 'utf8').trim().split('\n').slice(-50)
+      .map((l) => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean);
+  } catch { out.syncs = []; }
   return out;
 }
 
