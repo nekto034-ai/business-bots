@@ -23,8 +23,9 @@ from pathlib import Path
 
 import requests
 from mifit import MiFit
-from mifit.auth.qr import exchange_sts, new_device_id, poll_qr_login, request_qr_login
-from mifit.auth.session import load_session, save_session
+from mifit.auth.qr import QrChallenge, _load_json, new_device_id, poll_qr_login
+from mifit.auth.renew import renew_session
+from mifit.auth.session import Session, load_session, save_session
 from mifit.errors import NotificationRequiredError
 from mifit.mcp_server.login import qr_png
 from mifit.region import SID
@@ -40,6 +41,7 @@ SYNC_EVERY_S = 3600
 RECENT_DAYS = 3      # hourly sync: today and the two days before (sleep lands late)
 FIRST_DAYS = 30      # right after a login: the last month
 LOGIN_WAIT_S = 300   # how long a QR code waits for approval
+QR_SID = "xiaomiio"  # the service Xiaomi Home logs in to; its scanner accepts these codes
 HERE = Path(__file__).resolve().parent
 
 DAILY_DOMAINS = ["steps", "heart_rate_daily", "consumption", "sleep", "spo2_daily",
@@ -184,15 +186,34 @@ def sync_loop():
         time.sleep(SYNC_EVERY_S)
 
 
+def request_qr(http, device_id):
+    """A QR login for Mi Home's own service (sid xiaomiio), as the Xiaomi Home app's
+    scanner expects it; the passToken it yields is then traded for the health service."""
+    params = {"_qrsize": "240", "qs": "%3Fsid%3Dxiaomiio%26_json%3Dtrue", "callback": "https://sts.api.io.mi.com/sts",
+              "_hasLogo": "false", "sid": QR_SID, "serviceParam": "", "_locale": "ru_RU", "_dc": str(int(time.time() * 1000))}
+    r = http.get("https://account.xiaomi.com/longPolling/loginUrl", params=params, cookies={"deviceId": device_id}, timeout=30)
+    data = _load_json(r, "QR login request")
+    if data.get("code") not in (0, None):
+        raise RuntimeError(f"Xiaomi refused the QR request (code {data.get('code')})")
+    ch = QrChallenge(login_url=data["loginUrl"], qr_payload=data.get("qr", ""), lp_url=data["lp"])
+    png = b""
+    if ch.qr_payload.startswith("https://"):
+        img = http.get(ch.qr_payload, timeout=30)   # Xiaomi's own QR picture
+        if img.ok and img.headers.get("content-type", "").startswith("image/"):
+            png = img.content
+    if not png:
+        png = qr_png(ch.login_url)
+    return ch, png
+
+
 def start_login():
     with login_lock:
         if login.get("status") == "pending":
             return login
         device_id, http = new_device_id(), requests.Session()
-        ch = request_qr_login(http, SID, device_id=device_id)
-        png = base64.b64encode(qr_png(ch.login_url)).decode()
+        ch, png = request_qr(http, device_id)
         login.clear()
-        login.update(status="pending", login_url=ch.login_url, qr_png=png, started=now_iso())
+        login.update(status="pending", login_url=ch.login_url, qr_png=base64.b64encode(png).decode(), started=now_iso())
 
     def wait():
         try:
@@ -207,9 +228,10 @@ def start_login():
                         login.clear()
                         login.update(status="failed", message="Код истёк: вход не подтвердили за 5 минут. Нажми «Попробовать ещё раз».")
                         return
-            session = exchange_sts(result, SID, http, device_id=device_id)
-            if not result.region_hint:
-                session.region = FALLBACK_REGION
+            # Trade the account passToken for a Mi Fitness (health) session.
+            stub = Session(user_id=str(result.user_id), c_user_id=str(result.c_user_id), service_token="", ssecurity="",
+                           region=FALLBACK_REGION, created_at=now_iso(), pass_token=result.pass_token, device_id=device_id)
+            session = renew_session(stub, http, sid=SID)
             save_session(session)
             login.clear()
             login.update(status="succeeded", region=session.region)
