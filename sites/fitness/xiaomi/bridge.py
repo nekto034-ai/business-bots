@@ -39,6 +39,7 @@ FALLBACK_REGION = os.environ.get("XIAOMI_REGION", "ru")
 SYNC_EVERY_S = 3600
 RECENT_DAYS = 3      # hourly sync: today and the two days before (sleep lands late)
 FIRST_DAYS = 30      # right after a login: the last month
+LOGIN_WAIT_S = 300   # how long a QR code waits for approval
 HERE = Path(__file__).resolve().parent
 
 DAILY_DOMAINS = ["steps", "heart_rate_daily", "consumption", "sleep", "spo2_daily",
@@ -195,7 +196,17 @@ def start_login():
 
     def wait():
         try:
-            result = poll_qr_login(ch, http, device_id=device_id)
+            # The long poll returns when the login is approved; keep asking until the code expires.
+            deadline = time.time() + LOGIN_WAIT_S
+            while True:
+                try:
+                    result = poll_qr_login(ch, http, device_id=device_id, timeout_s=60)
+                    break
+                except requests.exceptions.ReadTimeout:
+                    if time.time() > deadline:
+                        login.clear()
+                        login.update(status="failed", message="Код истёк: вход не подтвердили за 5 минут. Нажми «Попробовать ещё раз».")
+                        return
             session = exchange_sts(result, SID, http, device_id=device_id)
             if not result.region_hint:
                 session.region = FALLBACK_REGION
