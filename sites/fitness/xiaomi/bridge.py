@@ -190,7 +190,7 @@ def start_login():
             return login
         device_id, http = new_device_id(), requests.Session()
         ch = request_qr_login(http, SID, device_id=device_id)
-        png = base64.b64encode(qr_png(ch.qr_payload)).decode()
+        png = base64.b64encode(qr_png(ch.login_url)).decode()
         login.clear()
         login.update(status="pending", login_url=ch.login_url, qr_png=png, started=now_iso())
 
