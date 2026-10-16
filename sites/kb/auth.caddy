@@ -1,4 +1,5 @@
-# Логин в базу знаний. Здесь только bcrypt-хэш, пароль у Артёма.
-basic_auth {
-	artem $2a$14$0HSggwmYjBlQmJe3P3KdOuVDncp0ClfpI/WbnN6z2Ye9sPhJOOtTS
+# Логин в базу знаний. Здесь только bcrypt-хэш (base64), пароль у Артёма.
+# Директива basicauth — совместима с Caddy 2.6 из Ubuntu 24.04.
+basicauth {
+	artem JDJhJDE0JDBIU2dnd21ZakJsUW1KZTNQM0tkT3VWRG5jcDBDbGZwSS9XYm5ONnoyWWU5c1BoSk9PdFRT
 }
