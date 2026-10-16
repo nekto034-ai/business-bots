@@ -1,0 +1,19 @@
+[Unit]
+Description=Xiaomi cloud bridge for the fitness site (pulls Mi Fitness data hourly)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+DynamicUser=yes
+StateDirectory=fitness-xiaomi
+StateDirectoryMode=0700
+Environment=STATE_DIR=/var/lib/fitness-xiaomi
+Environment=HOME=/var/lib/fitness-xiaomi
+Environment=PORT=8091
+Environment=TZ=Europe/Moscow
+ExecStart=/opt/fitness-xiaomi-venv/bin/python /opt/business-bots/sites/fitness/xiaomi/bridge.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

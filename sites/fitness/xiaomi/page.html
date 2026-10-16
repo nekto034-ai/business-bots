@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Xiaomi облако</title>
+<style>
+  :root { --bg: #f2f4f7; --card: #fff; --ink: #14181f; --muted: #667085; --line: #e4e7ec; --accent: #ff6900; --ok: #2e9e5b; --bad: #d23c3c; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #0f1216; --card: #181c22; --ink: #eef1f5; --muted: #98a2b3; --line: #2a3038; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  .wrap { max-width: 520px; margin: 0 auto; padding: 20px 16px 40px; }
+  h1 { font-size: 24px; margin: 4px 0 4px; }
+  p { margin: 6px 0; }
+  .muted { color: var(--muted); font-size: 14px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 16px; margin-top: 14px; }
+  .state { display: flex; align-items: center; gap: 10px; font-weight: 700; }
+  .dot { width: 12px; height: 12px; border-radius: 50%; background: var(--muted); flex: none; }
+  .dot.ok { background: var(--ok); } .dot.bad { background: var(--bad); }
+  button, .btn { display: block; width: 100%; text-align: center; text-decoration: none; border: 0; border-radius: 14px; padding: 15px; font: inherit; font-weight: 700; background: var(--accent); color: #fff; cursor: pointer; margin-top: 12px; }
+  .btn.ghost, button.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+  ol { padding-left: 20px; margin: 8px 0; } li { margin: 4px 0; }
+  img.qr { display: block; width: 220px; height: 220px; margin: 12px auto 4px; image-rendering: pixelated; background: #fff; padding: 8px; border-radius: 12px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 8px; }
+  td, th { text-align: left; padding: 6px 4px; border-bottom: 1px solid var(--line); }
+  th { color: var(--muted); font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Xiaomi облако</h1>
+  <p class="muted">Сервер сам раз в час забирает данные браслета из облака Xiaomi — без Health Connect. Пароль сюда не вводится: вход подтверждается на сайте Xiaomi.</p>
+
+  <div class="card">
+    <div class="state"><span class="dot" id="dot"></span><span id="state">Проверяю…</span></div>
+    <p class="muted" id="sub"></p>
+    <button class="ghost" id="sync" hidden>Обновить сейчас</button>
+  </div>
+
+  <div class="card" id="login-card">
+    <div id="login-body">
+      <button id="start">Войти через Xiaomi</button>
+    </div>
+  </div>
+
+  <div class="card" id="data-card" hidden>
+    <b>Последние дни из облака</b>
+    <table><thead><tr><th>День</th><th>Шаги</th><th>Сон</th><th>Пульс</th></tr></thead><tbody id="rows"></tbody></table>
+  </div>
+</div>
+<script>
+const $ = id => document.getElementById(id);
+const fmtTime = iso => iso ? new Date(iso).toLocaleString("ru-RU", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "—";
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+let polling = null;
+
+async function refresh() {
+  const st = await fetch("status", { cache: "no-store" }).then(r => r.json()).catch(() => null);
+  if (!st) { $("state").textContent = "Сервис недоступен"; $("dot").className = "dot bad"; return; }
+  if (st.logged_in) {
+    $("dot").className = "dot " + (st.last_error ? "bad" : "ok");
+    $("state").textContent = st.last_error ? "Подключено, но последняя загрузка с ошибкой" : "Подключено к Xiaomi";
+    $("sub").textContent = "Последняя загрузка: " + fmtTime(st.last_sync) + (st.last_error ? " · ошибка: " + st.last_error : "") + " · регион " + (st.region || "?");
+    $("sync").hidden = false;
+    if (st.login.status !== "pending") $("login-body").innerHTML = '<button class="ghost" id="start">Войти заново</button>';
+  } else {
+    $("dot").className = "dot bad"; $("state").textContent = "Не подключено"; $("sub").textContent = "Нажми «Войти через Xiaomi».";
+  }
+  const d = await fetch("api?days=7", { cache: "no-store" }).then(r => r.json()).catch(() => null);
+  if (d && d.days.length) {
+    $("data-card").hidden = false;
+    $("rows").innerHTML = d.days.slice().reverse().map(x => {
+      const sl = x.sleep && x.sleep.asleep_min ? Math.floor(x.sleep.asleep_min / 60) + " ч " + (x.sleep.asleep_min % 60) + " м" : "—";
+      const hr = x.hr_avg ? x.hr_min + "–" + x.hr_max + " (ср " + x.hr_avg + ")" : "—";
+      return `<tr><td>${esc(x.date.slice(8, 10) + "." + x.date.slice(5, 7))}</td><td>${esc(x.steps ?? "—")}</td><td>${esc(sl)}</td><td>${esc(hr)}</td></tr>`;
+    }).join("");
+  }
+}
+
+function showLogin(l) {
+  const body = $("login-body");
+  if (l.status === "pending") {
+    body.innerHTML = `
+      <b>Подтверди вход в аккаунт Xiaomi</b>
+      <ol>
+        <li>Нажми оранжевую кнопку — откроется сайт Xiaomi.</li>
+        <li>Войди в свой аккаунт Xiaomi (тот же, что в Mi Fitness) и подтверди вход.</li>
+        <li>Вернись на эту страницу — она сама покажет «Готово».</li>
+      </ol>
+      <a class="btn" href="${esc(l.login_url)}" target="_blank" rel="noopener">Открыть вход Xiaomi</a>
+      <p class="muted" style="margin-top:14px">Если открыл эту страницу на компьютере — отсканируй код приложением Mi Fitness или Xiaomi на телефоне:</p>
+      <img class="qr" alt="QR-код входа Xiaomi" src="data:image/png;base64,${l.qr_png}">`;
+  } else if (l.status === "succeeded") {
+    body.innerHTML = `<b style="color:var(--ok)">Готово ✓</b><p>Вход выполнен. Загружаю данные за последний месяц — это займёт минуту-две.</p>`;
+  } else if (l.status === "confirmation_required") {
+    body.innerHTML = `<b>Xiaomi просит подтвердить вход</b><p>Нажми кнопку, подтверди на сайте Xiaomi (может прийти код по СМС), потом начни вход заново.</p>
+      <a class="btn" href="${esc(l.notification_url)}" target="_blank" rel="noopener">Подтвердить на сайте Xiaomi</a>
+      <button class="ghost" id="start">Начать вход заново</button>`;
+  } else if (l.status === "failed") {
+    body.innerHTML = `<b style="color:var(--bad)">Не получилось</b><p class="muted">${esc(l.message || "")}</p><button id="start">Попробовать ещё раз</button>`;
+  }
+}
+
+async function poll() {
+  const l = await fetch("login", { cache: "no-store" }).then(r => r.json()).catch(() => null);
+  if (!l) return;
+  showLogin(l);
+  if (l.status !== "pending") { clearInterval(polling); polling = null; setTimeout(refresh, 1500); setTimeout(refresh, 60000); }
+}
+
+document.addEventListener("click", async ev => {
+  if (ev.target.closest("#start")) {
+    $("login-body").innerHTML = "<p>Готовлю вход…</p>";
+    const l = await fetch("login/start", { method: "POST" }).then(r => r.json()).catch(() => ({ status: "failed", message: "нет связи с сервером" }));
+    showLogin(l);
+    if (l.status === "pending" && !polling) polling = setInterval(poll, 3000);
+  }
+  if (ev.target.closest("#sync")) {
+    ev.target.textContent = "Загружаю…";
+    await fetch("sync", { method: "POST" });
+    setTimeout(() => { ev.target.textContent = "Обновить сейчас"; refresh(); }, 15000);
+  }
+});
+refresh();
+</script>
+</body>
+</html>

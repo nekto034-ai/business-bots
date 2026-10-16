@@ -22,6 +22,7 @@ const HEALTH_DIR = path.join(DATA_DIR, 'health');
 const HEALTH_KINDS = ['days', 'sleep', 'exercise', 'weight'];
 const APK_FILE = path.join(DATA_DIR, 'app', 'fitcourier.apk');
 const MAX_HEALTH_BODY = 3_000_000;
+const XIAOMI_PORT = Number(process.env.XIAOMI_PORT || 8091);
 const SYNC_LOG = path.join(HEALTH_DIR, 'syncs.jsonl');
 
 fs.mkdirSync(SESSIONS_DIR, { recursive: true });
@@ -121,6 +122,17 @@ const server = http.createServer((req, res) => {
     return res.end('auth required');
   }
   const url = new URL(req.url, 'http://x');
+
+  // Xiaomi cloud bridge (sites/fitness/xiaomi/bridge.py): same password, proxied to localhost.
+  if (url.pathname === '/xiaomi') { res.writeHead(302, { location: '/xiaomi/' }); return res.end(); }
+  if (url.pathname.startsWith('/xiaomi/')) {
+    const up = http.request({ host: '127.0.0.1', port: XIAOMI_PORT, path: req.url, method: req.method, headers: { 'content-type': req.headers['content-type'] || '' } }, (r) => {
+      res.writeHead(r.statusCode, { 'content-type': r.headers['content-type'] || 'application/json', 'cache-control': 'no-store' });
+      r.pipe(res);
+    });
+    up.on('error', () => json(res, 502, { error: 'xiaomi bridge is not running' }));
+    return req.pipe(up);
+  }
 
   if (req.method === 'GET' && (url.pathname === '/' || url.pathname === '/index.html')) {
     res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-cache' });
