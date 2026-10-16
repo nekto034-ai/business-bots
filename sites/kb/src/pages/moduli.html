@@ -1,0 +1,48 @@
+<!-- title: Модули потерь -->
+<section data-needs-js>
+  <div class="head">
+    <div class="eyebrow">Главный инструмент продаж</div>
+    <h1>27 мест, где бизнес теряет деньги</h1>
+    <p class="lead">У каждого модуля: как это звучит у клиента, вопрос, метрика, что настраиваем и что говорить в четырёх акцентах. Акцент выбирайте под человека.</p>
+  </div>
+  <div class="g4">
+    <div class="card"><span class="acc a-logic" style="width:80px">логика</span><p class="soft">Цифры и механика. Для тех, кто считает.</p></div>
+    <div class="card"><span class="acc a-fear" style="width:80px">страх</span><p class="soft">Что будет, если ничего не менять. Показать риск, а не запугать.</p></div>
+    <div class="card"><span class="acc a-gain" style="width:80px">выгода</span><p class="soft">Как будет после: свобода, контроль, рост.</p></div>
+    <div class="card"><span class="acc a-price" style="width:80px">цена</span><p class="soft">Окупаемость: дешевле одной потерянной продажи.</p></div>
+  </div>
+  <div class="toolbar">
+    <input id="q" type="search" placeholder="Поиск: «звонки», «отзывы», «1С»…" aria-label="Поиск по модулям">
+    <div class="seg" role="group" aria-label="Этап">
+      <button type="button" id="st-all" data-stage-btn="all" aria-pressed="true">Все этапы</button>
+      <button type="button" id="st-0" data-stage-btn="0" aria-pressed="false">Привлечение</button>
+      <button type="button" id="st-1" data-stage-btn="1" aria-pressed="false">Первый контакт</button>
+      <button type="button" id="st-2" data-stage-btn="2" aria-pressed="false">Продажа</button>
+      <button type="button" id="st-3" data-stage-btn="3" aria-pressed="false">Оплата</button>
+      <button type="button" id="st-4" data-stage-btn="4" aria-pressed="false">После продажи</button>
+      <button type="button" id="st-5" data-stage-btn="5" aria-pressed="false">Управление</button>
+    </div>
+    <div class="seg" role="group" aria-label="Акцент">
+      <button type="button" id="ac-all" data-acc-btn="all" aria-pressed="true">Все акценты</button>
+      <button type="button" id="ac-logic" data-acc-btn="logic" aria-pressed="false">Логика</button>
+      <button type="button" id="ac-fear" data-acc-btn="fear" aria-pressed="false">Страх</button>
+      <button type="button" id="ac-gain" data-acc-btn="gain" aria-pressed="false">Выгода</button>
+      <button type="button" id="ac-price" data-acc-btn="price" aria-pressed="false">Цена</button>
+    </div>
+  </div>
+  <div id="modlist" style="display:flex;flex-direction:column;gap:28px"><p class="empty">Загружаю модули…</p></div>
+  <p class="empty" id="empty" hidden>Ничего не нашлось. Попробуйте другое слово или сбросьте фильтр этапа.</p>
+  <details>
+    <summary>Шаблоны оценки потерь</summary>
+    <div class="tbl"><table><thead><tr><th>Шаблон</th><th>Формула</th></tr></thead><tbody>
+      <tr><td>Потерянные заявки</td><td>Заявки × доля потерянных × конверсия × чек</td></tr>
+      <tr><td>Невозвращённые</td><td>Зависшие × доля, которую можно вернуть × конверсия × чек</td></tr>
+      <tr><td>Недополученный чек</td><td>Продаж в месяц × рост чека</td></tr>
+      <tr><td>Повторные</td><td>Клиентов в базе × доля, которые купили бы снова × чек</td></tr>
+      <tr><td>Деньги в долгах</td><td>Сумма неоплаченного</td></tr>
+      <tr><td>Время</td><td>Часы в неделю × стоимость часа</td></tr>
+      <tr><td>Невидимые деньги</td><td>Рекламный бюджет каналов без продаж</td></tr>
+      <tr><td>Риск</td><td>Без суммы: «что будет, если…»</td></tr>
+    </tbody></table></div>
+  </details>
+</section>

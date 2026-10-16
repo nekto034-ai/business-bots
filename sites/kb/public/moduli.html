@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Модули потерь · Математика бизнеса</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<link rel="stylesheet" href="assets/style.css?v=74730908">
+</head>
+<body>
+<header class="top"><div class="top-in">
+  <a class="logo" href="index.html"><span class="logo-mark">∑</span><span>Математика бизнеса<small>база знаний</small></span></a>
+  <nav class="nav" aria-label="Разделы"><a href="index.html">Главная</a><a href="strategiya.html">Стратегия</a><a href="produkty.html">Продукты</a><a href="ceny.html">Цены</a><a href="vnedrenie.html">Внедрение</a><a href="soprovozhdenie.html">Сопровождение</a><a href="prodazhi.html">Продажи</a><a href="moduli.html" aria-current="page">Модули</a><a href="vozrazheniya.html">Возражения</a><a href="modelirovanie.html">Моделирование</a><a href="plan.html">План</a></nav>
+</div></header>
+<main class="wrap">
+<section data-needs-js>
+  <div class="head">
+    <div class="eyebrow">Главный инструмент продаж</div>
+    <h1>27 мест, где бизнес теряет деньги</h1>
+    <p class="lead">У каждого модуля: как это звучит у клиента, вопрос, метрика, что настраиваем и что говорить в четырёх акцентах. Акцент выбирайте под человека.</p>
+  </div>
+  <div class="g4">
+    <div class="card"><span class="acc a-logic" style="width:80px">логика</span><p class="soft">Цифры и механика. Для тех, кто считает.</p></div>
+    <div class="card"><span class="acc a-fear" style="width:80px">страх</span><p class="soft">Что будет, если ничего не менять. Показать риск, а не запугать.</p></div>
+    <div class="card"><span class="acc a-gain" style="width:80px">выгода</span><p class="soft">Как будет после: свобода, контроль, рост.</p></div>
+    <div class="card"><span class="acc a-price" style="width:80px">цена</span><p class="soft">Окупаемость: дешевле одной потерянной продажи.</p></div>
+  </div>
+  <div class="toolbar">
+    <input id="q" type="search" placeholder="Поиск: «звонки», «отзывы», «1С»…" aria-label="Поиск по модулям">
+    <div class="seg" role="group" aria-label="Этап">
+      <button type="button" id="st-all" data-stage-btn="all" aria-pressed="true">Все этапы</button>
+      <button type="button" id="st-0" data-stage-btn="0" aria-pressed="false">Привлечение</button>
+      <button type="button" id="st-1" data-stage-btn="1" aria-pressed="false">Первый контакт</button>
+      <button type="button" id="st-2" data-stage-btn="2" aria-pressed="false">Продажа</button>
+      <button type="button" id="st-3" data-stage-btn="3" aria-pressed="false">Оплата</button>
+      <button type="button" id="st-4" data-stage-btn="4" aria-pressed="false">После продажи</button>
+      <button type="button" id="st-5" data-stage-btn="5" aria-pressed="false">Управление</button>
+    </div>
+    <div class="seg" role="group" aria-label="Акцент">
+      <button type="button" id="ac-all" data-acc-btn="all" aria-pressed="true">Все акценты</button>
+      <button type="button" id="ac-logic" data-acc-btn="logic" aria-pressed="false">Логика</button>
+      <button type="button" id="ac-fear" data-acc-btn="fear" aria-pressed="false">Страх</button>
+      <button type="button" id="ac-gain" data-acc-btn="gain" aria-pressed="false">Выгода</button>
+      <button type="button" id="ac-price" data-acc-btn="price" aria-pressed="false">Цена</button>
+    </div>
+  </div>
+  <div id="modlist" style="display:flex;flex-direction:column;gap:28px"><p class="empty">Загружаю модули…</p></div>
+  <p class="empty" id="empty" hidden>Ничего не нашлось. Попробуйте другое слово или сбросьте фильтр этапа.</p>
+  <details>
+    <summary>Шаблоны оценки потерь</summary>
+    <div class="tbl"><table><thead><tr><th>Шаблон</th><th>Формула</th></tr></thead><tbody>
+      <tr><td>Потерянные заявки</td><td>Заявки × доля потерянных × конверсия × чек</td></tr>
+      <tr><td>Невозвращённые</td><td>Зависшие × доля, которую можно вернуть × конверсия × чек</td></tr>
+      <tr><td>Недополученный чек</td><td>Продаж в месяц × рост чека</td></tr>
+      <tr><td>Повторные</td><td>Клиентов в базе × доля, которые купили бы снова × чек</td></tr>
+      <tr><td>Деньги в долгах</td><td>Сумма неоплаченного</td></tr>
+      <tr><td>Время</td><td>Часы в неделю × стоимость часа</td></tr>
+      <tr><td>Невидимые деньги</td><td>Рекламный бюджет каналов без продаж</td></tr>
+      <tr><td>Риск</td><td>Без суммы: «что будет, если…»</td></tr>
+    </tbody></table></div>
+  </details>
+</section>
+
+</main>
+<footer class="footer">Математика бизнеса · внутренняя база знаний · не для передачи клиентам</footer>
+<script src="assets/data.js?v=74730908"></script>
+<script src="assets/app.js?v=74730908"></script>
+</body>
+</html>
