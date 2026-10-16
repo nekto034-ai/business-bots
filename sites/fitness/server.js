@@ -65,9 +65,17 @@ function writeJson(file, obj) {
 function saveHealth(data) {
   const counts = {};
   const put = (kind, id, obj) => { if (!id) return; writeJson(path.join(HEALTH_DIR, kind, id + '.json'), obj); counts[kind] = (counts[kind] || 0) + 1; };
+  // Days are merged, never replaced: if a source disappears from Health Connect (e.g. an app is
+  // disconnected and its data deleted), the values we already received must not be wiped.
   for (const d of Array.isArray(data.days) ? data.days : []) {
-    if (/^\d{4}-\d{2}-\d{2}$/.test(d.date)) put('days', d.date, d);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(d.date)) continue;
+    let prev = {};
+    try { prev = JSON.parse(fs.readFileSync(path.join(HEALTH_DIR, 'days', d.date + '.json'), 'utf8')); } catch {}
+    put('days', d.date, { ...prev, ...d });
   }
+  // Raw copy of every upload, so any day can be rebuilt later.
+  fs.mkdirSync(path.join(HEALTH_DIR, 'raw'), { recursive: true });
+  writeJson(path.join(HEALTH_DIR, 'raw', new Date().toISOString().replace(/[:.]/g, '-') + '.json'), data);
   for (const kind of ['sleep', 'exercise', 'weight']) {
     for (const r of Array.isArray(data[kind]) ? data[kind] : []) put(kind, safeId(r.id), r);
   }
