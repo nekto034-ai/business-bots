@@ -1,0 +1,4 @@
+# Логин в базу знаний. Здесь только bcrypt-хэш, пароль у Артёма.
+basic_auth {
+	artem $2a$14$0HSggwmYjBlQmJe3P3KdOuVDncp0ClfpI/WbnN6z2Ye9sPhJOOtTS
+}

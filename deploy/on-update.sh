@@ -38,6 +38,14 @@ fit.$HOST {
 	encode gzip
 	reverse_proxy 127.0.0.1:8090
 }
+
+kb.$HOST {
+	encode gzip
+	header X-Robots-Tag "noindex, nofollow"
+	import /opt/business-bots/sites/kb/auth.caddy
+	root * /opt/business-bots/sites/kb/public
+	file_server
+}
 CADDY
 caddy validate --adapter caddyfile --config "$NEW" >/dev/null
 if ! cmp -s "$NEW" /etc/caddy/Caddyfile; then
