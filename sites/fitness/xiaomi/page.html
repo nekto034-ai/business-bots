@@ -29,7 +29,7 @@
 <body>
 <div class="wrap">
   <h1>Xiaomi облако</h1>
-  <p class="muted">Сервер сам раз в час забирает данные браслета из облака Xiaomi — без Health Connect. Пароль сюда не вводится: вход подтверждается на сайте Xiaomi.</p>
+  <p class="muted">Сервер сам раз в час забирает данные браслета из облака Xiaomi — без Health Connect. Пароль сюда не вводится: вход подтверждается в приложении Mi Fitness по QR-коду.</p>
 
   <div class="card">
     <div class="state"><span class="dot" id="dot"></span><span id="state">Проверяю…</span></div>
@@ -81,15 +81,16 @@ function showLogin(l) {
   const body = $("login-body");
   if (l.status === "pending") {
     body.innerHTML = `
-      <b>Подтверди вход в аккаунт Xiaomi</b>
+      <b>Отсканируй код приложением Mi Fitness</b>
+      <img class="qr" alt="QR-код входа Xiaomi" src="data:image/png;base64,${l.qr_png}">
       <ol>
-        <li>Нажми оранжевую кнопку — откроется сайт Xiaomi.</li>
-        <li>Войди в свой аккаунт Xiaomi (тот же, что в Mi Fitness) и подтверди вход.</li>
-        <li>Вернись на эту страницу — она сама покажет «Готово».</li>
+        <li>Открой эту страницу на компьютере (или на другом экране).</li>
+        <li>На телефоне в <b>Mi Fitness</b> найди сканер: значок сканирования вверху (часто во вкладке «Профиль» или под «+»).</li>
+        <li>Наведи на код и <b>подтверди вход</b> в приложении.</li>
+        <li>Страница сама покажет «Готово». Код живёт несколько минут — если истёк, нажми «Попробовать ещё раз».</li>
       </ol>
-      <a class="btn" href="${esc(l.login_url)}" target="_blank" rel="noopener">Открыть вход Xiaomi</a>
-      <p class="muted" style="margin-top:14px">Если открыл эту страницу на компьютере — отсканируй код приложением Mi Fitness или Xiaomi на телефоне:</p>
-      <img class="qr" alt="QR-код входа Xiaomi" src="data:image/png;base64,${l.qr_png}">`;
+      <p class="muted">Ссылку ниже открывать только в браузере телефона, где ты уже вошёл в аккаунт Xiaomi; в обычном браузере на компьютере она выдаёт «Неверный запрос».</p>
+      <a class="btn ghost" href="${esc(l.login_url)}" target="_blank" rel="noopener">Открыть вход по ссылке</a>`;
   } else if (l.status === "succeeded") {
     body.innerHTML = `<b style="color:var(--ok)">Готово ✓</b><p>Вход выполнен. Загружаю данные за последний месяц — это займёт минуту-две.</p>`;
   } else if (l.status === "confirmation_required") {
