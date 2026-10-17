@@ -68,9 +68,10 @@
   .icon-btn { height: 38px; min-width: 38px; flex: none; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); display: inline-flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; padding: 0 10px; font-size: 13px; font-weight: 700; }
   .icon-btn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .icon-btn.inb { color: var(--c-body); border-color: color-mix(in srgb, var(--c-body) 40%, var(--line)); }
-  .tabs { position: sticky; top: 6px; z-index: 6; display: grid; grid-template-columns: repeat(5, 1fr); gap: 3px; padding: 4px; border-radius: 16px;
+  .tabs { position: sticky; top: 6px; z-index: 6; display: flex; gap: 3px; padding: 4px; border-radius: 16px; overflow-x: auto; scrollbar-width: none;
     background: color-mix(in srgb, var(--surface) 90%, transparent); backdrop-filter: blur(10px); box-shadow: var(--shadow); }
-  .tabs button { border: 0; background: transparent; border-radius: 12px; padding: 9px 2px; font-size: 13.5px; font-weight: 600; color: var(--muted); cursor: pointer; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tabs button { flex: 1 0 auto; border: 0; background: transparent; border-radius: 12px; padding: 9px 11px; font-size: 13.5px; font-weight: 600; color: var(--muted); cursor: pointer; white-space: nowrap; }
   .tabs button[aria-selected="true"] { background: var(--fg); color: var(--surface); }
 
   /* Page head */
@@ -220,6 +221,29 @@
   .wc .bar i { display: block; height: 100%; border-radius: inherit; background: var(--c-train); width: 0; transition: width 1s cubic-bezier(.2,.8,.2,1); }
   .wc.next { background: transparent; border: 1.5px dashed var(--line); }
 
+  /* Workouts tab */
+  .filters { display: flex; gap: 6px; flex-wrap: wrap; }
+  .filters button { height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+  .filters button[aria-pressed="true"] { background: var(--fg); color: var(--surface); border-color: var(--fg); }
+  .wc.click { cursor: pointer; }
+  .wc .chev { grid-column: 3; justify-self: end; color: var(--muted); font-size: 13px; }
+  .wdet { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 10px; margin-top: 8px; padding-top: 10px; border-top: 1px dashed var(--line); }
+  .exd { background: var(--surface); border-radius: 12px; padding: 10px 12px; }
+  .exd .h { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; font-weight: 700; font-size: 14px; }
+  .exd .h span:last-child { font-weight: 500; font-size: 12px; color: var(--muted); white-space: nowrap; }
+  .sets { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 7px; }
+  .sets span { font-size: 12.5px; font-weight: 700; font-variant-numeric: tabular-nums; padding: 3px 8px; border-radius: 8px; background: color-mix(in srgb, var(--c-train) 12%, var(--surface-2)); }
+  .sets span.best { background: var(--c-train); color: #fff; }
+  .exd .m { font-size: 12px; color: var(--muted); margin-top: 6px; }
+  .exd details { margin-top: 6px; font-size: 12.5px; color: var(--fg-2); }
+  .exd summary { cursor: pointer; color: var(--muted); font-weight: 600; }
+  .exrow { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; padding: 11px 0; border-bottom: 1px solid var(--line); cursor: pointer; }
+  .exrow:last-child { border-bottom: 0; }
+  .exrow .n { font-weight: 700; font-size: 14px; }
+  .exrow .r { text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .exrow .s { font-size: 12px; color: var(--muted); }
+  .exhist { grid-column: 1 / -1; margin-top: 8px; display: flex; flex-direction: column; gap: 8px; cursor: default; }
+
   /* Month calendar */
   .cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
   .cal .wdh { font-size: 11px; color: var(--muted); text-align: center; font-weight: 600; padding-bottom: 2px; }
@@ -305,6 +329,7 @@
   <nav class="tabs" role="tablist" id="tabs">
     <button role="tab" data-tab="today">Сегодня</button>
     <button role="tab" data-tab="yday">Вчера</button>
+    <button role="tab" data-tab="train">Тренировки</button>
     <button role="tab" data-tab="week">Неделя</button>
     <button role="tab" data-tab="month">Месяц</button>
     <button role="tab" data-tab="path">Путь</button>
@@ -415,6 +440,8 @@ const section = (cls, icon, title, sum, body) => `<section class="sec ${cls}"><d
 /* ---------- Data ---------- */
 let CW = 640; // chart width in px = the section's inner width, set on every render
 let D = null, tab = "today", cursor = { week: null, month: null }, intraday = {};
+const wtab = { filter: "all", open: new Set(), ex: null };
+let dayDate = null; // the "day" view opened from a workout card // workouts tab: day filter, expanded workouts, opened exercise
 const by = { days: {}, sleep: {}, ex: {}, sess: {}, journal: {} };
 let weeks = []; // training weeks: [{n, sessions, from, to, current, missing, ton}]
 function index() {
@@ -682,7 +709,8 @@ async function viewDay(date) {
   const stepsAvg = mean(prev7(date, x => (by.days[x] || {}).steps)), sleepAvg = mean(prev7(date, x => sleepMin(by.sleep[x]))), restAvg = mean(prev7(date, x => (by.days[x] || {}).hr_rest));
   const sess = (by.sess[date] || [])[0], manual = MANUAL.find(x => x.date === date), w = workoutOf(date), j = journal(date), hunger = j.hunger || [];
   const tw = weekOf(date);
-  let h = `<div class="head"><div class="t"><h1>${isToday ? "Сегодня" : "Вчера"}</h1><div class="s">${esc(cap1(dLong(date)))}</div>${tw ? `<div class="s" style="margin-top:8px;font-weight:600;color:var(--fg-2)">Тренировочная неделя ${tw.n}</div>${weekPills(tw, isToday)}` : ""}</div></div>`;
+  const title = isToday ? "Сегодня" : date === addDays(todayISO(), -1) ? "Вчера" : cap1(dDay(date));
+  let h = `<div class="head"><div class="t"><h1>${title}</h1><div class="s">${esc(cap1(dLong(date)))}</div>${tw ? `<div class="s" style="margin-top:8px;font-weight:600;color:var(--fg-2)">Тренировочная неделя ${tw.n}</div>${weekPills(tw, isToday)}` : ""}</div></div>`;
 
   // Summary: three rings + chips + one sentence
   const trained = !!(sess || manual || w), sessT = sess ? sessionStats(sess).tonnage : 0;
@@ -772,6 +800,7 @@ function trainingSection(date, sess, manual, w) {
     </div>
     ${sess.pain ? `<div class="empty">⚠ ${esc(sess.pain)}</div>` : ""}
     <div><p class="blk-t">Упражнения: лучший подход</p><p class="blk-s">${prev ? `Светлая полоса — прошлая тренировка ${DAY[sess.day]} (${dShort(prev.date)}), яркая — эта` : "Первая тренировка этого дня в программе — со следующей здесь появится «было → стало»"}</p><div class="cmp">${rows}</div></div>
+    <button class="ghost" type="button" data-goto-train="${sess.date + sess.day}" style="align-self:flex-start">Все подходы и история упражнений →</button>
     <div class="hr"></div>
     <div><p class="blk-t">Нагрузка по мышцам</p><p class="blk-s">Чем темнее мышца на силуэте, тем больше килограммов на неё пришлось. Нажми на мышцу — увидишь цифры</p>${musclesBlock([sess])}</div>`);
 }
@@ -869,8 +898,8 @@ function viewWeek() {
     const st = sessionStats(s), wo = workoutOf(s.date), dur = wo ? (new Date(wo.end) - new Date(wo.start)) / 60000 : 0, ps = pw && pw.sessions.find(x => x.day === s.day);
     const prs = Object.entries(st.best).filter(([id, b]) => { const bb = bestBefore(id, s.date); return bb && better(b, bb, id); }).length;
     const meta = [dur ? fmtDur(dur) : "", wo && wo.hr_avg ? "пульс " + wo.hr_avg : "", sleepMin(by.sleep[s.date]) ? "сон перед " + fmtDur(sleepMin(by.sleep[s.date])) : "", s.state ? STATE[+s.state] : "", ps ? "прошлая " + DAY[s.day] + ": " + fmtT(sessionStats(ps).tonnage) + " " + cmpText(st.tonnage, sessionStats(ps).tonnage, "", true, 0, fmtT) : ""].filter(Boolean).join(" · ");
-    return `<div class="wc"><span class="plate ${s.day}">${DAY[s.day]}</span><span class="ttl">${cap1(DAYN[s.day])} · ${wd(s.date)} ${dShort(s.date)}${prs ? `<span class="pr">🏆 ${prs}</span>` : ""}</span><span class="ton">${fmtT(st.tonnage)}</span>
-      <span class="meta">${meta}</span><span class="bar"><i data-w="${st.tonnage / maxT * 100}"></i></span></div>`;
+    return `<div class="wc click" data-goto-train="${s.date + s.day}"><span class="plate ${s.day}">${DAY[s.day]}</span><span class="ttl">${cap1(DAYN[s.day])} · ${wd(s.date)} ${dShort(s.date)}${prs ? `<span class="pr">🏆 ${prs}</span>` : ""}</span><span class="ton">${fmtT(st.tonnage)}</span>
+      <span class="meta">${meta} · <b style="color:var(--fg-2)">подробно →</b></span><span class="bar"><i data-w="${st.tonnage / maxT * 100}"></i></span></div>`;
   });
   if (nx && w.missing.length) cards.push(`<div class="wc next"><span class="plate ${nx.day}" style="opacity:.55">${DAY[nx.day]}</span><span class="ttl">${cap1(DAYN[nx.day])} — следующая</span><span class="ton muted">—</span><span class="meta">${nx.date === todayISO() ? "сегодня" : wd(nx.date) + " " + dShort(nx.date)} · закроет круг</span></div>`);
   h += section("train", "train", "Тренировки недели", `${w.sessions.length} из 3 · поднято ${fmtT(w.ton)}${pw ? " · прошлая неделя " + fmtT(pw.ton) : ""}`, `<div class="wcards">${cards.join("")}</div>`);
@@ -991,6 +1020,81 @@ function viewPath() {
   return h;
 }
 
+/* ---------- Workouts tab: every workout with every set, and each exercise's history ---------- */
+function setsOf(s, id) { return ((s.ex[id] || {}).sets || []).filter(x => parseInt(x.reps, 10)); }
+function exOrder(s) {
+  // the order he actually did them: by the time of the first ticked set
+  return Object.keys(s.ex || {}).filter(id => EX[id] && setsOf(s, id).length)
+    .map(id => ({ id, t: Math.min(...setsOf(s, id).map(x => x.at ? Date.parse(x.at) : Infinity)) }))
+    .sort((a, b) => a.t - b.t).map(x => x.id);
+}
+function workoutDetail(s) {
+  const st = sessionStats(s), prev = prevSameDay(s), pst = prev ? sessionStats(prev) : null;
+  const blocks = exOrder(s).map(id => {
+    const e = EX[id], x = s.ex[id], sets = setsOf(s, id), b = st.best[id], pb = pst && pst.best[id];
+    const kgTxt = v => e.bw && !num(v.kg) ? "св" : fmt(num(v.kg), 1);
+    const chips = sets.map(v => `<span class="${num(v.kg) === b.kg && (parseInt(v.reps, 10) === b.reps) ? "best" : ""}">${kgTxt(v)}×${v.reps}</span>`).join("");
+    const t = sets.reduce((a, v) => a + setLoad(id, v).t, 0);
+    const diff = pb ? (better(b, pb, id) ? `<span class="d-up">▲ лучше, чем ${dShort(prev.date)}</span>` : b.kg === pb.kg && b.reps === pb.reps ? `<span class="d-eq">как ${dShort(prev.date)}</span>` : `<span class="d-down">▼ слабее, чем ${dShort(prev.date)}</span>`) : "";
+    const meta = [x.rir !== "" && x.rir != null ? "запас " + String(x.rir).replace("-", "–") : "", (x.flags || []).join(" + ").toLowerCase(), x.setup ? "⚙ " + x.setup : ""].filter(Boolean).join(" · ");
+    return `<div class="exd"><div class="h"><span>${esc(e.n)}</span><span>${t ? fmtT(t) : ""}</span></div><div class="sets">${chips}</div>
+      ${meta || diff ? `<div class="m">${esc(meta)}${meta && diff ? " · " : ""}${diff}</div>` : ""}${x.note ? `<details><summary>примечание</summary>${esc(x.note)}</details>` : ""}</div>`;
+  }).join("");
+  const extra = [s.water ? "💧 " + s.water : "", s.state ? "самочувствие " + STATE[+s.state] : "", s.discomfort === "есть" ? "⚠ дискомфорт" + (s.pain ? ": " + s.pain : "") : s.discomfort === "нет" ? "без дискомфорта" : ""].filter(Boolean).join(" · ");
+  return `<div class="wdet">${blocks}<button class="ghost" type="button" data-goto-day="${s.date}" style="align-self:flex-start">Весь день: сон, пульс, питание →</button>${extra ? `<div class="m muted" style="font-size:12.5px">${esc(extra)}</div>` : ""}${s.note ? `<details class="exd"><summary>Заметки по тренировке</summary>${esc(s.note)}</details>` : ""}</div>`;
+}
+function viewWorkouts() {
+  const f = wtab.filter, all = D.sessions.slice().reverse().filter(s => f === "all" || s.day === f);
+  const manual = f === "all" ? MANUAL.filter(m => !D.sessions.some(s => s.date === m.date)) : [];
+  const items = all.map(s => ({ date: s.date, s })).concat(manual.map(m => ({ date: m.date, m }))).sort((a, b) => a.date < b.date ? 1 : -1);
+  const ton = all.reduce((a, s) => a + sessionStats(s).tonnage, 0), maxT = Math.max(1, ...all.map(s => sessionStats(s).tonnage));
+  let h = `<div class="head"><div class="t"><h1>Тренировки</h1><div class="s">${items.length} ${plural(items.length, "тренировка", "тренировки", "тренировок")}${ton ? " · поднято " + fmtT(ton) + " " + equiv(ton) : ""}</div></div></div>`;
+  h += `<div class="filters">${[["all", "Все"], ["A", "А · жимы"], ["B", "Б · ноги"], ["C", "В · тяги"]].map(([k, n]) => `<button type="button" data-wf="${k}" aria-pressed="${f === k}">${k !== "all" ? `<span class="plate ${k}">${DAY[k]}</span>` : ""}${n.replace(/^[АБВ] · /, k === "all" ? "" : "")}</button>`).join("")}</div>`;
+  const nx = nextWorkout();
+  const cards = items.map(it => {
+    if (it.m) { const m = it.m; return `<div class="wc"><span class="plate F">F</span><span class="ttl">${esc(m.title)} · ${wd(m.date)} ${dShort(m.date)}</span><span class="ton muted">—</span><span class="meta">${esc(m.note)}${m.band ? ` · ${fmtDur(m.band.dur)} · пульс ${m.band.hr_avg}` : ""} · веса не записывались</span></div>`; }
+    const s = it.s, st = sessionStats(s), wo = workoutOf(s.date), dur = wo ? (new Date(wo.end) - new Date(wo.start)) / 60000 : 0, tw = weekOf(s.date), open = wtab.open.has(s.date + s.day);
+    const prs = Object.entries(st.best).filter(([id, b]) => { const bb = bestBefore(id, s.date); return bb && better(b, bb, id); }).length;
+    const meta = [tw ? "неделя " + tw.n : "", dur ? fmtDur(dur) : "", wo && wo.hr_avg ? "пульс " + wo.hr_avg : "", st.sets + " подх.", s.state ? STATE[+s.state] : ""].filter(Boolean).join(" · ");
+    return `<div class="wc click" data-wopen="${s.date + s.day}"><span class="plate ${s.day}">${DAY[s.day]}</span><span class="ttl">${cap1(DAYN[s.day])} · ${wd(s.date)} ${dShort(s.date)}${prs ? `<span class="pr">🏆 ${prs}</span>` : ""}</span><span class="ton">${fmtT(st.tonnage)}</span>
+      <span class="meta">${meta} · <b style="color:var(--fg-2)">${open ? "свернуть ▲" : "подробно ▼"}</b></span><span class="bar"><i data-w="${st.tonnage / maxT * 100}"></i></span>${open ? workoutDetail(s) : ""}</div>`;
+  });
+  if (nx && f === "all" || (nx && f === nx.day)) cards.unshift(`<div class="wc next"><span class="plate ${nx.day}" style="opacity:.55">${DAY[nx.day]}</span><span class="ttl">${cap1(DAYN[nx.day])} — следующая</span><span class="ton muted">—</span><span class="meta">${nx.date === todayISO() ? "сегодня" : wd(nx.date) + " " + dShort(nx.date)}</span></div>`);
+  h += section("train", "train", "Все тренировки", "свежие сверху · нажми на тренировку — откроются все подходы", cards.length ? `<div class="wcards">${cards.join("")}</div>` : `<div class="empty">Тренировок этого дня пока нет.</div>`);
+  // exercises: best, last, history
+  const ids = []; D.sessions.forEach(s => exOrder(s).forEach(id => { if (!ids.includes(id) && (f === "all" || s.day === f)) ids.push(id); }));
+  const rows = ids.map(id => {
+    const e = EX[id], hist = D.sessions.filter(s => setsOf(s, id).length);
+    let best = null; hist.forEach(s => { const b = sessionStats(s).best[id]; if (better(b, best, id)) best = { ...b, date: s.date }; });
+    const last = sessionStats(hist[hist.length - 1]).best[id], open = wtab.ex === id, kgMode = !(e.bw && !best.kg);
+    const val = b => kgMode ? `${fmt(b.kg, 1)} × ${b.reps}` : `св. вес × ${b.reps}`;
+    let more = "";
+    if (open) {
+      const pts = hist.map((s, i) => { const b = sessionStats(s).best[id]; return { x: hist.length > 1 ? i / (hist.length - 1) : 1, y: kgMode ? b.kg : b.reps, tip: `<b>${val(b)}</b><br>${dDay(s.date)}` }; });
+      more = `<div class="exhist">${hist.length > 1 ? line(pts, { color: "var(--c-train)", labels: hist.map((s, i) => [hist.length > 1 ? i / (hist.length - 1) : 1, dShort(s.date)]), height: 150, dots: true, aria: e.n }) : `<div class="empty">Пока одна тренировка — график появится со следующей.</div>`}
+        ${hist.slice().reverse().map(s => `<div class="exd"><div class="h"><span>${wd(s.date)} ${dShort(s.date)}</span><span>${DAY[s.day]} · ${cap1(DAYN[s.day])}</span></div><div class="sets">${setsOf(s, id).map(v => `<span>${e.bw && !num(v.kg) ? "св" : fmt(num(v.kg), 1)}×${v.reps}</span>`).join("")}</div>${s.ex[id].rir ? `<div class="m">запас ${String(s.ex[id].rir).replace("-", "–")}${(s.ex[id].flags || []).length ? " · " + s.ex[id].flags.join(" + ").toLowerCase() : ""}</div>` : ""}</div>`).join("")}
+        ${e.prior ? `<div class="goal" style="font-size:12.5px">До паузы — ${e.prior} кг. Сейчас ${fmt(best.kg / e.prior * 100)}% от него</div>` : ""}</div>`;
+    }
+    return `<div class="exrow" data-exopen="${id}"><span class="n">${esc(e.n)}</span><span class="r">${val(best)}</span><span class="s">${hist.length} ${plural(hist.length, "тренировка", "тренировки", "тренировок")} · рекорд ${dShort(best.date)}</span><span class="s" style="text-align:right">последний: ${val(last)} · ${open ? "▲" : "▼"}</span>${more}</div>`;
+  }).join("");
+  h += section("train", "path", "Упражнения", "рекорд и последний результат · нажми — история и график", rows ? `<div>${rows}</div>` : `<div class="empty">Пока нет данных.</div>`);
+  return h;
+}
+// Links between the two: a day's workout → the workouts tab (opened on it); a workout → its whole day
+document.addEventListener("click", ev => {
+  const gt = ev.target.closest("[data-goto-train]");
+  if (gt) { ev.stopImmediatePropagation(); tab = "train"; wtab.filter = "all"; wtab.open.add(gt.dataset.gotoTrain); render().then(() => { const el = document.querySelector(`[data-wopen="${gt.dataset.gotoTrain}"]`); if (el) el.scrollIntoView({ behavior: "smooth", block: "start" }); }); return; }
+  const gd = ev.target.closest("[data-goto-day]");
+  if (gd) { ev.stopImmediatePropagation(); const d = gd.dataset.gotoDay; tab = d === todayISO() ? "today" : d === addDays(todayISO(), -1) ? "yday" : "day"; dayDate = d; render(); window.scrollTo({ top: 0 }); }
+}, true);
+$("view").addEventListener("click", ev => {
+  if (tab !== "train") return;
+  if (ev.target.closest("summary, details, .exhist")) return;
+  const f = ev.target.closest("[data-wf]"); if (f) { wtab.filter = f.dataset.wf; render(); return; }
+  const w = ev.target.closest("[data-wopen]"); if (w) { const k = w.dataset.wopen; wtab.open.has(k) ? wtab.open.delete(k) : wtab.open.add(k); render(); return; }
+  const x = ev.target.closest("[data-exopen]"); if (x) { wtab.ex = wtab.ex === x.dataset.exopen ? null : x.dataset.exopen; render(); }
+});
+
 /* ---------- InBody panel ---------- */
 const NORMS = [
   ["weight_kg", "Вес", "кг", 60.6, 82, 1, "down"], ["muscle_kg", "Скелетные мышцы", "кг", 30.6, 37.4, 1, "up"], ["fat_pct", "Жир", "%", 10, 20, 1, "down"], ["fat_mass_kg", "Масса жира", "кг", null, null, 1, "down"],
@@ -1044,7 +1148,7 @@ $("panel").addEventListener("click", ev => {
   const n = ev.target.closest("[data-inb]"); if (n && !n.disabled) { inbIdx += +n.dataset.inb; $("panel").innerHTML = inbodyPanel(); animate($("panel")); return; }
   const r = ev.target.closest("[data-inb-date]"); if (r) { inbIdx = inbAll().findIndex(x => x.date === r.dataset.inbDate); $("panel").innerHTML = inbodyPanel(); animate($("panel")); $("panel").scrollTo({ top: 0, behavior: "smooth" }); }
 });
-document.addEventListener("click", ev => { if (ev.target.closest("[data-open-inbody]")) openInbody(); });
+document.addEventListener("click", ev => { if (ev.target.closest("[data-open-inbody]")) openInbody(); if (ev.target.closest("[data-back-train]")) { tab = "train"; render(); } });
 
 /* ---------- Render ---------- */
 async function render() {
@@ -1053,8 +1157,10 @@ async function render() {
   CW = Math.max(300, Math.min(728, v.clientWidth - 32));
   let h = "";
   if (tab === "today") h = await viewDay(todayISO());
+  else if (tab === "day") h = `<button class="ghost" type="button" data-back-train style="align-self:flex-start">← к тренировкам</button>` + await viewDay(dayDate);
   else if (tab === "yday") h = await viewDay(addDays(todayISO(), -1));
   else if (tab === "week") h = viewWeek();
+  else if (tab === "train") h = viewWorkouts();
   else if (tab === "month") h = viewMonth();
   else h = viewPath();
   v.innerHTML = h;
@@ -1087,7 +1193,7 @@ async function load() {
   intraday[todayISO()] = null;
   render();
 }
-try { tab = localStorage.getItem("tab") || "today"; } catch (e) {}
+try { tab = localStorage.getItem("tab") || "today"; if (tab === "day") tab = "today"; } catch (e) {}
 cursor.month = todayISO().slice(0, 7);
 load();
 setInterval(() => { if (!document.hidden && $("panel").hidden && !document.querySelector("#h-form:not([hidden])") && document.activeElement.tagName !== "TEXTAREA") load(); }, 600000);
