@@ -354,7 +354,7 @@ const EX = {
   fly: { n: "Бабочка", p: ["chest"], x: [] },
   goblet_squat: { n: "Гоблет-присед", p: ["quads", "glutes"], x: ["abs"] },
   abs_leg_raise: { n: "Подъём ног в упоре", p: ["abs"], x: [], bw: true },
-  leg_press: { n: "Жим ногами", p: ["quads", "glutes"], x: ["hams"], prior: 320 },
+  leg_press: { n: "Жим ногами", p: ["quads", "glutes"], x: ["hams"] },
   leg_curl: { n: "Сгибание ног", p: ["hams"], x: ["calves"] },
   calf_seated: { n: "Икры сидя", p: ["calves"], x: [] },
   lunge: { n: "Выпады с гантелями", p: ["quads", "glutes"], x: ["hams"] },
@@ -389,16 +389,6 @@ const EVENTS = [
   { date: "2026-10-15", c: "var(--c-train)", x: "Старт программы А → Б → В", s: "первая тренировка «жимы» с записанными весами" },
   { date: "2026-10-17", c: "var(--c-heart)", x: "Браслет на Gadgetbridge", s: "пульс и шаги идут сами, круглые сутки" }
 ];
-// Strength history before this comeback (history/*.md): start from zero → end of the trainer year → record before the pause.
-const HISTORY = {
-  leg_press: [["старт с нуля", 55], ["год с тренером", 180], ["до паузы", 320]],
-  tri_pushdown: [["старт с нуля", 12], ["год с тренером", 18.75]],
-  lateral: [["старт с нуля", 4], ["год с тренером", 7.5]],
-  curl: [["старт с нуля", 7], ["год с тренером", 11]],
-  row_horiz: [["старт с нуля", 27.5], ["год с тренером", 85]],
-  pulldown: [["старт с нуля", 30], ["год с тренером", 82.5]],
-  gravitron: [["старт с нуля", 71], ["год с тренером", 32]]
-};
 const GOAL = { weight: 108, by: "2026-12-31" }; // New Year target ~107–109 kg (PLAN.md)
 
 /* ---------- Helpers ---------- */
@@ -782,14 +772,13 @@ function trainingSection(date, sess, manual, w) {
   const st = sessionStats(sess), prev = prevSameDay(sess), pst = prev ? sessionStats(prev) : null;
   const rows = Object.entries(st.best).map(([id, b]) => {
     const e = EX[id], pb = pst && pst.best[id], before = bestBefore(id, sess.date), pr = before && better(b, before, id);
-    const kgMode = b.kg > 0, scale = kgMode ? Math.max(b.kg, pb ? pb.kg : 0, e.prior || 0) : Math.max(b.reps, pb ? pb.reps : 0);
+    const kgMode = b.kg > 0, scale = kgMode ? Math.max(b.kg, pb ? pb.kg : 0) : Math.max(b.reps, pb ? pb.reps : 0);
     const val = x => e.bw && !x.kg ? `св. вес × ${x.reps}` : `${fmt(x.kg, 1)} × ${x.reps}`;
     const diff = pb ? (b.kg !== pb.kg ? `${b.kg > pb.kg ? "▲ +" : "▼ "}${fmt(b.kg - pb.kg, 1)} кг` : b.reps !== pb.reps ? `${b.reps > pb.reps ? "▲ +" : "▼ "}${b.reps - pb.reps} повт.` : "как в прошлый раз") : "первый раз";
     const cls = !pb ? "muted" : better(b, pb, id) ? "d-up" : b.kg === pb.kg && b.reps === pb.reps ? "d-eq" : "d-down";
     return `<div><div class="name"><span>${esc(e.n)}${pr ? '<span class="pr">🏆 рекорд</span>' : ""}</span><span class="r ${cls}">${diff}</span></div>
       ${pb ? `<div class="pair"><span>было ${dShort(prev.date)}</span><span class="b" data-w="${(kgMode ? pb.kg : pb.reps) / scale * 100}"></span><span class="v">${val(pb)}</span>
-      <span>сейчас</span><span class="b now" data-w="${(kgMode ? b.kg : b.reps) / scale * 100}"></span><span class="v now">${val(b)}</span></div>` : `<div class="first"><b>${val(b)}</b> — отправная точка, дальше сравним</div>`}
-      ${e.prior ? `<div class="goal">До паузы — ${e.prior} кг. Пройдено <b>${fmt(b.kg / e.prior * 100)}%</b> пути назад</div><div class="meter" style="--c:var(--c-train)"><i data-w="${b.kg / e.prior * 100}"></i></div>` : ""}</div>`;
+      <span>сейчас</span><span class="b now" data-w="${(kgMode ? b.kg : b.reps) / scale * 100}"></span><span class="v now">${val(b)}</span></div>` : `<div class="first"><b>${val(b)}</b> — отправная точка, дальше сравним</div>`}</div>`;
   }).join("");
   const tonPrev = pst ? pst.tonnage : 0;
   return section("train", "train", `Тренировка ${DAY[sess.day]} · ${DAYN[sess.day]}`, (w ? `${hm(w.start)}–${hm(w.end)} · ${fmtDur(dur)}` : "") + (sess.state ? " · самочувствие " + STATE[+sess.state] : "") + (sess.discomfort === "есть" ? " · ⚠ дискомфорт" : ""),
@@ -955,10 +944,9 @@ function strengthSection(from, to, title, sub) {
   }).filter(Boolean).sort((a, b) => (b.n > 1) - (a.n > 1) || b.l.kg - a.l.kg);
   if (!rows.length) return section("train", "path", title, sub, `<div class="empty">Пока нет данных.</div>`);
   return section("train", "path", title, sub, `<div class="cmp">${rows.map(r => {
-    const max = Math.max(r.e.prior || 0, r.l.kg, r.f.kg) || 1;
+    const max = Math.max(r.l.kg, r.f.kg) || 1;
     return `<div><div class="name"><span>${esc(r.e.n)}</span><span class="r ${r.n > 1 && r.gain > 0 ? "d-up" : "muted"}">${r.n > 1 ? (r.gain > 0 ? "▲ +" + fmt(r.gain) + "%" : r.gain < 0 ? "▼ " + fmt(r.gain) + "%" : "держим") : "пока одна тренировка"}</span></div>
-      <div class="pair">${r.n > 1 ? `<span>${dShort(r.fd)}</span><span class="b" data-w="${r.f.kg / max * 100}"></span><span class="v">${fmt(r.f.kg, 1)} × ${r.f.reps}</span>` : ""}<span>${dShort(r.ld)}</span><span class="b now" data-w="${r.l.kg / max * 100}"></span><span class="v now">${fmt(r.l.kg, 1)} × ${r.l.reps}</span></div>
-      ${r.e.prior ? `<div class="goal">До паузы — ${r.e.prior} кг. Пройдено <b>${fmt(r.l.kg / r.e.prior * 100)}%</b> пути назад</div><div class="meter" style="--c:var(--c-train)"><i data-w="${r.l.kg / r.e.prior * 100}"></i></div>` : ""}</div>`;
+      <div class="pair">${r.n > 1 ? `<span>${dShort(r.fd)}</span><span class="b" data-w="${r.f.kg / max * 100}"></span><span class="v">${fmt(r.f.kg, 1)} × ${r.f.reps}</span>` : ""}<span>${dShort(r.ld)}</span><span class="b now" data-w="${r.l.kg / max * 100}"></span><span class="v now">${fmt(r.l.kg, 1)} × ${r.l.reps}</span></div></div>`;
   }).join("")}</div>`);
 }
 
@@ -984,32 +972,23 @@ function viewPath() {
   ms.sort((a, b) => a.date < b.date ? 1 : a.date > b.date ? -1 : 0);
   h += section("train", "path", "Вехи пути", "что уже сделано — свежее сверху", `<div class="tl">${ms.map(m => `<div class="it" style="--c:${m.c}"><div class="d">${dDay(m.date)}</div><div class="x">${esc(m.x)}<small>${esc(m.s || "")}</small></div></div>`).join("")}</div>`);
   // Weight: history + goal
-  const ib = D.inbody.filter(x => x.weight_kg).sort((a, b) => a.date < b.date ? -1 : 1), cur = ib[ib.length - 1];
+  const ib = D.inbody.filter(x => x.weight_kg && x.date >= START).sort((a, b) => a.date < b.date ? -1 : 1), cur = ib[ib.length - 1];
   if (cur) {
     const startW = (ib.find(x => x.date === START) || cur).weight_kg, lost = startW - cur.weight_kg, need = startW - GOAL.weight;
     const t0 = parse(ib[0].date), t1 = parse(GOAL.by), X = d => (parse(d) - t0) / (t1 - t0);
-    const pts = ib.map(x => ({ x: X(x.date), y: x.weight_kg, hollow: x.date < START, tip: `<b>${fmt(x.weight_kg, 1)} кг</b> · жир ${fmt(x.fat_pct, 1)}%<br>${dDay(x.date)}${x.date === START ? " · точка А" : ""}` }));
+    const pts = ib.map(x => ({ x: X(x.date), y: x.weight_kg, tip: `<b>${fmt(x.weight_kg, 1)} кг</b> · жир ${fmt(x.fat_pct, 1)}%<br>${dDay(x.date)}${x.date === START ? " · точка А" : ""}` }));
     pts.push({ x: 1, y: GOAL.weight, color: "var(--good)", tip: `<b>цель ~${GOAL.weight} кг</b><br>к Новому году` });
-    const months = []; for (let d = new Date(t0.getFullYear(), t0.getMonth() + 1, 1); d <= t1; d.setMonth(d.getMonth() + 2)) months.push([X(iso(d)), d.toLocaleDateString("ru-RU", { month: "short" })]);
-    const minI = ib.reduce((a, x, i) => x.weight_kg < ib[a].weight_kg ? i : a, 0), aI = ib.findIndex(x => x.date === START);
+    const months = [[0, dShort(ib[0].date)]]; for (let d = new Date(t0.getFullYear(), t0.getMonth() + 1, 1); d <= t1; d.setMonth(d.getMonth() + 1)) months.push([X(iso(d)), d.toLocaleDateString("ru-RU", { month: "short" })]);
+    const aI = ib.findIndex(x => x.date === START);
     h += section("body", "body", `Вес: цель к Новому году ~${GOAL.weight} кг`, `сейчас ${fmt(cur.weight_kg, 1)} кг (InBody ${dShort(cur.date)}) · сброшено ${fmt(Math.max(0, lost), 1)} из ${fmt(need, 1)} кг`,
       `<div class="tiles three">
         ${tile({ c: "var(--c-body)", lbl: "Сброшено с точки А", val: fmt(Math.max(0, lost), 1), unit: "кг", was: `осталось ${fmt(Math.max(0, cur.weight_kg - GOAL.weight), 1)} кг`, meter: Math.max(0, lost) / need * 100 })}
         ${tile({ c: "var(--c-body)", lbl: "Жир", val: fmt(cur.fat_pct, 1), unit: "%", was: `${fmt(cur.fat_mass_kg, 1)} кг жира` })}
         ${tile({ c: "var(--c-body)", lbl: "Мышцы", val: fmt(cur.muscle_kg, 1), unit: "кг", was: "держим или растим" })}
       </div>
-      <div><p class="blk-t">Весь путь веса</p><p class="blk-s">Пустые точки — замеры до точки А, сплошные — с неё. Пунктир — путь к цели к Новому году</p>${line(pts, { color: "var(--c-body)", planFrom: ib.length - 1, planColor: "var(--good)", labels: months, aria: "Вес", dots: true, ref: [GOAL.weight, "цель"], notes: [[minI, "лучший " + fmt(ib[minI].weight_kg, 1), true], [aI, "точка А"]] })}</div>
+      <div><p class="blk-t">Путь веса</p><p class="blk-s">Точки — замеры InBody с точки А, пунктир — путь к цели к Новому году</p>${line(pts, { color: "var(--c-body)", planFrom: ib.length - 1, planColor: "var(--good)", labels: months, aria: "Вес", dots: true, ref: [GOAL.weight, "цель"], notes: [[aI, "точка А"]] })}</div>
       <button class="ghost" type="button" data-open-inbody style="align-self:flex-start">Все цифры InBody →</button>`);
   }
-  // Long road: from zero to now
-  const rowsLong = Object.entries(HISTORY).map(([id, st]) => {
-    const e = EX[id]; let nowB = null; D.sessions.forEach(s => { const x = sessionStats(s).best[id]; if (x && better(x, nowB, id)) nowB = x; });
-    const stages = st.map(([n, v]) => ({ n, v })); if (nowB) stages.push({ n: "сейчас", v: nowB.kg, now: true });
-    const max = Math.max(...stages.map(x => x.v)) || 1, inv = !!e.assist;
-    return `<div><div class="name"><span>${esc(e.n)}${inv ? ' <span class="muted" style="font-weight:400;font-size:12px">· помощь, меньше — лучше</span>' : ""}</span><span class="r ${nowB ? "d-up" : "muted"}">${nowB ? (inv ? "" : "×" + fmt(nowB.kg / stages[0].v, 1) + " от старта") : "ещё не делал в этом цикле"}</span></div>
-      <div class="pair">${stages.map(x => `<span>${esc(x.n)}</span><span class="b ${x.now ? "now" : ""}" data-w="${x.v / max * 100}"></span><span class="v ${x.now ? "now" : ""}">${fmt(x.v, 1)} кг</span>`).join("")}</div></div>`;
-  }).join("");
-  h += section("train", "path", "Большой путь: с нуля до сегодня", "2 года назад — первые тренировки в жизни. Вот откуда ты пришёл", `<div class="cmp">${rowsLong}</div>`);
   h += strengthSection(START, todayISO(), "Сила в этом цикле", "лучший подход: первая тренировка → последняя");
   if (weeks.length) {
     h += section("sleep", "sleep", "По тренировочным неделям", "как меняются нагрузка и сон от круга к кругу",
@@ -1072,8 +1051,7 @@ function viewWorkouts() {
     if (open) {
       const pts = hist.map((s, i) => { const b = sessionStats(s).best[id]; return { x: hist.length > 1 ? i / (hist.length - 1) : 1, y: kgMode ? b.kg : b.reps, tip: `<b>${val(b)}</b><br>${dDay(s.date)}` }; });
       more = `<div class="exhist">${hist.length > 1 ? line(pts, { color: "var(--c-train)", labels: hist.map((s, i) => [hist.length > 1 ? i / (hist.length - 1) : 1, dShort(s.date)]), height: 150, dots: true, aria: e.n }) : `<div class="empty">Пока одна тренировка — график появится со следующей.</div>`}
-        ${hist.slice().reverse().map(s => `<div class="exd"><div class="h"><span>${wd(s.date)} ${dShort(s.date)}</span><span>${DAY[s.day]} · ${cap1(DAYN[s.day])}</span></div><div class="sets">${setsOf(s, id).map(v => `<span>${e.bw && !num(v.kg) ? "св" : fmt(num(v.kg), 1)}×${v.reps}</span>`).join("")}</div>${s.ex[id].rir ? `<div class="m">запас ${String(s.ex[id].rir).replace("-", "–")}${(s.ex[id].flags || []).length ? " · " + s.ex[id].flags.join(" + ").toLowerCase() : ""}</div>` : ""}</div>`).join("")}
-        ${e.prior ? `<div class="goal" style="font-size:12.5px">До паузы — ${e.prior} кг. Сейчас ${fmt(best.kg / e.prior * 100)}% от него</div>` : ""}</div>`;
+        ${hist.slice().reverse().map(s => `<div class="exd"><div class="h"><span>${wd(s.date)} ${dShort(s.date)}</span><span>${DAY[s.day]} · ${cap1(DAYN[s.day])}</span></div><div class="sets">${setsOf(s, id).map(v => `<span>${e.bw && !num(v.kg) ? "св" : fmt(num(v.kg), 1)}×${v.reps}</span>`).join("")}</div>${s.ex[id].rir ? `<div class="m">запас ${String(s.ex[id].rir).replace("-", "–")}${(s.ex[id].flags || []).length ? " · " + s.ex[id].flags.join(" + ").toLowerCase() : ""}</div>` : ""}</div>`).join("")}</div>`;
     }
     return `<div class="exrow" data-exopen="${id}"><span class="n">${esc(e.n)}</span><span class="r">${val(best)}</span><span class="s">${hist.length} ${plural(hist.length, "тренировка", "тренировки", "тренировок")} · рекорд ${dShort(best.date)}</span><span class="s" style="text-align:right">последний: ${val(last)} · ${open ? "▲" : "▼"}</span>${more}</div>`;
   }).join("");
