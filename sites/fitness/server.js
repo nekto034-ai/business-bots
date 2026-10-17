@@ -149,14 +149,17 @@ const server = http.createServer((req, res) => {
     res.writeHead(200, { 'content-type': 'image/jpeg', 'cache-control': 'max-age=604800' });
     return fs.createReadStream(file).pipe(res);
   }
-  if (req.method === 'GET' && url.pathname === '/app.apk') {
-    if (!fs.existsSync(APK_FILE)) return json(res, 404, { error: 'apk not uploaded yet' });
+  // APKs kept on the server: the courier and Gadgetbridge (F-Droid build, hash-checked on upload).
+  const APKS = { '/app.apk': ['fitcourier.apk', APK_FILE], '/gadgetbridge.apk': ['gadgetbridge.apk', path.join(DATA_DIR, 'app', 'gadgetbridge.apk')] };
+  if (req.method === 'GET' && APKS[url.pathname]) {
+    const [name, file] = APKS[url.pathname];
+    if (!fs.existsSync(file)) return json(res, 404, { error: 'apk not uploaded yet' });
     res.writeHead(200, {
       'content-type': 'application/vnd.android.package-archive',
-      'content-disposition': 'attachment; filename="fitcourier.apk"',
-      'content-length': fs.statSync(APK_FILE).size,
+      'content-disposition': `attachment; filename="${name}"`,
+      'content-length': fs.statSync(file).size,
     });
-    return fs.createReadStream(APK_FILE).pipe(res);
+    return fs.createReadStream(file).pipe(res);
   }
   if (req.method === 'POST' && url.pathname === '/api/health') {
     return readBody(req, (data) => {
