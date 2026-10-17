@@ -126,11 +126,30 @@
   .note-btn { align-self: flex-start; }
   .after textarea { width: 100%; min-height: 64px; border: 1px solid var(--line); background: var(--surface-2); border-radius: 12px; padding: 9px 10px; font-size: 14px; resize: vertical; }
   .note-row { display: flex; gap: 10px; align-items: center; }
-  .note-ok { height: 36px; padding: 0 14px; border-radius: 10px; border: 0; background: var(--accent); color: var(--accent-ink); font-weight: 700; cursor: pointer; }
-  .note-saved { font-size: 12.5px; color: var(--ok); }
-  .note-view { font-size: 13.5px; color: var(--muted); white-space: pre-wrap; cursor: pointer; border-left: 3px solid var(--line); padding-left: 8px; }
+  /* "OK / Готово" buttons are green on every day so they stand out from the day color */
+  .note-ok, .setup-ok, .fold-ok { height: 36px; padding: 0 14px; border-radius: 10px; border: 0; background: var(--ok); color: #fff; font-weight: 700; cursor: pointer; }
+  .note-saved { font-size: 12.5px; color: var(--ok); font-weight: 600; }
+  .note-box { display: flex; flex-direction: column; gap: 6px; }
+  .note-view { font-size: 13.5px; color: var(--fg); white-space: pre-wrap; border-left: 3px solid var(--ok); padding-left: 8px; }
+  .note-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .note-actions .link { height: 32px; font-size: 12.5px; }
   .setup { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
   .setup input { flex: 1; min-width: 0; height: 36px; border: 1px solid var(--line); background: var(--surface-2); border-radius: 10px; padding: 0 10px; font-size: 14px; color: var(--ink, inherit); }
+  .setup-ok { padding: 0 12px; }
+  .setup-ok.flash, .fold-ok.flash { background: color-mix(in srgb, var(--ok) 70%, #000); }
+  .fold-ok { display: none; align-self: stretch; height: 42px; }
+  .ex.all-done .fold-ok { display: block; }
+  .why { font-size: 12.5px; color: var(--muted); margin-top: 6px; line-height: 1.35; }
+  .ex.collapsed .why { display: none; }
+  .ex.extra { outline: 2px dashed color-mix(in srgb, var(--accent) 45%, var(--line)); outline-offset: -2px; }
+  .last .rec { color: var(--fg); }
+  .endq { display: flex; flex-direction: column; gap: 12px; border-top: 1px dashed var(--line); padding-top: 12px; }
+  .endq .lbl { font-size: 13.5px; font-weight: 600; margin-bottom: 6px; }
+  .seg { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+  .seg.five { grid-template-columns: repeat(5, 1fr); }
+  .seg button { height: 40px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface-2); font-weight: 700; cursor: pointer; font-variant-numeric: tabular-nums; padding: 0 2px; }
+  .seg button[aria-pressed="true"] { background: var(--ok); border-color: var(--ok); color: #fff; }
+  .endq textarea { width: 100%; min-height: 54px; border: 1px solid var(--line); background: var(--surface-2); border-radius: 12px; padding: 9px 10px; font-size: 14px; resize: vertical; margin-top: 6px; }
   .ref .collapse { margin-left: auto; }
   .tips ul { list-style: none; padding: 0; margin: 10px 0 0; display: flex; flex-direction: column; gap: 12px; }
   .tips li { border-left: 3px solid var(--accent); padding-left: 10px; font-size: 14px; line-height: 1.45; }
@@ -144,7 +163,7 @@
   .lockbar button.go { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
   body.locked .list .ex { filter: grayscale(1); opacity: .6; }
   body.locked .list .ex .sets, body.locked .list .ex .after, body.locked .list .ex .setup { pointer-events: none; }
-  body.locked .note textarea { opacity: .6; pointer-events: none; }
+  body.locked .note textarea, body.locked .endq { opacity: .6; pointer-events: none; }
   body.locked #finish-btn { display: none; }
   .mini { display: none; width: 26px; height: 26px; border-radius: 50%; background: var(--ok); color: #fff; font-family: var(--font-display); font-size: 12px; font-weight: 800; place-items: center; flex: none; }
   .ex-title { display: flex; gap: 8px; align-items: center; }
@@ -164,7 +183,7 @@
   /* Exercise card */
   .list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
   .ex { background: var(--surface); border-radius: 20px; box-shadow: var(--shadow); overflow: hidden; }
-  .ex.opt { opacity: .92; }
+  .ex.opt, .ex.extra { opacity: .92; }
   .ex.opt .photo { filter: saturate(.7); }
   .photo { position: relative; aspect-ratio: 3 / 2; background: #fff; }
   .photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
@@ -239,13 +258,13 @@
     transform: translateY(110%); transition: transform .25s ease;
   }
   .timer.show { transform: translateY(0); }
-  .timer .in { max-width: 620px; margin: 0 auto; display: grid; grid-template-columns: 1fr auto auto; gap: 10px; align-items: center; }
+  .timer .in { max-width: 620px; margin: 0 auto; display: grid; grid-template-columns: 1fr auto auto auto; gap: 8px; align-items: center; }
   .timer .t { font-family: var(--font-display); font-weight: 800; font-size: 28px; font-variant-numeric: tabular-nums; line-height: 1; }
   .timer .l { font-size: 12px; color: var(--muted); margin-top: 3px; }
   .timer .bar { grid-column: 1 / -1; height: 5px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
   .timer .bar i { display: block; height: 100%; width: 0; background: var(--accent); border-radius: inherit; transition: width .25s linear; }
   .timer.over .t { color: var(--ok); }
-  .timer button { height: 42px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface-2); padding: 0 14px; font-weight: 700; cursor: pointer; }
+  .timer button { height: 42px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface-2); padding: 0 11px; font-weight: 700; cursor: pointer; white-space: nowrap; }
 
   @media (prefers-reduced-motion: reduce) {
     * { transition: none !important; }
@@ -266,13 +285,16 @@
   <section class="rules" id="rules" hidden>
     <h3>Каждую тренировку</h3>
     <ul>
-      <li>Разминка 5–10 мин кардио; разминочные подходы — по самочувствию, не записываем</li>
-      <li>Записываем 4 рабочих подхода</li>
-      <li>Недели 1–2: в рабочих подходах запас 2–3 повтора</li>
+      <li>Разминка 5–7 мин кардио. Разминочные подходы — в первом тяжёлом упражнении, дальше мышцы уже тёплые. Не записываем</li>
+      <li>Начало тренировки на браслете — сразу как пришёл: по нему видно, сколько заняла разминка</li>
+      <li>Записываем 4 рабочих подхода. Запас в рабочих — 1–2, на жиме ногами не меньше 1</li>
+      <li>Порядок упражнений продуман: мышцы чередуются, одни работают — другие отдыхают. Строчка «↳» в карточке объясняет, почему упражнение здесь</li>
+      <li>Суперсет: подход на одном → подход на другом → снова на первом</li>
+      <li>Экстра (пунктирная рамка) — в конце, лёгкий вес, учим технику. Нет времени — пропускай первой</li>
       <li>Отдых: базовые ~2 мин, изолирующие и пресс 60–90 с. Нажми ✓ — запустится таймер</li>
       <li>Все рабочие подходы — верх диапазона с нужным запасом → в следующий раз +вес (тренажёр +5 кг, гантели +1–2 кг)</li>
       <li>Тяжёлые подходы: выдох на усилии, без долгой задержки дыхания</li>
-      <li>Нет нужного тренажёра — бери похожий на ту же мышцу. Блеклая карточка — по желанию</li>
+      <li>Тренажёр занят — подожди или бери похожий на ту же мышцу; порядок лучше не менять. Блеклая карточка — по желанию</li>
     </ul>
     <div class="scale" aria-label="Шкала запаса">
       <i style="background:var(--ok)">запас 5–4</i><i style="background:var(--rir-y)">3–2</i><i style="background:var(--rir-o)">2–1</i><i style="background:var(--rir-r)">1–0</i>
@@ -308,11 +330,21 @@
   <section class="note">
     <label for="note">Самочувствие и заметки по тренировке</label>
     <textarea id="note" placeholder="Например: дыхалка лучше, плечо не беспокоит"></textarea>
+    <div class="note-row"><button class="note-ok" id="note-ok" type="button">Готово ✓</button><span class="note-saved" id="note-flash"></span></div>
   </section>
 
   <section class="finish" id="finish">
     <h3>Конец тренировки</h3>
     <p>Всё уже сохраняется само после каждой цифры. Кнопка — финальная точка: сохранит тренировку и покажет итог.</p>
+    <div class="endq" id="endq">
+      <div><div class="lbl">💧 Сколько воды выпил за тренировку</div>
+        <div class="seg" data-k="water"><button type="button" data-v="0">0</button><button type="button" data-v="0.5">0,5</button><button type="button" data-v="1">1 л</button><button type="button" data-v="1.5">1,5</button><button type="button" data-v="2">2 л</button><button type="button" data-v="2.5+">2,5+</button></div></div>
+      <div><div class="lbl">Общее состояние</div>
+        <div class="seg five" data-k="state"><button type="button" data-v="1" title="совсем плохо">😫</button><button type="button" data-v="2" title="так себе">😕</button><button type="button" data-v="3" title="нормально">😐</button><button type="button" data-v="4" title="хорошо">🙂</button><button type="button" data-v="5" title="отлично">💪</button></div></div>
+      <div><div class="lbl">Что-то странно болит, тянет или хрустит?</div>
+        <div class="seg" data-k="pain" style="grid-template-columns:auto"><button type="button" data-v="нет">Ничего ✓</button></div>
+        <textarea id="pain" placeholder="Где и как: например, правое колено щёлкает на выпадах"></textarea></div>
+    </div>
     <div class="summary" id="summary" hidden></div>
     <div class="saved-ok" id="saved-ok" hidden></div>
     <button class="primary" id="finish-btn" type="button">Завершить и сохранить</button>
@@ -327,6 +359,7 @@
 <div class="timer" id="timer" aria-live="polite">
   <div class="in">
     <div><div class="t" id="t-time">2:00</div><div class="l" id="t-label">Отдых</div></div>
+    <button type="button" id="t-minus">−30 с</button>
     <button type="button" id="t-plus">+30 с</button>
     <button type="button" id="t-stop">Готов</button>
     <div class="bar"><i id="t-bar"></i></div>
@@ -336,56 +369,84 @@
 <script>
 const M = {
   chest: "грудь", delts: "плечи", tri: "трицепс", bi: "бицепс", back: "спина", rear: "задняя дельта",
-  abs: "пресс", quads: "квадрицепс", hams: "бицепс бедра", glutes: "ягодицы", adduct: "приводящие", lower: "поясница"
+  abs: "пресс", quads: "квадрицепс", hams: "бицепс бедра", glutes: "ягодицы", adduct: "приводящие", lower: "поясница", calves: "икры"
 };
+// Order is deliberate: the main lift goes first while fresh, then muscles alternate so the next one works while the last one rests (w = why it sits here).
+// opt — "по желанию"; extra — light technique practice at the very end (squat / deadlift learning), not counted in the ring.
+// bw — bodyweight: empty kg = own weight, a number = extra plates. unit — label for the kg field.
 const DAYS = {
   A: { title: "Жимы", plate: "20", meta: "Грудь, плечи, трицепс, пресс", ex: [
     { id: "abs_ddx", n: "Скручивания в тренажёре DDX", alt: "блины 5–20 кг", s: 4, r: "12–15", rest: 75, p: ["abs"], x: [], q: "скручивания в тренажере на пресс техника",
+      w: "Пресс первым — твоя привычка; дальше корпус держит спинка тренажёров",
       c: ["Скручивайся прессом, а не тяни руками", "Внизу пауза 1 с, выдох", "Вверх медленно, без бросания веса"] },
     { id: "chest_machine", n: "Жим в тренажёре на грудь", alt: "Хаммер или блочный", s: 4, r: "8–10", rest: 120, p: ["chest"], x: ["delts","tri"], q: "жим от груди в тренажере хаммер техника",
+      w: "Главное упражнение дня — пока грудь, плечи и трицепс свежие",
       c: ["Лопатки сведены и прижаты к спинке", "Рукояти на уровне середины груди", "Вверх на выдохе, локти не выпрямлять до щелчка"] },
     { id: "incline_db", n: "Жим гантелей на наклонной", alt: "скамья 30°", s: 4, r: "8–12", rest: 120, p: ["chest"], x: ["delts","tri"], q: "жим гантелей на наклонной скамье техника",
+      w: "Добиваем грудь, пока она разогрета",
       c: ["Наклон скамьи 30°", "Локти под ~45° к корпусу", "Опускай до уровня груди, вверх по дуге"] },
-    { id: "shoulder_press", n: "Жим на плечи", alt: "тренажёр или гантели сидя", s: 4, r: "8–12", rest: 120, p: ["delts"], x: ["tri"], q: "жим гантелей сидя на плечи техника",
-      c: ["Спина прижата, без прогиба в пояснице", "Вниз до уровня ушей", "Вверх без рывка"] },
     { id: "lateral", n: "Махи гантелями в стороны", s: 4, r: "12–15", rest: 75, p: ["delts"], x: [], q: "махи гантелями в стороны техника",
+      w: "Между жимами: грудь и трицепс отдыхают, работает только средняя дельта",
       c: ["Руки чуть согнуты, до уровня плеч", "Ведёт локоть, а не кисть", "Без раскачки корпусом"] },
+    { id: "shoulder_press", n: "Жим на плечи", alt: "тренажёр или гантели сидя", s: 4, r: "8–12", rest: 120, p: ["delts"], x: ["tri"], q: "жим гантелей сидя на плечи техника",
+      w: "После паузы на махах трицепс снова в силе. Вес тут ниже, чем был бы первым, — это нормально",
+      c: ["Спина прижата, без прогиба в пояснице", "Вниз до уровня ушей", "Вверх без рывка"] },
     { id: "tri_pushdown", n: "Разгибание рук в блоке", alt: "трицепс", s: 4, r: "12–15", rest: 75, p: ["tri"], x: [], q: "разгибание рук на блоке трицепс техника",
+      w: "Трицепс последним: он помогает во всех жимах, раньше нельзя — ослабит их",
       c: ["Локти прижаты к бокам и неподвижны", "Разгибай до конца, внизу пауза", "Вверх медленно"] },
     { id: "fly", opt: true, n: "Сведение рук (бабочка)", s: 4, r: "12–15", rest: 75, p: ["chest"], x: [], q: "сведение рук в тренажере бабочка техника",
-      c: ["Локти чуть согнуты и не меняют угол", "Своди грудью", "В точке сведения пауза 1 с"] }
+      c: ["Локти чуть согнуты и не меняют угол", "Своди грудью", "В точке сведения пауза 1 с"] },
+    { id: "goblet_squat", extra: true, n: "Присед с гантелью у груди", alt: "гоблет-присед", s: 3, r: "8", rest: 90, p: ["quads","glutes"], x: ["abs"], q: "гоблет присед с гантелью техника для начинающих",
+      w: "Экстра: учим присед. Ноги в этот день свежие, а к субботе успеют отдохнуть",
+      c: ["Гантель вертикально у груди, локти смотрят вниз", "Садись между коленей: спина ровная, пятки на полу", "Колени туда же, куда носки. Лёгкий вес, запас 3+. Сними себя сбоку"] }
   ]},
   B: { title: "Ноги", plate: "25", meta: "Ноги, ягодицы, пресс, поясница", ex: [
-    { id: "abs_leg_raise", n: "Подъём ног в упоре", alt: "турник / брусья", s: 4, r: "10–15", rest: 75, p: ["abs"], x: [], q: "подъем ног в упоре на брусьях техника",
+    { id: "abs_leg_raise", bw: true, n: "Подъём ног в упоре", alt: "турник / брусья", s: 4, r: "10–15", rest: 75, p: ["abs"], x: [], q: "подъем ног в упоре на брусьях техника",
+      w: "Пресс первым — твоя привычка; в жиме ногами корпус держит спинка",
       c: ["Без раскачки — поднимай прессом", "Вверху подкручивай таз", "Тяжело — сгибай колени"] },
-    { id: "leg_press", n: "Жим ногами", s: 4, r: "10–12", rest: 150, p: ["quads","glutes"], x: ["hams"], q: "жим ногами в тренажере техника",
+    { id: "leg_press", n: "Жим ногами", s: 4, r: "10–12", rest: 150, p: ["quads","glutes"], x: ["hams"], q: "жим ногами в тренажере техника", prior: "300–320 кг",
+      w: "Главное упражнение дня — пока ноги свежие. Разминочные подходы — только здесь",
       c: ["Поясница и таз прижаты к спинке", "Колени смотрят туда же, куда носки", "Выдох на жиме, колени не выпрямлять до щелчка"] },
-    { id: "lunge", n: "Выпады с шагом назад", alt: "или испанские приседания", s: 4, r: "10–12 на ногу", rest: 120, p: ["quads","glutes"], x: ["hams"], q: "обратные выпады с гантелями техника",
-      c: ["Корпус ровно, шаг достаточно длинный", "Колено задней ноги почти касается пола", "Толчок пяткой передней ноги"] },
-    { id: "leg_curl", n: "Сгибание ног в тренажёре", alt: "лёжа или сидя", s: 4, r: "12–15", rest: 90, p: ["hams"], x: [], q: "сгибание ног в тренажере лежа техника",
-      c: ["Таз прижат", "Сгибай до упора, вниз медленно", "Без рывков"] },
-    { id: "leg_ext", n: "Разгибание ног в тренажёре", s: 4, r: "12–15", rest: 90, p: ["quads"], x: [], q: "разгибание ног в тренажере техника",
-      c: ["Колено на оси тренажёра", "Вверху пауза 1 с", "Вниз медленно"] },
-    { id: "hyper", n: "Гиперэкстензия", s: 4, r: "12–15", rest: 75, p: ["lower","glutes"], x: ["hams"], q: "гиперэкстензия техника",
-      c: ["Вниз с ровной спиной", "Вверх до прямой линии, не прогибайся сильнее", "Медленно, без рывков"] },
-    { id: "adduct", opt: true, n: "Сведение или разведение ног", s: 4, r: "15", rest: 75, p: ["adduct"], x: ["glutes"], q: "сведение ног в тренажере техника",
-      c: ["Спина прижата", "Плавно, без рывков", "Пауза в крайней точке"] }
+    { id: "leg_curl", n: "Сгибание ног лёжа", alt: "суперсет с икрами", s: 4, r: "12–15", rest: 60, p: ["hams"], x: ["calves"], q: "сгибание ног в тренажере лежа техника",
+      w: "Перед бедра отдыхает после жима, работает задняя поверхность. Суперсет с икрами: подход тут → подход на икры → снова сюда",
+      c: ["Валик чуть выше пяток, колено напротив оси тренажёра", "Таз прижат, сгибай до упора", "Вниз медленно, без рывков"] },
+    { id: "calf_seated", n: "Подъём на носки сидя", alt: "суперсет со сгибанием", s: 4, r: "15–20", rest: 60, p: ["calves"], x: [], q: "подъем на носки сидя в тренажере техника",
+      w: "Суперсет со сгибанием ног: пока работают икры, задняя поверхность бедра отдыхает, и наоборот",
+      c: ["Носки на краю платформы, валик на бёдрах у коленей", "Вниз — полная растяжка пятки, вверх — пауза 1 с", "Без отбива внизу"] },
+    { id: "lunge", n: "Выпады с гантелями", alt: "10 шагов вперёд + 10 назад", s: 4, r: "10–12 на ногу", rest: 120, p: ["quads","glutes"], x: ["hams"], q: "выпады с гантелями в ходьбе техника",
+      w: "Перед бедра отдохнул за суперсет — снова свежий. Вес пиши общий, обеих гантелей",
+      c: ["Корпус ровно, шаг длинный", "Колено задней ноги почти касается пола", "Колено передней — над стопой, не заваливается внутрь"] },
+    { id: "hyper", bw: true, n: "Гиперэкстензия", s: 4, r: "12–15", rest: 75, p: ["lower","glutes"], x: ["hams"], q: "гиперэкстензия техника",
+      w: "Последней: уставшая поясница ничему больше не мешает",
+      c: ["Валик у сгиба бедра, а не на животе", "Вниз с ровной спиной, вверх до прямой линии — не прогибайся сильнее", "Медленно, без рывков"] },
+    { id: "leg_ext", opt: true, n: "Разгибание ног в тренажёре", s: 4, r: "12–15", rest: 75, p: ["quads"], x: [], q: "разгибание ног в тренажере техника",
+      w: "Валик на голени спереди, разгибаешь колени. Если валик сверху на коленях и поднимаешь пятки — это икры",
+      c: ["Колено на оси тренажёра", "Вверху пауза 1 с", "Вниз медленно"] }
   ]},
   C: { title: "Тяги", plate: "15", meta: "Спина, бицепс, задняя дельта, пресс", ex: [
-    { id: "abs_situp", n: "Подъём корпуса, руки вперёд", s: 4, r: "15–20", rest: 60, p: ["abs"], x: [], q: "подъем корпуса на пресс руки вперед техника",
+    { id: "abs_situp", bw: true, n: "Подъём корпуса, руки вперёд", s: 4, r: "15–20", rest: 60, p: ["abs"], x: [], q: "подъем корпуса на пресс руки вперед техника",
+      w: "Пресс первым — твоя привычка; в тягах корпус держит тренажёр",
       c: ["Тянись руками вперёд, поднимаясь", "Поясница не отрывается рывком", "Вниз медленно, выдох на подъёме"] },
-    { id: "gravitron", n: "Подтягивания в гравитроне", s: 4, r: "6–10", rest: 120, p: ["back"], x: ["bi"], q: "подтягивания в гравитроне техника",
+    { id: "gravitron", unit: "пом", n: "Подтягивания в гравитроне", alt: "кг — помощь (противовес)", s: 4, r: "6–10", rest: 120, p: ["back"], x: ["bi"], q: "подтягивания в гравитроне техника",
+      w: "Главное упражнение дня — тяга сверху, пока спина и бицепс свежие",
       c: ["Сначала опусти плечи, потом тяни", "Тянись грудью к рукояти", "Вниз медленно"] },
     { id: "row_horiz", n: "Тяга горизонтальная", alt: "Хаммер или блок", s: 4, r: "10–12", rest: 120, p: ["back"], x: ["bi","rear"], q: "тяга горизонтального блока техника",
+      w: "Тяга к поясу — другое направление: работает середина спины",
       c: ["Спина ровная, грудь вперёд", "Тяни локтями к поясу, сведи лопатки", "Без наклона корпусом"] },
-    { id: "pulldown", n: "Тяга верхнего блока", s: 4, r: "10–12", rest: 120, p: ["back"], x: ["bi"], q: "тяга верхнего блока к груди техника",
-      c: ["Небольшой наклон назад, грудь вверх", "Тяни к верху груди, не за голову", "Вверх подконтрольно"] },
     { id: "rear_fly", n: "Обратные махи", alt: "задняя дельта", s: 4, r: "12–15", rest: 75, p: ["rear"], x: ["back"], q: "обратные разведения гантелей задняя дельта техника",
+      w: "Между тягами: широчайшие и бицепс отдыхают, работает задняя дельта",
       c: ["Лёгкий вес, руки чуть согнуты", "Разводи в стороны, а не назад", "Пауза наверху"] },
+    { id: "pulldown", n: "Тяга верхнего блока", s: 4, r: "10–12", rest: 120, p: ["back"], x: ["bi"], q: "тяга верхнего блока к груди техника",
+      w: "Снова тяга сверху — после паузы спина в силе",
+      c: ["Небольшой наклон назад, грудь вверх", "Тяни к верху груди, не за голову", "Вверх подконтрольно"] },
     { id: "curl", n: "Сгибания на бицепс", alt: "гантели, молот или супинация", s: 4, r: "10–12", rest: 75, p: ["bi"], x: [], q: "сгибание рук с гантелями молот техника",
+      w: "Бицепс последним: он помогает во всех тягах, раньше нельзя — ослабит их",
       c: ["Локти прижаты к корпусу", "Без раскачки спиной", "Вниз медленно"] },
     { id: "row_one", opt: true, n: "Тяга одной рукой", alt: "Хаммер или гантель", s: 4, r: "10–12 на руку", rest: 120, p: ["back"], x: ["bi","rear"], q: "тяга гантели одной рукой в наклоне техника",
-      c: ["Не скручивай корпус", "Тяни локоть к бедру", "Внизу растяни спину"] }
+      c: ["Не скручивай корпус", "Тяни локоть к бедру", "Внизу растяни спину"] },
+    { id: "rdl", extra: true, n: "Румынская тяга с гантелями", alt: "техника становой", s: 3, r: "8", rest: 90, p: ["hams","glutes"], x: ["lower"], q: "румынская тяга с гантелями техника для начинающих",
+      w: "Экстра: учим становую. В конце — тяги уже сделаны, а задняя поверхность бедра к субботе успеет отдохнуть",
+      c: ["Колени чуть согнуты и не меняют угол", "Таз назад, гантели скользят по бёдрам, спина ровная", "Вниз до середины голени или пока спина ровная. Лёгкий вес, запас 3+. Сними себя сбоку"] }
   ]}
 };
 
@@ -396,7 +457,7 @@ const FRONT = [["delts","e",15.5,26,5,4.5],["delts","e",44.5,26,5,4.5],["chest",
   ["quads","e",24,76,5.6,12.5],["quads","e",36,76,5.6,12.5],["adduct","e",28.3,71,1.8,7],["adduct","e",31.7,71,1.8,7]];
 const BACKV = [["rear","e",15.5,26,5,4.5],["rear","e",44.5,26,5,4.5],["back","e",30,25.5,9,4],["back","e",22.5,38,5,10],["back","e",37.5,38,5,10],
   ["lower","r",26,45,8,11,3],["tri","e",12.2,37.5,3.3,7.5],["tri","e",47.8,37.5,3.3,7.5],
-  ["glutes","e",25,63,6,5.5],["glutes","e",35,63,6,5.5],["hams","e",24,79,5.4,11],["hams","e",36,79,5.4,11]];
+  ["glutes","e",25,63,6,5.5],["glutes","e",35,63,6,5.5],["hams","e",24,79,5.4,11],["hams","e",36,79,5.4,11],["calves","e",24,97,3.2,6.5],["calves","e",36,97,3.2,6.5]];
 function shape(s, fill) {
   if (s[0] === "e") return `<ellipse cx="${s[1]}" cy="${s[2]}" rx="${s[3]}" ry="${s[4]}" fill="${fill}"/>`;
   if (s[0] === "r") return `<rect x="${s[1]}" y="${s[2]}" width="${s[3]}" height="${s[4]}" rx="${s[5] || 0}" fill="${fill}"/>`;
@@ -427,6 +488,7 @@ let day = "A", date = todayISO(), online = false, sessions = {}, draft = null, d
 let writing = Promise.resolve(), saveTimer = null;
 let collapsed = new Set();
 let tips = {}, unlocked = new Set(); // unlocked: finished sessions opened for editing
+const noteBase = new Map(); // exercise id -> note text kept as is while "＋ Дописать" adds a new piece below it
 const isLocked = () => !!draft.finishedAt && !unlocked.has(sid());
 const NEXT = { A: "B", B: "C", C: "A" }, DAY_RU = { A: "А", B: "Б", C: "В" };
 function applyCollapsed(li) {
@@ -445,7 +507,7 @@ function tipsHtml(exId) {
 function renderLock() {
   const bar = document.getElementById("lockbar"), locked = isLocked();
   document.body.classList.toggle("locked", locked);
-  document.querySelectorAll("#list input, #list textarea, #list .done, #list .rir-seg button, #list .flag, #list .note-btn, #note").forEach(el => { el.disabled = locked; });
+  document.querySelectorAll("#list input, #list textarea, #list .done, #list .rir-seg button, #list .flag, #list .note-btn, #list .note-actions button, #list .setup-ok, #note, #note-ok, #endq button, #pain").forEach(el => { el.disabled = locked; });
   if (!draft.finishedAt) { bar.hidden = true; return; }
   const when = new Date(draft.finishedAt).toLocaleString("ru-RU", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
   const nx = NEXT[day];
@@ -454,15 +516,17 @@ function renderLock() {
     : `<span class="grow">✎ Правишь завершённую тренировку — всё сохраняется само</span><button type="button" id="relock">Готово 🔒</button>`;
   bar.hidden = false;
 }
-function sumText(st) {
-  return st.sets.filter(x => x.kg || x.reps).map(x => (x.kg || "—") + "×" + (x.reps || "—")).join("  ·  ") + (st.rir !== "" ? " · запас " + rirText(st.rir) : "");
+const exDef = id => DAYS[day].ex.find(x => x.id === id) || {};
+const kgText = (kg, bw) => kg ? kg : bw ? "св" : "—"; // bodyweight: empty kg means own weight
+function sumText(st, bw) {
+  return st.sets.filter(x => x.kg || x.reps).map(x => kgText(x.kg, bw) + "×" + (x.reps || "—")).join("  ·  ") + (st.rir !== "" ? " · запас " + rirText(st.rir) : "");
 }
 const sid = () => date + "_" + day;
 
 function emptySession() {
   const ex = {};
   DAYS[day].ex.forEach(e => { ex[e.id] = { name: e.n, sets: Array.from({ length: e.s }, () => ({ kg: "", reps: "", done: false, at: "" })), rir: "", note: "", flags: [], setup: "" }; });
-  return { date, day, ex, note: "", finishedAt: "" };
+  return { date, day, ex, note: "", water: "", state: "", pain: "", finishedAt: "" };
 }
 function loadDraft() {
   const stored = sessions[sid()] || ls.get("session-" + sid());
@@ -477,6 +541,7 @@ function loadDraft() {
       base.ex[k].setup = s.setup || "";
     });
     base.note = stored.note || "";
+    base.water = stored.water || ""; base.state = stored.state || ""; base.pain = stored.pain || "";
     base.finishedAt = stored.finishedAt || "";
   }
   Object.keys(base.ex).forEach(k => { if (!base.ex[k].setup) base.ex[k].setup = lastSetup(k); });
@@ -492,12 +557,32 @@ function previousFor(exId) {
   list.sort((a, b) => a.date < b.date ? 1 : -1);
   if (!list.length) return "";
   const s = list[0], e = s.ex[exId];
-  const sets = e.sets.filter(x => x.kg || x.reps).map(x => `<b>${esc(x.kg || "—")}</b>×${esc(x.reps || "—")}`).join("  ·  ");
+  const bw = exDef(exId).bw;
+  const sets = e.sets.filter(x => x.kg || x.reps).map(x => `<b>${esc(kgText(x.kg, bw))}</b>×${esc(x.reps || "—")}`).join("  ·  ");
   return `Прошлый раз ${fmtDate(s.date)}: ${sets}${e.rir !== "" ? " · запас " + esc(rirText(e.rir)) : ""}`;
+}
+// Best set before this date on any day: heaviest weight, then most reps (bodyweight: most reps)
+function recordFor(exId) {
+  let best = null;
+  Object.values(sessions).forEach(s => {
+    if (s.date >= date || !s.ex || !s.ex[exId]) return;
+    s.ex[exId].sets.forEach(x => {
+      const kg = parseFloat(String(x.kg || "0").replace(",", ".")) || 0, reps = parseInt(x.reps, 10) || 0;
+      if (!reps) return;
+      if (!best || kg > best.kg || (kg === best.kg && reps > best.reps)) best = { kg, reps, kgRaw: x.kg, date: s.date };
+    });
+  });
+  return best;
+}
+function recordHtml(e) {
+  const r = recordFor(e.id), parts = [];
+  if (r) parts.push(`🏆 Рекорд: <b>${esc(kgText(r.kgRaw, e.bw))}</b>×${r.reps} · ${fmtDate(r.date)}`);
+  if (e.prior) parts.push(`до паузы: ${esc(e.prior)}`);
+  return parts.length ? `<span class="rec">${parts.join(" · ")}</span>` : "";
 }
 
 const FLAGS = ["Легко", "Средне", "Тяжело", "Заменить", "Дискомфорт"];
-const FEEL = ["Легко", "Средне", "Тяжело"]; // pick one of these
+const FEEL = ["Легко", "Средне", "Тяжело"]; // up to two of these, e.g. «Средне» + «Тяжело»
 // Reserve (RIR) can be one number or a range like "1-2": sets inside one exercise often feel different.
 const rirHas = (rir, v) => { if (rir === "") return false; const [a, b = a] = String(rir).split("-").map(Number); return +v >= a && +v <= b; };
 const rirText = rir => String(rir).replace("-", "–");
@@ -512,10 +597,11 @@ function renderHead() {
   document.getElementById("meta").textContent = d.meta;
   document.getElementById("date").value = date;
   document.getElementById("note").value = draft.note;
+  renderEndq();
   updateProgress();
 }
 function updateProgress() {
-  const core = DAYS[day].ex.filter(e => !e.opt);
+  const core = DAYS[day].ex.filter(e => !e.opt && !e.extra);
   const total = core.reduce((a, e) => a + e.s, 0);
   const done = core.reduce((a, e) => a + draft.ex[e.id].sets.filter(s => s.done).length, 0);
   document.getElementById("ring-num").textContent = done + "/" + total;
@@ -529,21 +615,21 @@ function render() {
   DAYS[day].ex.forEach((e, i) => {
     const st = draft.ex[e.id];
     const li = document.createElement("li");
-    li.className = "ex" + (e.opt ? " opt" : "");
+    li.className = "ex" + (e.opt ? " opt" : "") + (e.extra ? " extra" : "") + (st.sets.every(x => x.done) ? " all-done" : "");
     li.dataset.ex = e.id;
     const label = "Работают: " + e.p.map(k => M[k]).join(", ") + (e.x.length ? "; помогают: " + e.x.map(k => M[k]).join(", ") : "");
     const sets = st.sets.map((v, j) => `
       <div class="set${v.done ? " is-done" : ""}" data-row="${j}">
         <span class="n">${j + 1}</span>
-        <label class="field"><input inputmode="decimal" placeholder="0" aria-label="Подход ${j + 1}, вес" data-ex="${e.id}" data-set="${j}" data-f="kg" value="${esc(v.kg)}"><small>кг</small></label>
+        <label class="field"><input inputmode="decimal" placeholder="${e.bw ? "св. вес" : "0"}" aria-label="Подход ${j + 1}, ${e.bw ? "доп. вес (пусто — свой вес)" : "вес"}" data-ex="${e.id}" data-set="${j}" data-f="kg" value="${esc(v.kg)}"><small>${e.unit || (e.bw ? "+кг" : "кг")}</small></label>
         <span class="x">×</span>
         <label class="field"><input inputmode="numeric" placeholder="0" aria-label="Подход ${j + 1}, повторы" data-ex="${e.id}" data-set="${j}" data-f="reps" value="${esc(v.reps)}"><small>раз</small></label>
         <button class="done" type="button" aria-pressed="${v.done}" aria-label="Подход ${j + 1} сделан" data-ex="${e.id}" data-set="${j}">${CHECK}</button>
       </div>`).join("");
     const rirBtns = ["0", "1", "2", "3", "4", "5"].map(o => `<button type="button" data-ex="${e.id}" data-v="${o}" aria-pressed="${rirHas(st.rir, o)}">${o}</button>`).join("");
-    const doneSum = sumText(st);
+    const doneSum = sumText(st, e.bw);
     if (st.sets.every(x => x.done)) collapsed.add(e.id);
-    const prev = previousFor(e.id);
+    const prev = previousFor(e.id), rec = recordHtml(e);
     const restTxt = e.rest >= 120 ? (e.rest === 150 ? "2–3 мин" : "2 мин") : e.rest + " с";
     li.innerHTML = `
       <div class="photo">
@@ -551,7 +637,7 @@ function render() {
         <img class="b" src="img/${e.id}_1.jpg" alt="" loading="lazy">
         <span class="badge">${i + 1}</span>
         <span class="rest">отдых ${restTxt}</span>
-        ${e.opt ? '<span class="opt-tag">по желанию</span>' : ""}
+        ${e.opt ? '<span class="opt-tag">по желанию</span>' : e.extra ? '<span class="opt-tag">экстра · техника</span>' : ""}
       </div>
       <div class="ex-body">
         <div class="ex-head">
@@ -564,6 +650,7 @@ function render() {
               ${e.x.map(k => `<span class="tag">${M[k]}</span>`).join("")}
               ${e.alt ? `<span class="tag">${esc(e.alt)}</span>` : ""}
             </div>
+            ${e.w ? `<div class="why">↳ ${esc(e.w)}</div>` : ""}
           </div>
           <div class="fig" title="${esc(label)}">${figure(FRONT, e.p, e.x, "спереди. " + label)}${figure(BACKV, e.p, e.x, "сзади. " + label)}</div>
           <button class="link expand" type="button" data-ex="${e.id}" hidden>Развернуть</button>
@@ -574,19 +661,23 @@ function render() {
           ${tipsHtml(e.id)}
           <button class="link collapse" type="button" data-ex="${e.id}">Свернуть</button>
         </div>
-        ${prev ? `<div class="last">${prev}</div>` : ""}
-        <label class="setup">⚙ <input data-ex="${e.id}" data-f="setup" value="${esc(st.setup)}" placeholder="Настройка: сиденье, наклон, ручка" aria-label="Настройка тренажёра"></label>
+        ${prev || rec ? `<div class="last">${[prev, rec].filter(Boolean).join("<br>")}</div>` : ""}
+        <div class="setup">⚙ <input data-ex="${e.id}" data-f="setup" value="${esc(st.setup)}" placeholder="Только настройка: сиденье, высота, ручка" aria-label="Настройка тренажёра"><button class="setup-ok" type="button" data-ex="${e.id}" aria-label="Сохранить настройку">✓</button></div>
         <div class="sets">${sets}</div>
         <div class="after">
           <div class="lbl">После упражнения</div>
           <div class="rir-seg" title="Можно выбрать две цифры — например 1 и 2"><span>Запас</span>${rirBtns}</div>
           <div class="flags">${FLAGS.map(f => `<button class="flag" type="button" aria-pressed="${st.flags.includes(f)}" data-ex="${e.id}" data-flag="${f}">${f}</button>`).join("")}</div>
           <button class="link note-btn" type="button" data-ex="${e.id}"${st.note ? " hidden" : ""}>✎ Примечание</button>
-          <div class="note-view" data-ex="${e.id}" title="Нажми, чтобы изменить"${st.note ? "" : " hidden"}>${esc(st.note)}</div>
-          <div class="note-edit" hidden>
-            <textarea placeholder="Что заметил, что поменять" aria-label="Примечание к упражнению" data-ex="${e.id}" data-f="note">${esc(st.note)}</textarea>
-            <div class="note-row"><button class="note-ok" type="button" data-ex="${e.id}">Готово ✓</button><span class="note-saved"></span></div>
+          <div class="note-box"${st.note ? "" : " hidden"}>
+            <div class="note-view">${esc(st.note)}</div>
+            <div class="note-actions"><button class="link note-edit-btn" type="button" data-ex="${e.id}">✎ Изменить</button><button class="link note-add-btn" type="button" data-ex="${e.id}">＋ Дописать</button><span class="note-saved"></span></div>
           </div>
+          <div class="note-edit" hidden>
+            <textarea placeholder="Что заметил, что поменять" aria-label="Примечание к упражнению" data-ex="${e.id}" data-f="note"></textarea>
+            <div class="note-row"><button class="note-ok" type="button" data-ex="${e.id}">Готово ✓</button></div>
+          </div>
+          <button class="fold-ok" type="button" data-ex="${e.id}">Готово ✓ свернуть</button>
         </div>
       </div>`;
     if (isLocked()) collapsed.add(e.id);
@@ -663,6 +754,10 @@ document.getElementById("t-plus").addEventListener("click", () => {
   if (tEnd < Date.now()) tEnd = Date.now();
   tEnd += 30000; tTotal += 30; beeped = false; warned = false; timerEl.classList.add("show"); tickTimer();
 });
+document.getElementById("t-minus").addEventListener("click", () => {
+  tEnd = Math.max(Date.now() + 1000, tEnd - 30000); tTotal = Math.max(tTotal, 1);
+  const left = (tEnd - Date.now()) / 1000; if (left > 5) warned = false; tickTimer();
+});
 document.getElementById("t-stop").addEventListener("click", stopTimer);
 
 /* Events */
@@ -670,20 +765,33 @@ const list = document.getElementById("list");
 list.addEventListener("input", ev => {
   const el = ev.target, exId = el.dataset.ex; if (!exId) return;
   if (el.dataset.f === "rir") draft.ex[exId].rir = el.value;
-  else if (el.dataset.f === "note") draft.ex[exId].note = el.value;
+  else if (el.dataset.f === "note") { const base = noteBase.get(exId); draft.ex[exId].note = base ? base + "\n\n" + el.value : el.value; }
   else if (el.dataset.f === "setup") draft.ex[exId].setup = el.value;
   else draft.ex[exId].sets[+el.dataset.set][el.dataset.f] = el.value.trim();
   scheduleSave();
 });
 list.addEventListener("change", ev => { if (ev.target.dataset.f === "rir") { draft.ex[ev.target.dataset.ex].rir = ev.target.value; scheduleSave(); } });
 list.addEventListener("click", ev => {
-  if (isLocked() && ev.target.closest(".done, .rir-seg button, .flag, .note-btn, .note-view, .note-ok")) return;
+  if (isLocked() && ev.target.closest(".done, .rir-seg button, .flag, .note-btn, .note-actions button, .note-ok, .setup-ok")) return;
   const ex = ev.target.closest(".expand");
   if (ex) { collapsed.delete(ex.dataset.ex); applyCollapsed(ex.closest(".ex")); return; }
   const co = ev.target.closest(".collapse");
   if (co) {
     const card = co.closest(".ex"); collapsed.add(co.dataset.ex); applyCollapsed(card);
-    card.querySelector(".done-sum").textContent = sumText(draft.ex[co.dataset.ex]); return;
+    card.querySelector(".done-sum").textContent = sumText(draft.ex[co.dataset.ex], exDef(co.dataset.ex).bw); return;
+  }
+  const fo = ev.target.closest(".fold-ok");
+  if (fo) {
+    flushNow();
+    const card = fo.closest(".ex"); collapsed.add(fo.dataset.ex); applyCollapsed(card);
+    card.querySelector(".done-sum").textContent = sumText(draft.ex[fo.dataset.ex], exDef(fo.dataset.ex).bw);
+    card.scrollIntoView({ behavior: "smooth", block: "nearest" }); return;
+  }
+  const so = ev.target.closest(".setup-ok");
+  if (so) {
+    const inp = so.parentElement.querySelector("input"); inp.blur(); flushNow();
+    writing.then(okSaved => { if (okSaved === false) return; so.textContent = "✓ сохранено"; so.classList.add("flash"); setTimeout(() => { so.textContent = "✓"; so.classList.remove("flash"); }, 2000); });
+    return;
   }
   const rb = ev.target.closest(".rir-seg button");
   if (rb) {
@@ -694,22 +802,28 @@ list.addEventListener("click", ev => {
     rb.parentElement.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(rirHas(st.rir, x.dataset.v))));
     scheduleSave(); return;
   }
-  const nb = ev.target.closest(".note-btn");
-  const nv = ev.target.closest(".note-view");
-  if (nb || nv) {
-    const after = (nb || nv).closest(".after");
-    after.querySelector(".note-btn").hidden = true; after.querySelector(".note-view").hidden = true;
-    const ed = after.querySelector(".note-edit"); ed.hidden = false; ed.querySelector(".note-saved").textContent = "";
-    ed.querySelector("textarea").focus(); return;
+  const nb = ev.target.closest(".note-btn, .note-edit-btn, .note-add-btn");
+  if (nb) {
+    const after = nb.closest(".after"), exId = nb.dataset.ex, adding = nb.classList.contains("note-add-btn");
+    const cur = draft.ex[exId].note.trim();
+    if (adding) noteBase.set(exId, cur); else noteBase.delete(exId);
+    after.querySelector(".note-btn").hidden = true; after.querySelector(".note-box").hidden = true;
+    const ed = after.querySelector(".note-edit"), ta = ed.querySelector("textarea");
+    ta.value = adding ? "" : cur; ta.placeholder = adding ? "Что добавить — запишется ниже прошлого" : "Что заметил, что поменять";
+    ed.hidden = false; ta.focus(); return;
   }
   const ok = ev.target.closest(".note-ok");
   if (ok) {
-    const after = ok.closest(".after"), text = draft.ex[ok.dataset.ex].note.trim();
-    flushNow();
+    const after = ok.closest(".after"), exId = ok.dataset.ex;
+    noteBase.delete(exId);
+    const text = draft.ex[exId].note = draft.ex[exId].note.trim();
+    dirty = true; flushNow();
     after.querySelector(".note-edit").hidden = true;
-    const view = after.querySelector(".note-view"); view.textContent = text; view.hidden = !text;
+    after.querySelector(".note-view").textContent = text;
+    after.querySelector(".note-box").hidden = !text;
     after.querySelector(".note-btn").hidden = !!text;
-    writing.then(okSaved => { if (okSaved !== false && text) { view.textContent = text + "  ✓ сохранено"; setTimeout(() => { view.textContent = draft.ex[ok.dataset.ex].note.trim(); }, 2500); } });
+    const flash = after.querySelector(".note-box .note-saved"); flash.textContent = "";
+    writing.then(okSaved => { if (okSaved !== false && text) { flash.textContent = "✓ сохранено"; setTimeout(() => { flash.textContent = ""; }, 3000); } });
     return;
   }
   const fl = ev.target.closest(".flag");
@@ -717,7 +831,7 @@ list.addEventListener("click", ev => {
     const arr = draft.ex[fl.dataset.ex].flags, f = fl.dataset.flag, i = arr.indexOf(f);
     if (i >= 0) arr.splice(i, 1);
     else {
-      if (FEEL.includes(f)) for (let k = arr.length - 1; k >= 0; k--) if (FEEL.includes(arr[k])) arr.splice(k, 1); // one of Легко / Средне / Тяжело
+      if (FEEL.includes(f) && arr.filter(x => FEEL.includes(x)).length >= 2) arr.splice(arr.findIndex(x => FEEL.includes(x)), 1); // keep the newest two
       arr.push(f);
     }
     fl.parentElement.querySelectorAll(".flag").forEach(x => x.setAttribute("aria-pressed", String(arr.includes(x.dataset.flag)))); scheduleSave(); return;
@@ -731,13 +845,14 @@ list.addEventListener("click", ev => {
   updateProgress(); scheduleSave();
   const card = b.closest(".ex");
   const allDone = draft.ex[e.id].sets.every(x => x.done);
+  card.classList.toggle("all-done", allDone);
   if (s.done && !allDone) startTimer(e.rest, "Отдых · " + e.n);
   if (s.done && allDone) stopTimer(); // exercise finished: no rest countdown while moving to the next machine
   if (s.done && allDone) {
     // exercise finished: fold the card and bring the next one into view
     setTimeout(() => {
       collapsed.add(e.id); applyCollapsed(card);
-      card.querySelector(".done-sum").textContent = sumText(draft.ex[e.id]);
+      card.querySelector(".done-sum").textContent = sumText(draft.ex[e.id], e.bw);
       const next = card.nextElementSibling; if (next) next.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 700);
   }
@@ -748,6 +863,21 @@ document.getElementById("lockbar").addEventListener("click", ev => {
   if (ev.target.closest("#go-next")) { flushNow(); day = NEXT[day]; ls.set("day", day); loadDraft(); collapsed = new Set(); render(); window.scrollTo({ top: 0 }); }
 });
 document.getElementById("note").addEventListener("input", ev => { draft.note = ev.target.value; scheduleSave(); });
+document.getElementById("note-ok").addEventListener("click", () => {
+  const flash = document.getElementById("note-flash"); document.getElementById("note").blur(); dirty = true; flushNow();
+  writing.then(okSaved => { flash.textContent = okSaved === false ? "не сохранилось — записи на телефоне" : "✓ сохранено"; setTimeout(() => { flash.textContent = ""; }, 3000); });
+});
+function renderEndq() {
+  document.querySelectorAll("#endq .seg").forEach(seg => seg.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(draft[seg.dataset.k] === b.dataset.v))));
+  document.getElementById("pain").value = draft.pain === "нет" ? "" : draft.pain;
+}
+document.getElementById("endq").addEventListener("click", ev => {
+  const b = ev.target.closest(".seg button"); if (!b || isLocked()) return;
+  const k = b.closest(".seg").dataset.k;
+  draft[k] = draft[k] === b.dataset.v ? "" : b.dataset.v; // tap again — clear
+  renderEndq(); scheduleSave();
+});
+document.getElementById("pain").addEventListener("input", ev => { draft.pain = ev.target.value; renderEndq(); scheduleSave(); });
 document.querySelector(".plates").addEventListener("click", ev => {
   const t = ev.target.closest(".plate"); if (!t || t.dataset.day === day) return;
   flushNow(); day = t.dataset.day; ls.set("day", day); loadDraft(); collapsed = new Set(); render(); window.scrollTo({ top: 0 });
@@ -761,11 +891,14 @@ function reportText() {
   const d = DAYS[day], lines = [{ A: "А", B: "Б", C: "В" }[day] + " (" + d.title + "), " + fmtDate(date) + ":"];
   d.ex.forEach(e => {
     const st = draft.ex[e.id];
-    const sets = st.sets.filter(x => x.kg || x.reps).map(x => (x.kg || "—") + "×" + (x.reps || "—"));
+    const sets = st.sets.filter(x => x.kg || x.reps).map(x => kgText(x.kg, e.bw) + "×" + (x.reps || "—"));
     const extra = [st.flags.join(", "), st.note.trim()].filter(Boolean).join(" — ");
     if (sets.length || extra) lines.push("— " + e.n + ": " + (sets.join(", ") || "без подходов") + (st.rir !== "" ? " (запас " + rirText(st.rir) + ")" : "") + (st.setup ? " {" + st.setup + "}" : "") + (extra ? " [" + extra + "]" : ""));
   });
   if (draft.note) lines.push("Заметки: " + draft.note);
+  if (draft.water) lines.push("Вода: " + draft.water + " л");
+  if (draft.state) lines.push("Состояние: " + draft.state + " из 5");
+  if (draft.pain) lines.push("Болит/хрустит: " + draft.pain);
   return lines.join("\n");
 }
 document.getElementById("copy").addEventListener("click", () => {
@@ -794,7 +927,8 @@ function renderSummary() {
   if (!draft.finishedAt) { box.hidden = true; ok.hidden = true; document.getElementById("finish-btn").textContent = "Завершить и сохранить"; return; }
   const st = stats();
   box.innerHTML = `<div><b>${st.sets}</b><span>подходов записано</span></div><div><b>${st.tonnage.toLocaleString("ru-RU")}</b><span>кг поднято (тоннаж)</span></div>
-    <div><b>${st.minutes || "—"}</b><span>минут от первого до последнего подхода</span></div><div><b>${st.avgRest ? Math.floor(st.avgRest / 60) + ":" + pad(st.avgRest % 60) : "—"}</b><span>средний отдых</span></div>`;
+    <div><b>${st.minutes || "—"}</b><span>минут от первого до последнего подхода</span></div><div><b>${st.avgRest ? Math.floor(st.avgRest / 60) + ":" + pad(st.avgRest % 60) : "—"}</b><span>средний отдых</span></div>
+    <div><b>${draft.water ? esc(draft.water.replace(".", ",")) : "—"}</b><span>литров воды</span></div><div><b>${draft.state ? esc(draft.state) + "/5" : "—"}</b><span>состояние</span></div>`;
   box.hidden = false;
   ok.textContent = "✓ Тренировка сохранена " + new Date(draft.finishedAt).toLocaleString("ru-RU", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }) + " · Claude её видит";
   ok.hidden = false;
