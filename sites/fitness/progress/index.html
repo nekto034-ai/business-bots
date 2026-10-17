@@ -413,8 +413,100 @@ const localDate = isoStr => iso(new Date(isoStr));
 const mean = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0;
 const cap1 = s => s.charAt(0).toUpperCase() + s.slice(1);
 function plural(n, a, b, c) { n = Math.abs(Math.round(n)); const m10 = n % 10, m100 = n % 100; return m10 === 1 && m100 !== 11 ? a : m10 >= 2 && m10 <= 4 && (m100 < 10 || m100 >= 20) ? b : c; }
-const EQ = [[5000, "слон", "слона", "слонов"], [1500, "легковая машина", "легковые машины", "легковых машин"], [300, "пианино", "пианино", "пианино"], [60, "мешок цемента", "мешка цемента", "мешков цемента"]];
-function equiv(kg) { for (const [w, a, b, c] of EQ) { const n = Math.round(kg / w); if (n >= 1) return "≈ " + n + " " + plural(n, a, b, c); } return ""; }
+/* Real-world comparisons for kilograms lifted and kilometres walked. The closest-scale ones are picked,
+   and which one shows depends on the place (key), so the page doesn't repeat itself.
+   Weights: [kg, one, few (2–4), many (5+), genitive (fractions: «2,4 КАМАЗа»)]. Distances: [km, «пройти …», «…% …»]. */
+const WEIGHTS = [
+  [3.5, "кирпич", "кирпича", "кирпичей", "кирпича"], [8, "арбуз", "арбуза", "арбузов", "арбуза"],
+  [16, "пудовая гиря", "пудовые гири", "пудовых гирь", "пудовой гири"], [20, "блин от штанги", "блина от штанги", "блинов от штанги", "блина от штанги"],
+  [40, "мешок картошки", "мешка картошки", "мешков картошки", "мешка картошки"], [50, "мешок сахара", "мешка сахара", "мешков сахара", "мешка сахара"],
+  [70, "стиральная машина", "стиральные машины", "стиральных машин", "стиральной машины"], [80, "холодильник", "холодильника", "холодильников", "холодильника"],
+  [120, "чугунная ванна", "чугунные ванны", "чугунных ванн", "чугунной ванны"], [120, "страус", "страуса", "страусов", "страуса"],
+  [160, "горилла", "гориллы", "горилл", "гориллы"], [200, "амурский тигр", "амурских тигра", "амурских тигров", "амурского тигра"],
+  [200, "бочка воды на 200 литров", "бочки воды на 200 литров", "бочек воды на 200 литров", "бочки воды на 200 литров"],
+  [250, "пианино", "пианино", "пианино", "пианино"], [340, "мотоцикл «Урал» с коляской", "мотоцикла «Урал» с коляской", "мотоциклов «Урал» с коляской", "мотоцикла «Урал» с коляской"],
+  [350, "бурый медведь", "бурых медведя", "бурых медведей", "бурого медведя"], [450, "лось", "лося", "лосей", "лося"],
+  [480, "концертный рояль", "концертных рояля", "концертных роялей", "концертного рояля"], [500, "лошадь", "лошади", "лошадей", "лошади"],
+  [600, "корова", "коровы", "коров", "коровы"], [650, "горбатый «Запорожец»", "горбатых «Запорожца»", "горбатых «Запорожцев»", "горбатого «Запорожца»"],
+  [800, "зубр", "зубра", "зубров", "зубра"], [1000, "кубометр воды", "кубометра воды", "кубометров воды", "кубометра воды"],
+  [1100, "белая акула", "белые акулы", "белых акул", "белой акулы"], [1160, "«Лада Гранта»", "машины «Лада Гранта»", "машин «Лада Гранта»", "машины «Лада Гранта»"],
+  [1200, "жираф", "жирафа", "жирафов", "жирафа"], [1200, "морж", "моржа", "моржей", "моржа"],
+  [1210, "«Нива»", "«Нивы»", "«Нив»", "«Нивы»"], [1500, "бегемот", "бегемота", "бегемотов", "бегемота"],
+  [1850, "УАЗ «Буханка»", "УАЗа «Буханка»", "УАЗов «Буханка»", "УАЗа «Буханка»"], [2100, "«Газель»", "«Газели»", "«Газелей»", "«Газели»"],
+  [2300, "носорог", "носорога", "носорогов", "носорога"], [2500, "«Гелендваген»", "«Гелендвагена»", "«Гелендвагенов»", "«Гелендвагена»"],
+  [3300, "самолёт Ан-2", "самолёта Ан-2", "самолётов Ан-2", "самолёта Ан-2"], [3800, "трактор «Беларус»", "трактора «Беларус»", "тракторов «Беларус»", "трактора «Беларус»"],
+  [5500, "касатка", "касатки", "касаток", "касатки"], [6000, "мамонт", "мамонта", "мамонтов", "мамонта"],
+  [7100, "вертолёт Ми-8", "вертолёта Ми-8", "вертолётов Ми-8", "вертолёта Ми-8"], [8000, "тираннозавр", "тираннозавра", "тираннозавров", "тираннозавра"],
+  [10000, "КАМАЗ", "КАМАЗа", "КАМАЗов", "КАМАЗа"], [11000, "автобус ЛиАЗ", "автобуса ЛиАЗ", "автобусов ЛиАЗ", "автобуса ЛиАЗ"],
+  [12800, "трактор «Кировец»", "трактора «Кировец»", "тракторов «Кировец»", "трактора «Кировец»"], [13000, "«Икарус»", "«Икаруса»", "«Икарусов»", "«Икаруса»"],
+  [20000, "трамвай", "трамвая", "трамваев", "трамвая"], [33000, "вагон метро", "вагона метро", "вагонов метро", "вагона метро"],
+  [39300, "Царь-пушка", "Царь-пушки", "Царь-пушек", "Царь-пушки"], [40000, "кашалот", "кашалота", "кашалотов", "кашалота"],
+  [41000, "пустой Boeing 737", "пустых Boeing 737", "пустых Boeing 737", "пустого Boeing 737"], [107000, "пустой карьерный БелАЗ", "пустых карьерных БелАЗа", "пустых карьерных БелАЗов", "пустого карьерного БелАЗа"],
+  [150000, "синий кит", "синих кита", "синих китов", "синего кита"], [202000, "Царь-колокол", "Царь-колокола", "Царь-колоколов", "Царь-колокола"],
+  [204000, "Статуя Свободы", "Статуи Свободы", "Статуй Свободы", "Статуи Свободы"], [420000, "МКС", "МКС", "МКС", "МКС"],
+  [2500000, "олимпийский бассейн с водой", "олимпийских бассейна с водой", "олимпийских бассейнов с водой", "олимпийского бассейна с водой"],
+  [7300000, "Эйфелева башня", "Эйфелевы башни", "Эйфелевых башен", "Эйфелевой башни"]
+];
+const DISTANCES = [
+  [0.33, "Красную площадь из конца в конец", "Красной площади"], [0.54, "высоту Останкинской башни, только по земле", "высоты Останкинской башни"],
+  [0.83, "высоту Бурдж-Халифы, только по земле", "высоты Бурдж-Халифы"], [1.25, "весь Старый Арбат", "Старого Арбата"],
+  [1.8, "Бруклинский мост", "Бруклинского моста"], [2.2, "вдоль всей Кремлёвской стены", "Кремлёвской стены"],
+  [2.7, "мост Золотые Ворота", "моста Золотые Ворота"], [4.5, "весь Невский проспект", "Невского проспекта"],
+  [5.6, "высоту Эльбруса, только по земле", "высоты Эльбруса"], [8.85, "высоту Эвереста, только по земле", "высоты Эвереста"],
+  [9, "Бульварное кольцо", "Бульварного кольца"], [11, "глубину Марианской впадины, только по земле", "глубины Марианской впадины"],
+  [15.6, "Садовое кольцо", "Садового кольца"], [19.4, "кольцевую линию метро поверху", "кольцевой линии метро"],
+  [33, "ширину Ла-Манша", "ширины Ла-Манша"], [35, "Третье транспортное кольцо", "Третьего транспортного кольца"],
+  [37, "от Кремля до Зеленограда", "пути от Кремля до Зеленограда"], [42.2, "марафон", "марафона"],
+  [50, "тоннель под Ла-Маншем", "тоннеля под Ла-Маншем"], [70, "от Москвы до Сергиева Посада", "пути от Москвы до Сергиева Посада"],
+  [70, "Большую кольцевую линию метро поверху", "Большой кольцевой линии метро"], [74, "вдоль всей Невы", "Невы"],
+  [82, "вдоль Панамского канала", "Панамского канала"], [89, "Кругобайкальскую железную дорогу", "Кругобайкальской железной дороги"],
+  [90, "от Москвы до Клина", "пути от Москвы до Клина"], [109, "МКАД по кругу", "МКАД"],
+  [115, "от Москвы до Коломны", "пути от Москвы до Коломны"], [140, "от Петербурга до Выборга", "пути от Петербурга до Выборга"],
+  [180, "от Москвы до Твери", "пути от Москвы до Твери"], [185, "от Москвы до Тулы", "пути от Москвы до Тулы"],
+  [190, "от Москвы до Владимира", "пути от Москвы до Владимира"], [193, "вдоль Суэцкого канала", "Суэцкого канала"],
+  [200, "от Москвы до Рязани", "пути от Москвы до Рязани"], [227, "вдоль Беломорканала", "Беломорканала"],
+  [270, "от Москвы до Ярославля", "пути от Москвы до Ярославля"], [336, "ЦКАД по кругу", "ЦКАД"],
+  [400, "от Москвы до Смоленска", "пути от Москвы до Смоленска"], [420, "от Москвы до Нижнего Новгорода", "пути от Москвы до Нижнего Новгорода"],
+  [503, "вдоль всей Москвы-реки", "Москвы-реки"], [520, "от Москвы до Воронежа", "пути от Москвы до Воронежа"],
+  [636, "вдоль всего Байкала", "Байкала"], [710, "от Москвы до Петербурга", "пути от Москвы до Петербурга"],
+  [780, "Путь Святого Иакова к Сантьяго-де-Компостела", "Пути Святого Иакова"], [820, "от Москвы до Казани", "пути от Москвы до Казани"],
+  [948, "вдоль всего Сахалина", "Сахалина"], [960, "весь Чуйский тракт", "Чуйского тракта"],
+  [1060, "от Москвы до Самары", "пути от Москвы до Самары"], [1070, "от Москвы до Ростова-на-Дону", "пути от Москвы до Ростова-на-Дону"],
+  [1100, "вдоль Главного Кавказского хребта", "Главного Кавказского хребта"], [1200, "вдоль всей Камчатки", "Камчатки"],
+  [1230, "от Москвы до Архангельска", "пути от Москвы до Архангельска"], [1350, "от Москвы до Краснодара", "пути от Москвы до Краснодара"],
+  [1500, "вдоль всей Оки", "Оки"], [1620, "от Москвы до Сочи", "пути от Москвы до Сочи"],
+  [1790, "от Москвы до Екатеринбурга", "пути от Москвы до Екатеринбурга"], [1800, "от Москвы до Берлина", "пути от Москвы до Берлина"],
+  [1900, "от Москвы до Мурманска", "пути от Москвы до Мурманска"], [2500, "вдоль Уральских гор", "Уральских гор"],
+  [2850, "от Москвы до Парижа", "пути от Москвы до Парижа"], [2850, "вдоль всего Дуная", "Дуная"],
+  [3300, "от Москвы до Новосибирска", "пути от Москвы до Новосибирска"], [3500, "Аппалачскую тропу", "Аппалачской тропы"],
+  [3530, "вдоль всей Волги", "Волги"], [4800, "через Сахару с запада на восток", "Сахары с запада на восток"],
+  [5800, "от Москвы до Пекина по прямой", "пути от Москвы до Пекина"], [6650, "вдоль всего Нила", "Нила"],
+  [7500, "от Москвы до Нью-Йорка по прямой", "пути от Москвы до Нью-Йорка"], [8850, "вдоль Великой Китайской стены", "Великой Китайской стены"],
+  [9289, "по Транссибу от Москвы до Владивостока", "Транссиба"], [40075, "вокруг Земли по экватору", "экватора"], [384400, "до Луны", "пути до Луны"]
+];
+function hashStr(s) { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+// The few comparisons closest to "1–2 of something", one of them chosen by place + value
+function pickEq(list, value, key) {
+  const c = list.map(it => ({ it, r: value / it[0] })).filter(x => x.r >= .25 && x.r <= 9)
+    .sort((a, b) => Math.abs(Math.log(a.r / 1.5)) - Math.abs(Math.log(b.r / 1.5))).slice(0, 6);
+  return c.length ? c[hashStr(key + "|" + Math.round(value)) % c.length] : null;
+}
+function equiv(kg, key = "") {
+  const x = kg > 0 && pickEq(WEIGHTS, kg, key); if (!x) return "";
+  const [, one, few, many, gen] = x.it, r = x.r;
+  if (r < .95) return `≈ ${Math.round(r * 100)}% веса ${gen}`;
+  if (r < 1.15) return `≈ ${one}`;
+  if (r < 5) return `≈ ${fmt(r, 1)} ${gen}`;
+  const n = Math.round(r); return `≈ ${n} ${plural(n, one, few, many)}`;
+}
+function distEq(km, key = "") {
+  const x = km > 0 && pickEq(DISTANCES, km, key); if (!x) return "";
+  const [, full, part] = x.it, r = x.r;
+  if (r < .95) return `≈ ${Math.round(r * 100)}% ${part}`;
+  if (r < 1.15) return `как пройти ${full}`;
+  if (r < 5) return `как ${fmt(r, 1)} раза пройти ${full}`;
+  const n = Math.round(r); return `как ${n} ${plural(n, "раз", "раза", "раз")} пройти ${full}`;
+}
 const ICON = {
   act: '<svg viewBox="0 0 24 24"><circle cx="13" cy="4" r="1.6"/><path d="M10 21l2-6 3 3v3M9 12l2-4 4 2 2 3M7 13l2-1"/></svg>',
   heart: '<svg viewBox="0 0 24 24"><path d="M20.8 8.6a5 5 0 0 0-8.8-3.2 5 5 0 0 0-8.8 3.2c0 5.4 8.8 10.4 8.8 10.4s8.8-5 8.8-10.4z"/></svg>',
@@ -724,7 +816,7 @@ async function viewDay(date) {
   h += section("act", "act", "Активность", d.steps ? `${fmt(d.steps)} шагов${stepsAvg ? " · " + (d.steps >= stepsAvg ? "больше" : "меньше") + " обычного" : ""}` : (isToday ? "данные ещё в пути" : "нет данных"),
     `<div class="tiles three">
       ${tile({ lbl: "Шаги", val: d.steps ? `<span data-count="${d.steps}">0</span>` : "—", was: stepsAvg ? `обычно ${fmt(stepsAvg)} · ${cmpText(d.steps, stepsAvg, "", true)}` : "", meter: d.steps ? d.steps / STEP_GOAL * 100 : null, mark: stepsAvg ? stepsAvg / STEP_GOAL * 100 : null, spark: spark(last7(date, x => (by.days[x] || {}).steps), "var(--c-act)") })}
-      ${tile({ lbl: "Пройдено", val: km ? fmt(km, 1) : "—", unit: km ? "км" : "", was: km ? "≈ " + fmt(km * 1000 / 400) + " кругов стадиона" : "" })}
+      ${tile({ lbl: "Пройдено", val: km ? fmt(km, 1) : "—", unit: km ? "км" : "", was: km ? distEq(km, "day" + date) : "" })}
       ${tile({ lbl: "Активные калории", val: d.active_kcal ? fmt(d.active_kcal) : "—", unit: d.active_kcal ? "ккал" : "", was: "по браслету — он завышает", spark: spark(last7(date, x => (by.days[x] || {}).active_kcal), "var(--c-act)") })}
     </div>
     <div><p class="blk-t">Шаги по часам</p><p class="blk-s">${hasPrev ? "Синие — этот день, серые — накануне. Чёрная метка на полоске шагов — твой обычный уровень" : "Сколько шагов в каждый час"}</p>${stepsCols.some(c => c.value || c.ghost) ? columns(stepsCols, { maxLabels: 8, peak: true, aria: "Шаги по часам" }) : `<div class="empty">Нет почасовых данных</div>`}
@@ -783,7 +875,7 @@ function trainingSection(date, sess, manual, w) {
   const tonPrev = pst ? pst.tonnage : 0;
   return section("train", "train", `Тренировка ${DAY[sess.day]} · ${DAYN[sess.day]}`, (w ? `${hm(w.start)}–${hm(w.end)} · ${fmtDur(dur)}` : "") + (sess.state ? " · самочувствие " + STATE[+sess.state] : "") + (sess.discomfort === "есть" ? " · ⚠ дискомфорт" : ""),
     `<div class="tiles three">
-      ${tile({ c: "var(--c-train)", lbl: "Поднято", val: fmtT(st.tonnage), was: (equiv(st.tonnage) || "") + (tonPrev ? "<br>прошлая " + DAY[sess.day] + ": " + fmtT(tonPrev) + " · " + cmpText(st.tonnage, tonPrev, "", true, 0, x => fmtT(x)) : "") })}
+      ${tile({ c: "var(--c-train)", lbl: "Поднято", val: fmtT(st.tonnage), was: (equiv(st.tonnage, "sess" + sess.date) || "") + (tonPrev ? "<br>прошлая " + DAY[sess.day] + ": " + fmtT(tonPrev) + " · " + cmpText(st.tonnage, tonPrev, "", true, 0, x => fmtT(x)) : "") })}
       ${tile({ c: "var(--c-train)", lbl: "Подходов", val: st.sets, was: fmt(st.reps) + " повторов" })}
       ${tile({ c: "var(--c-train)", lbl: "Пульс", val: hrA || "—", unit: hrA ? "уд/мин" : "", was: hrM ? "максимум " + hrM + (dur ? " · " + fmtDur(dur) : "") : "" })}
     </div>
@@ -848,15 +940,15 @@ function periodStats(from, to) {
   const sess = sessionsIn(from, to), ton = sess.reduce((a, s) => a + sessionStats(s).tonnage, 0);
   const nW = sess.length + MANUAL.filter(m => m.date >= from && m.date <= to && !sess.some(s => s.date === m.date)).length;
   const js = past.map(d => by.journal[d]).filter(Boolean), hung = js.flatMap(j => j.hunger || []);
-  return { days, past, sess, nW, ton, steps: mean(steps), sleep: mean(sleeps), rest: mean(rest), hunger: hung.length ? mean(hung.map(x => x.lvl)) : 0, zhor: js.filter(j => (j.hunger || []).some(x => x.zhor)).length, dev: js.filter(j => j.food === "dev").length };
+  return { days, past, sess, nW, ton, stepsSum: steps.reduce((a, b) => a + b, 0), steps: mean(steps), sleep: mean(sleeps), rest: mean(rest), hunger: hung.length ? mean(hung.map(x => x.lvl)) : 0, zhor: js.filter(j => (j.hunger || []).some(x => x.zhor)).length, dev: js.filter(j => j.food === "dev").length };
 }
 function periodTiles(p, q, qName) {
   const vs = (now, prev, unit, up, dec, f) => q && prev && now ? `${qName}: ${f ? f(prev) : fmt(prev, dec) + unit} · ${cmpText(now, prev, unit, up, dec, f)}` : "";
   const tonVs = vs(p.ton, q && q.ton, "", true, 0, fmtT);
   return `<div class="tiles three">
-    ${tile({ c: "var(--c-train)", lbl: "Поднято", val: p.ton ? fmtT(p.ton) : "—", was: (p.ton ? equiv(p.ton) : "") + (tonVs ? "<br>" + tonVs : "") })}
+    ${tile({ c: "var(--c-train)", lbl: "Поднято", val: p.ton ? fmtT(p.ton) : "—", was: (p.ton ? equiv(p.ton, "period" + p.days[0]) : "") + (tonVs ? "<br>" + tonVs : "") })}
     ${tile({ c: "var(--c-sleep)", lbl: "Сон в среднем", val: p.sleep ? fmtDur(p.sleep) : "—", was: vs(p.sleep, q && q.sleep, "", true, 0, fmtDur), meter: p.sleep ? p.sleep / SLEEP_GOAL * 100 : null })}
-    ${tile({ c: "var(--c-act)", lbl: "Шаги в среднем", val: p.steps ? fmt(p.steps) : "—", was: vs(p.steps, q && q.steps, "", true, 0), meter: p.steps ? p.steps / STEP_GOAL * 100 : null })}
+    ${tile({ c: "var(--c-act)", lbl: "Шаги в среднем", val: p.steps ? fmt(p.steps) : "—", was: [vs(p.steps, q && q.steps, "", true, 0), p.stepsSum ? "всего " + fmt(p.stepsSum * .75 / 1000) + " км — " + distEq(p.stepsSum * .75 / 1000, "period" + p.days[0]) : ""].filter(Boolean).join("<br>"), meter: p.steps ? p.steps / STEP_GOAL * 100 : null })}
     ${tile({ c: "var(--c-heart)", lbl: "Пульс покоя", val: p.rest ? fmt(p.rest) : "—", unit: p.rest ? "уд/мин" : "", was: vs(p.rest, q && q.rest, "", false, 0) || "чем ниже, тем лучше" })}
     ${tile({ c: "var(--c-food)", lbl: "Голод в среднем", val: p.hunger ? fmt(p.hunger, 1) : "—", unit: p.hunger ? "/10" : "", was: `жор: ${p.zhor} ${plural(p.zhor, "день", "дня", "дней")}` })}
     ${tile({ c: "var(--c-food)", lbl: "Питание", val: p.dev ? p.dev : "✓", unit: p.dev ? plural(p.dev, "отклонение", "отклонения", "отклонений") : "", was: p.dev ? "остальные дни — по плану" : "все дни по плану" })}
@@ -958,14 +1050,14 @@ function viewPath() {
   const steps = days.reduce((a, d) => a + (by.days[d].steps || 0), 0), km = steps * .75 / 1000;
   const nDays = daysBetween(START, todayISO()) + 1;
   let h = `<section class="hero"><div class="k">Путь с точки А · ${dDay(START)} · ${nDays} ${plural(nDays, "день", "дня", "дней")}</div>
-    <div class="big"><span data-count="${ton / 1000}" data-dec="1">0</span><small>т</small></div><div class="eq">поднято за ${sess.length} ${plural(sess.length, "тренировку", "тренировки", "тренировок")} с записанными весами — ${equiv(ton) || "начало пути"}</div>
-    <div class="row"><div><b data-count="${nW}">0</b><span>${plural(nW, "тренировка", "тренировки", "тренировок")}</span></div><div><b data-count="${weeks.length}">0</b><span>трен. ${plural(weeks.length, "неделя", "недели", "недель")}</span></div><div><b data-count="${steps}">0</b><span>шагов</span></div><div><b data-count="${km}">0</b><span>км пешком</span></div></div></section>`;
+    <div class="big"><span data-count="${ton / 1000}" data-dec="1">0</span><small>т</small></div><div class="eq">поднято за ${sess.length} ${plural(sess.length, "тренировку", "тренировки", "тренировок")} с записанными весами — ${equiv(ton, "hero") || "начало пути"}</div>
+    <div class="row"><div><b data-count="${nW}">0</b><span>${plural(nW, "тренировка", "тренировки", "тренировок")}</span></div><div><b data-count="${weeks.length}">0</b><span>трен. ${plural(weeks.length, "неделя", "недели", "недель")}</span></div><div><b data-count="${steps}">0</b><span>шагов</span></div><div><b data-count="${km}">0</b><span>км пешком</span></div></div>${km ? `<div class="eq" style="margin-top:12px">Пешком — ${distEq(km, "hero")}</div>` : ""}</section>`;
   // Milestones: fixed events + records found in the data
   const ms = EVENTS.map(e => ({ ...e }));
   sess.forEach(s => { Object.entries(sessionStats(s).best).forEach(([id, b]) => { const bb = bestBefore(id, s.date); if (bb && better(b, bb, id) && !EX[id].bw) ms.push({ date: s.date, c: "var(--c-train)", x: `🏆 ${EX[id].n}: ${fmt(b.kg, 1)} × ${b.reps}`, s: `было ${fmt(bb.kg, 1)} × ${bb.reps}` }); }); });
-  if (sess.length) { const top = sess.reduce((a, s) => sessionStats(s).tonnage > sessionStats(a).tonnage ? s : a); ms.push({ date: top.date, c: "var(--c-train)", x: `Больше всего за тренировку: ${fmtT(sessionStats(top).tonnage)}`, s: `тренировка ${DAY[top.day]} · ${equiv(sessionStats(top).tonnage)}` }); }
+  if (sess.length) { const top = sess.reduce((a, s) => sessionStats(s).tonnage > sessionStats(a).tonnage ? s : a); ms.push({ date: top.date, c: "var(--c-train)", x: `Больше всего за тренировку: ${fmtT(sessionStats(top).tonnage)}`, s: `тренировка ${DAY[top.day]} · ${equiv(sessionStats(top).tonnage, "ms")}` }); }
   const bestSteps = days.reduce((a, d) => (by.days[d].steps || 0) > ((by.days[a] || {}).steps || 0) ? d : a, days[0]);
-  if (bestSteps && by.days[bestSteps].steps) ms.push({ date: bestSteps, c: "var(--c-act)", x: `Рекорд шагов: ${fmt(by.days[bestSteps].steps)}`, s: fmt(by.days[bestSteps].steps * .75 / 1000, 1) + " км за день" });
+  if (bestSteps && by.days[bestSteps].steps) ms.push({ date: bestSteps, c: "var(--c-act)", x: `Рекорд шагов: ${fmt(by.days[bestSteps].steps)}`, s: fmt(by.days[bestSteps].steps * .75 / 1000, 1) + " км за день — " + distEq(by.days[bestSteps].steps * .75 / 1000, "ms") });
   const sl = Object.keys(by.sleep).filter(d => d >= START);
   if (sl.length) { const bs = sl.reduce((a, d) => sleepMin(by.sleep[d]) > sleepMin(by.sleep[a]) ? d : a, sl[0]); ms.push({ date: bs, c: "var(--c-sleep)", x: `Лучший сон: ${fmtDur(sleepMin(by.sleep[bs]))}`, s: `глубокий ${fmtDur(stageMin(by.sleep[bs], [5]))}` }); }
   weeks.filter(w => !w.missing.length).forEach(w => ms.push({ date: w.sessions[w.sessions.length - 1].date, c: "var(--c-train)", x: `Закрыта тренировочная неделя ${w.n}`, s: `А, Б, В · ${fmtT(w.ton)}` }));
@@ -1027,7 +1119,7 @@ function viewWorkouts() {
   const manual = f === "all" ? MANUAL.filter(m => !D.sessions.some(s => s.date === m.date)) : [];
   const items = all.map(s => ({ date: s.date, s })).concat(manual.map(m => ({ date: m.date, m }))).sort((a, b) => a.date < b.date ? 1 : -1);
   const ton = all.reduce((a, s) => a + sessionStats(s).tonnage, 0), maxT = Math.max(1, ...all.map(s => sessionStats(s).tonnage));
-  let h = `<div class="head"><div class="t"><h1>Тренировки</h1><div class="s">${items.length} ${plural(items.length, "тренировка", "тренировки", "тренировок")}${ton ? " · поднято " + fmtT(ton) + " " + equiv(ton) : ""}</div></div></div>`;
+  let h = `<div class="head"><div class="t"><h1>Тренировки</h1><div class="s">${items.length} ${plural(items.length, "тренировка", "тренировки", "тренировок")}${ton ? " · поднято " + fmtT(ton) + " " + equiv(ton, "wall") : ""}</div></div></div>`;
   h += `<div class="filters">${[["all", "Все"], ["A", "А · жимы"], ["B", "Б · ноги"], ["C", "В · тяги"]].map(([k, n]) => `<button type="button" data-wf="${k}" aria-pressed="${f === k}">${k !== "all" ? `<span class="plate ${k}">${DAY[k]}</span>` : ""}${n.replace(/^[АБВ] · /, k === "all" ? "" : "")}</button>`).join("")}</div>`;
   const nx = nextWorkout();
   const cards = items.map(it => {
