@@ -147,6 +147,10 @@
   .endq .lbl { font-size: 13.5px; font-weight: 600; margin-bottom: 6px; }
   .seg { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
   .seg.five { grid-template-columns: repeat(5, 1fr); }
+  .seg.two { grid-template-columns: repeat(2, 1fr); }
+  .seg.five button { font-size: 22px; }
+  .water { display: flex; align-items: center; gap: 10px; }
+  .water input { flex: 1; min-width: 0; height: 40px; border: 1px solid var(--line); background: var(--surface-2); border-radius: 10px; padding: 0 10px; font-size: 15px; }
   .seg button { height: 40px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface-2); font-weight: 700; cursor: pointer; font-variant-numeric: tabular-nums; padding: 0 2px; }
   .seg button[aria-pressed="true"] { background: var(--ok); border-color: var(--ok); color: #fff; }
   .endq textarea { width: 100%; min-height: 54px; border: 1px solid var(--line); background: var(--surface-2); border-radius: 12px; padding: 9px 10px; font-size: 14px; resize: vertical; margin-top: 6px; }
@@ -289,7 +293,6 @@
       <li>Начало тренировки на браслете — сразу как пришёл: по нему видно, сколько заняла разминка</li>
       <li>Записываем 4 рабочих подхода. Запас в рабочих — 1–2, на жиме ногами не меньше 1</li>
       <li>Порядок упражнений продуман: мышцы чередуются, одни работают — другие отдыхают. Строчка «↳» в карточке объясняет, почему упражнение здесь</li>
-      <li>Суперсет: подход на одном → подход на другом → снова на первом</li>
       <li>Экстра (пунктирная рамка) — в конце, лёгкий вес, учим технику. Нет времени — пропускай первой</li>
       <li>Отдых: базовые ~2 мин, изолирующие и пресс 60–90 с. Нажми ✓ — запустится таймер</li>
       <li>Все рабочие подходы — верх диапазона с нужным запасом → в следующий раз +вес (тренажёр +5 кг, гантели +1–2 кг)</li>
@@ -337,13 +340,13 @@
     <h3>Конец тренировки</h3>
     <p>Всё уже сохраняется само после каждой цифры. Кнопка — финальная точка: сохранит тренировку и покажет итог.</p>
     <div class="endq" id="endq">
-      <div><div class="lbl">💧 Сколько воды выпил за тренировку</div>
-        <div class="seg" data-k="water"><button type="button" data-v="0">0</button><button type="button" data-v="0.5">0,5</button><button type="button" data-v="1">1 л</button><button type="button" data-v="1.5">1,5</button><button type="button" data-v="2">2 л</button><button type="button" data-v="2.5+">2,5+</button></div></div>
       <div><div class="lbl">Общее состояние</div>
         <div class="seg five" data-k="state"><button type="button" data-v="1" title="совсем плохо">😫</button><button type="button" data-v="2" title="так себе">😕</button><button type="button" data-v="3" title="нормально">😐</button><button type="button" data-v="4" title="хорошо">🙂</button><button type="button" data-v="5" title="отлично">💪</button></div></div>
-      <div><div class="lbl">Что-то странно болит, тянет или хрустит?</div>
-        <div class="seg" data-k="pain" style="grid-template-columns:auto"><button type="button" data-v="нет">Ничего ✓</button></div>
-        <textarea id="pain" placeholder="Где и как: например, правое колено щёлкает на выпадах"></textarea></div>
+      <div><div class="lbl">Дискомфорт: что-то болит, тянет, хрустит?</div>
+        <div class="seg two" data-k="discomfort"><button type="button" data-v="нет">Нет</button><button type="button" data-v="есть">Есть</button></div>
+        <div id="pain-box" hidden><div class="lbl" id="pain-lbl" style="margin:10px 0 0">Что, где и как?</div>
+        <textarea id="pain" placeholder="Например: правое колено щёлкает на выпадах, не болит; на что обратить внимание"></textarea></div></div>
+      <div class="water"><span class="lbl" style="margin:0">💧 Воды за тренировку</span><input id="water" placeholder="например, 1,5 л" aria-label="Сколько воды выпил"></div>
     </div>
     <div class="summary" id="summary" hidden></div>
     <div class="saved-ok" id="saved-ok" hidden></div>
@@ -407,14 +410,14 @@ const DAYS = {
     { id: "leg_press", n: "Жим ногами", s: 4, r: "10–12", rest: 150, p: ["quads","glutes"], x: ["hams"], q: "жим ногами в тренажере техника", prior: "300–320 кг",
       w: "Главное упражнение дня — пока ноги свежие. Разминочные подходы — только здесь",
       c: ["Поясница и таз прижаты к спинке", "Колени смотрят туда же, куда носки", "Выдох на жиме, колени не выпрямлять до щелчка"] },
-    { id: "leg_curl", n: "Сгибание ног лёжа", alt: "суперсет с икрами", s: 4, r: "12–15", rest: 60, p: ["hams"], x: ["calves"], q: "сгибание ног в тренажере лежа техника",
-      w: "Перед бедра отдыхает после жима, работает задняя поверхность. Суперсет с икрами: подход тут → подход на икры → снова сюда",
+    { id: "leg_curl", n: "Сгибание ног лёжа", s: 4, r: "12–15", rest: 90, p: ["hams"], x: ["calves"], q: "сгибание ног в тренажере лежа техника",
+      w: "Перед бедра отдыхает после жима, работает задняя поверхность",
       c: ["Валик чуть выше пяток, колено напротив оси тренажёра", "Таз прижат, сгибай до упора", "Вниз медленно, без рывков"] },
-    { id: "calf_seated", n: "Подъём на носки сидя", alt: "суперсет со сгибанием", s: 4, r: "15–20", rest: 60, p: ["calves"], x: [], q: "подъем на носки сидя в тренажере техника",
-      w: "Суперсет со сгибанием ног: пока работают икры, задняя поверхность бедра отдыхает, и наоборот",
+    { id: "calf_seated", n: "Подъём на носки сидя", s: 4, r: "15–20", rest: 60, p: ["calves"], x: [], q: "подъем на носки сидя в тренажере техника",
+      w: "Бёдра отдыхают, работают только икры",
       c: ["Носки на краю платформы, валик на бёдрах у коленей", "Вниз — полная растяжка пятки, вверх — пауза 1 с", "Без отбива внизу"] },
     { id: "lunge", n: "Выпады с гантелями", alt: "10 шагов вперёд + 10 назад", s: 4, r: "10–12 на ногу", rest: 120, p: ["quads","glutes"], x: ["hams"], q: "выпады с гантелями в ходьбе техника",
-      w: "Перед бедра отдохнул за суперсет — снова свежий. Вес пиши общий, обеих гантелей",
+      w: "Перед бедра отдохнул за сгибание и икры — снова свежий. Вес пиши общий, обеих гантелей",
       c: ["Корпус ровно, шаг длинный", "Колено задней ноги почти касается пола", "Колено передней — над стопой, не заваливается внутрь"] },
     { id: "hyper", bw: true, n: "Гиперэкстензия", s: 4, r: "12–15", rest: 75, p: ["lower","glutes"], x: ["hams"], q: "гиперэкстензия техника",
       w: "Последней: уставшая поясница ничему больше не мешает",
@@ -507,7 +510,7 @@ function tipsHtml(exId) {
 function renderLock() {
   const bar = document.getElementById("lockbar"), locked = isLocked();
   document.body.classList.toggle("locked", locked);
-  document.querySelectorAll("#list input, #list textarea, #list .done, #list .rir-seg button, #list .flag, #list .note-btn, #list .note-actions button, #list .setup-ok, #note, #note-ok, #endq button, #pain").forEach(el => { el.disabled = locked; });
+  document.querySelectorAll("#list input, #list textarea, #list .done, #list .rir-seg button, #list .flag, #list .note-btn, #list .note-actions button, #list .setup-ok, #note, #note-ok, #endq button, #pain, #water").forEach(el => { el.disabled = locked; });
   if (!draft.finishedAt) { bar.hidden = true; return; }
   const when = new Date(draft.finishedAt).toLocaleString("ru-RU", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
   const nx = NEXT[day];
@@ -526,7 +529,7 @@ const sid = () => date + "_" + day;
 function emptySession() {
   const ex = {};
   DAYS[day].ex.forEach(e => { ex[e.id] = { name: e.n, sets: Array.from({ length: e.s }, () => ({ kg: "", reps: "", done: false, at: "" })), rir: "", note: "", flags: [], setup: "" }; });
-  return { date, day, ex, note: "", water: "", state: "", pain: "", finishedAt: "" };
+  return { date, day, ex, note: "", water: "", state: "", discomfort: "", pain: "", finishedAt: "" };
 }
 function loadDraft() {
   const stored = sessions[sid()] || ls.get("session-" + sid());
@@ -541,7 +544,7 @@ function loadDraft() {
       base.ex[k].setup = s.setup || "";
     });
     base.note = stored.note || "";
-    base.water = stored.water || ""; base.state = stored.state || ""; base.pain = stored.pain || "";
+    base.water = stored.water || ""; base.state = stored.state || ""; base.discomfort = stored.discomfort || ""; base.pain = stored.pain || "";
     base.finishedAt = stored.finishedAt || "";
   }
   Object.keys(base.ex).forEach(k => { if (!base.ex[k].setup) base.ex[k].setup = lastSetup(k); });
@@ -869,7 +872,12 @@ document.getElementById("note-ok").addEventListener("click", () => {
 });
 function renderEndq() {
   document.querySelectorAll("#endq .seg").forEach(seg => seg.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(draft[seg.dataset.k] === b.dataset.v))));
-  document.getElementById("pain").value = draft.pain === "нет" ? "" : draft.pain;
+  // the text box opens only when something is off: discomfort "есть" or a bad overall state
+  const bad = draft.state === "1" || draft.state === "2", hurt = draft.discomfort === "есть";
+  document.getElementById("pain-box").hidden = !(bad || hurt || draft.pain);
+  document.getElementById("pain-lbl").textContent = hurt ? "Что, где и как? На что обратить внимание" : "Что не так? Опиши пару слов";
+  const pain = document.getElementById("pain"); if (document.activeElement !== pain) pain.value = draft.pain;
+  const water = document.getElementById("water"); if (document.activeElement !== water) water.value = draft.water;
 }
 document.getElementById("endq").addEventListener("click", ev => {
   const b = ev.target.closest(".seg button"); if (!b || isLocked()) return;
@@ -877,7 +885,8 @@ document.getElementById("endq").addEventListener("click", ev => {
   draft[k] = draft[k] === b.dataset.v ? "" : b.dataset.v; // tap again — clear
   renderEndq(); scheduleSave();
 });
-document.getElementById("pain").addEventListener("input", ev => { draft.pain = ev.target.value; renderEndq(); scheduleSave(); });
+document.getElementById("pain").addEventListener("input", ev => { draft.pain = ev.target.value; scheduleSave(); });
+document.getElementById("water").addEventListener("input", ev => { draft.water = ev.target.value; scheduleSave(); });
 document.querySelector(".plates").addEventListener("click", ev => {
   const t = ev.target.closest(".plate"); if (!t || t.dataset.day === day) return;
   flushNow(); day = t.dataset.day; ls.set("day", day); loadDraft(); collapsed = new Set(); render(); window.scrollTo({ top: 0 });
@@ -896,9 +905,9 @@ function reportText() {
     if (sets.length || extra) lines.push("— " + e.n + ": " + (sets.join(", ") || "без подходов") + (st.rir !== "" ? " (запас " + rirText(st.rir) + ")" : "") + (st.setup ? " {" + st.setup + "}" : "") + (extra ? " [" + extra + "]" : ""));
   });
   if (draft.note) lines.push("Заметки: " + draft.note);
-  if (draft.water) lines.push("Вода: " + draft.water + " л");
+  if (draft.water) lines.push("Вода: " + draft.water);
   if (draft.state) lines.push("Состояние: " + draft.state + " из 5");
-  if (draft.pain) lines.push("Болит/хрустит: " + draft.pain);
+  if (draft.discomfort || draft.pain) lines.push("Дискомфорт: " + (draft.discomfort || "—") + (draft.pain ? " — " + draft.pain : ""));
   return lines.join("\n");
 }
 document.getElementById("copy").addEventListener("click", () => {
@@ -928,7 +937,7 @@ function renderSummary() {
   const st = stats();
   box.innerHTML = `<div><b>${st.sets}</b><span>подходов записано</span></div><div><b>${st.tonnage.toLocaleString("ru-RU")}</b><span>кг поднято (тоннаж)</span></div>
     <div><b>${st.minutes || "—"}</b><span>минут от первого до последнего подхода</span></div><div><b>${st.avgRest ? Math.floor(st.avgRest / 60) + ":" + pad(st.avgRest % 60) : "—"}</b><span>средний отдых</span></div>
-    <div><b>${draft.water ? esc(draft.water.replace(".", ",")) : "—"}</b><span>литров воды</span></div><div><b>${draft.state ? esc(draft.state) + "/5" : "—"}</b><span>состояние</span></div>`;
+    <div><b>${draft.water ? esc(draft.water) : "—"}</b><span>воды</span></div><div><b>${draft.state ? ["", "😫", "😕", "😐", "🙂", "💪"][+draft.state] || "—" : "—"}</b><span>состояние${draft.discomfort === "есть" ? " · есть дискомфорт" : ""}</span></div>`;
   box.hidden = false;
   ok.textContent = "✓ Тренировка сохранена " + new Date(draft.finishedAt).toLocaleString("ru-RU", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }) + " · Claude её видит";
   ok.hidden = false;
