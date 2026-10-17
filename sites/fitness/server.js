@@ -24,8 +24,17 @@ const APK_FILE = path.join(DATA_DIR, 'app', 'fitcourier.apk');
 const MAX_HEALTH_BODY = 3_000_000;
 const XIAOMI_PORT = Number(process.env.XIAOMI_PORT || 8091);
 const SYNC_LOG = path.join(HEALTH_DIR, 'syncs.jsonl');
+// Progress site (progress.<host>): the same data, read-only views + a daily journal (food deviations, hunger).
+const PROGRESS_DIR = path.join(__dirname, 'progress');
+const INTRADAY_DIR = path.join(HEALTH_DIR, 'intraday');
+const JOURNAL_DIR = path.join(DATA_DIR, 'journal');
+const INBODY_FILE = path.join(DATA_DIR, 'inbody.json');
+const TZ = 'Europe/Moscow';
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 fs.mkdirSync(SESSIONS_DIR, { recursive: true });
+fs.mkdirSync(INTRADAY_DIR, { recursive: true });
+fs.mkdirSync(JOURNAL_DIR, { recursive: true });
 for (const k of HEALTH_KINDS) fs.mkdirSync(path.join(HEALTH_DIR, k), { recursive: true });
 if (!fs.existsSync(PASSWORD_FILE)) {
   fs.writeFileSync(PASSWORD_FILE, crypto.randomBytes(9).toString('base64url') + '\n', { mode: 0o600 });
@@ -85,6 +94,7 @@ function saveHealth(data) {
     trigger: data.trigger, bg_permission: data.bg_permission, battery_unrestricted: data.battery_unrestricted, counts,
   };
   writeJson(path.join(HEALTH_DIR, 'last-sync.json'), sync);
+  try { saveIntraday(data.diag); } catch (err) { console.error('intraday failed:', err.message); }
   // One line per sync: shows whether the phone keeps sending on its own.
   fs.appendFileSync(SYNC_LOG, JSON.stringify(sync) + '\n');
   return counts;
@@ -108,6 +118,72 @@ function readHealth(sinceIso) {
   return out;
 }
 
+// Local (Moscow) date and hour of a unix time.
+const tzFmt = new Intl.DateTimeFormat('en-CA', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', hourCycle: 'h23' });
+function local(epochSec) {
+  const p = Object.fromEntries(tzFmt.formatToParts(new Date(epochSec * 1000)).map((x) => [x.type, x.value]));
+  return { date: `${p.year}-${p.month}-${p.day}`, hour: Number(p.hour) };
+}
+
+// The courier sends the raw step and pulse records of the last 48 hours (diag). We keep them per local
+// day, merged across uploads, so the progress site can draw steps by hour and pulse through the day.
+// Steps: record key = start|origin (a re-sent record replaces itself). Pulse: [start, min, max] per record.
+function saveIntraday(diag) {
+  if (!diag || typeof diag !== 'object') return;
+  const byDate = {};
+  const day = (d) => {
+    if (!byDate[d]) {
+      let prev = { date: d, steps: {}, hr: {} };
+      try { prev = JSON.parse(fs.readFileSync(path.join(INTRADAY_DIR, d + '.json'), 'utf8')); } catch {}
+      byDate[d] = prev;
+    }
+    return byDate[d];
+  };
+  for (const r of Array.isArray(diag.steps) ? diag.steps : []) {
+    const [start, end, count, origin] = r;
+    if (!Number.isFinite(start) || !Number.isFinite(count)) continue;
+    day(local(start).date).steps[start + '|' + String(origin || '')] = [start, end, count, String(origin || '')];
+  }
+  for (const r of Array.isArray(diag.heart_rate) ? diag.heart_rate : []) {
+    const [start, , n, min, max, origin] = r;
+    if (!Number.isFinite(start) || !min) continue;
+    day(local(start).date).hr[start] = [start, min, max, n, String(origin || '')];
+  }
+  for (const d of Object.values(byDate)) writeJson(path.join(INTRADAY_DIR, d.date + '.json'), d);
+}
+
+// One pass over all raw uploads (oldest first) when the intraday store is still empty.
+function backfillIntraday() {
+  if (fs.readdirSync(INTRADAY_DIR).length) return;
+  const rawDir = path.join(HEALTH_DIR, 'raw');
+  if (!fs.existsSync(rawDir)) return;
+  for (const f of fs.readdirSync(rawDir).filter((x) => x.endsWith('.json')).sort()) {
+    try { saveIntraday(JSON.parse(fs.readFileSync(path.join(rawDir, f), 'utf8')).diag); } catch {}
+  }
+}
+
+function readIntraday(date) {
+  let d = null;
+  try { d = JSON.parse(fs.readFileSync(path.join(INTRADAY_DIR, date + '.json'), 'utf8')); } catch { return { date, steps: [], hr: [] }; }
+  // Steps by hour: two apps may cover the same hour (Mi Fitness before the switch, Gadgetbridge after),
+  // so per hour we take the larger app total instead of adding them up.
+  const perHour = {};
+  for (const [start, , count, origin] of Object.values(d.steps || {})) {
+    const h = local(start).hour;
+    perHour[h] = perHour[h] || {};
+    perHour[h][origin] = (perHour[h][origin] || 0) + count;
+  }
+  const steps = Array.from({ length: 24 }, (_, h) => Math.max(0, ...Object.values(perHour[h] || {})));
+  const hr = Object.values(d.hr || {}).sort((a, b) => a[0] - b[0]).map(([t, min, max]) => [t, min, max]);
+  return { date, steps, hr };
+}
+
+function readDir(dir) {
+  return fs.readdirSync(dir).filter((f) => f.endsWith('.json'))
+    .map((f) => { try { return JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8')); } catch { return null; } })
+    .filter(Boolean);
+}
+
 function listSessions() {
   return fs.readdirSync(SESSIONS_DIR)
     .filter((f) => f.endsWith('.json'))
@@ -122,6 +198,34 @@ const server = http.createServer((req, res) => {
     return res.end('auth required');
   }
   const url = new URL(req.url, 'http://x');
+  const isProgress = String(req.headers.host || '').startsWith('progress.');
+
+  if (isProgress && req.method === 'GET' && (url.pathname === '/' || url.pathname === '/index.html')) {
+    res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-cache' });
+    return fs.createReadStream(path.join(PROGRESS_DIR, 'index.html')).pipe(res);
+  }
+  // Everything the progress views need in one request; intraday (by hour / minute) is fetched per day.
+  if (req.method === 'GET' && url.pathname === '/api/progress') {
+    const out = readHealth('0000');
+    let inbody = [];
+    try { inbody = JSON.parse(fs.readFileSync(INBODY_FILE, 'utf8')); } catch {}
+    return json(res, 200, { ...out, syncs: undefined, sessions: listSessions(), journal: readDir(JOURNAL_DIR), inbody, tz: TZ });
+  }
+  if (req.method === 'GET' && url.pathname === '/api/intraday') {
+    const date = url.searchParams.get('date');
+    if (!DATE_RE.test(date || '')) return json(res, 400, { error: 'bad date' });
+    return json(res, 200, readIntraday(date));
+  }
+  const jm = url.pathname.match(/^\/api\/journal\/(\d{4}-\d{2}-\d{2})$/);
+  if (jm && req.method === 'PUT') {
+    return readBody(req, (data) => {
+      if (!data || typeof data !== 'object' || Array.isArray(data)) return json(res, 400, { error: 'bad json' });
+      data.date = jm[1];
+      data.updatedAt = new Date().toISOString();
+      try { writeJson(path.join(JOURNAL_DIR, jm[1] + '.json'), data); } catch { return json(res, 500, { error: 'save failed' }); }
+      json(res, 200, { ok: true, updatedAt: data.updatedAt });
+    });
+  }
 
   // Xiaomi cloud bridge (sites/fitness/xiaomi/bridge.py): same password, proxied to localhost.
   if (url.pathname === '/xiaomi') { res.writeHead(302, { location: '/xiaomi/' }); return res.end(); }
@@ -201,4 +305,5 @@ const server = http.createServer((req, res) => {
   json(res, 404, { error: 'not found' });
 });
 
+try { backfillIntraday(); } catch (err) { console.error('intraday backfill failed:', err.message); }
 server.listen(PORT, '127.0.0.1', () => console.log(`fitness listening on 127.0.0.1:${PORT}`));

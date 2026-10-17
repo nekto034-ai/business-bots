@@ -46,7 +46,7 @@ site.$HOST, site2.$HOST {
 	reverse_proxy 127.0.0.1:8080
 }
 
-fit.$HOST {
+fit.$HOST, progress.$HOST {
 	encode gzip
 	reverse_proxy 127.0.0.1:8090
 }
